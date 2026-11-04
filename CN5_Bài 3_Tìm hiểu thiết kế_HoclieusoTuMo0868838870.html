@@ -1,0 +1,2534 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 3: Tìm Hiểu Thiết Kế - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Quicksand:wght@600;700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            color: #1e293b;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 7px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.45);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 0 rgba(15, 23, 42, 0.16);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(15, 23, 42, 0.2);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.16);
+        }
+        .card-kid {
+            box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.08), 0 8px 12px -6px rgba(15, 23, 42, 0.04);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.97) translateY(6px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* Hiệu ứng sổ tay lò xo giống Hình 4 SGK trang 16 */
+        .spiral-notebook {
+            background-color: #fffef9;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 18px 18px;
+            position: relative;
+        }
+        .spiral-holes {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 8px 4px;
+            border-right: 2px dashed #cbd5e1;
+        }
+        .spiral-hole {
+            width: 12px;
+            height: 12px;
+            border-radius: 9999px;
+            background: #e2e8f0;
+            border: 2px solid #94a3b8;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-200 px-3 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider leading-none opacity-95">Bài</span>
+                <span class="text-xl sm:text-2xl font-black leading-none">3</span>
+            </div>
+            <div>
+                <div class="text-xs font-extrabold text-sky-600 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-lg sm:text-2xl font-black text-slate-800 tracking-tight leading-tight">Tìm hiểu thiết kế</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-6 h-6 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-lg sm:text-xl font-black text-amber-800">0</span>
+                <span class="text-xs font-extrabold text-amber-700 hidden sm:inline">Sao</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3.5 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden sm:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="lg:hidden bg-white/85 border-b-2 border-sky-100 px-3 py-1.5 flex items-center justify-center gap-1.5 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - CHIẾM TRỌN KHÔNG GIAN Ở GIỮA) -->
+    <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-sky-200 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-7 py-2.5 bg-gradient-to-r from-sky-50 via-indigo-50 to-amber-50 border-b-2 border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-5 py-2.5 border-t-2 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-200 px-4 sm:px-8 py-2 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-extrabold px-4 sm:px-6 py-2 rounded-2xl text-base sm:text-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-xs sm:text-sm font-extrabold text-slate-500">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-black px-5 sm:px-8 py-2 rounded-2xl text-base sm:text-lg">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI HỌC -->
+    <script>
+        /**************************************************************
+         * 1. HỆ THỐNG ÂM THANH (WEB AUDIO API) & ĐỌC BÀI (SPEECH API)
+         **************************************************************/
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(550, now);
+                    osc.frequency.exponentialRampToValueAtTime(840, now + 0.065);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(420, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.22, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.26);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 235];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.12, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.24, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.05;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#eab308'];
+            for (let i = 0; i < 90; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 260,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: -Math.random() * 15 - 5,
+                    size: Math.random() * 10 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. BỘ HÌNH MINH HỌA SVG RÕ NÉT BÁM SÁT SGK TRANG 14, 15, 16
+         **************************************************************/
+        const SVGS = {
+            // Minh họa hai bố con bên màn hình máy tính mở bản thiết kế ngôi nhà (Trang 14)
+            houseBlueprintMonitor: `<svg viewBox="0 0 240 145" class="w-56 h-32 mx-auto">
+                <rect x="95" y="118" width="50" height="14" rx="3" fill="#475569"/>
+                <rect x="75" y="128" width="90" height="8" rx="4" fill="#334155"/>
+                <rect x="25" y="10" width="190" height="112" rx="10" fill="#1e293b" stroke="#64748b" stroke-width="3"/>
+                <rect x="33" y="18" width="174" height="96" rx="6" fill="#dbeafe"/>
+                <line x1="33" y1="42" x2="207" y2="42" stroke="#bfdbfe" stroke-width="1"/>
+                <line x1="33" y1="66" x2="207" y2="66" stroke="#bfdbfe" stroke-width="1"/>
+                <line x1="33" y1="90" x2="207" y2="90" stroke="#bfdbfe" stroke-width="1"/>
+                <polygon points="65,58 120,28 175,58" fill="#93c5fd" stroke="#1d4ed8" stroke-width="2.5"/>
+                <rect x="75" y="58" width="90" height="46" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2.5"/>
+                <line x1="75" y1="81" x2="165" y2="81" stroke="#1d4ed8" stroke-width="2"/>
+                <rect x="88" y="64" width="22" height="12" fill="#bae6fd" stroke="#1d4ed8" stroke-width="1.5"/>
+                <rect x="130" y="64" width="22" height="12" fill="#bae6fd" stroke="#1d4ed8" stroke-width="1.5"/>
+                <rect x="112" y="85" width="18" height="19" fill="#93c5fd" stroke="#1d4ed8" stroke-width="1.5"/>
+                <line x1="55" y1="104" x2="185" y2="104" stroke="#1e40af" stroke-width="2.5"/>
+            </svg>`,
+
+            // Hình 1a: Sản xuất (Công nhân đội mũ bảo hộ lắp ráp đồng hồ trên dây chuyền nhà máy)
+            fig1a_Production: `<svg viewBox="0 0 180 115" class="w-40 h-24 mx-auto">
+                <rect x="4" y="4" width="172" height="107" rx="16" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="2"/>
+                <circle cx="90" cy="34" r="12" fill="#fed7aa"/>
+                <path d="M75 30 Q90 15 105 30 Z" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+                <path d="M67 78 L75 48 L105 48 L113 78 Z" fill="#2563eb"/>
+                <rect x="14" y="80" width="152" height="18" rx="6" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                <circle cx="32" cy="89" r="4" fill="#e2e8f0"/><circle cx="90" cy="89" r="4" fill="#e2e8f0"/><circle cx="148" cy="89" r="4" fill="#e2e8f0"/>
+                <rect x="26" y="60" width="20" height="20" rx="3" fill="#78350f"/><circle cx="36" cy="70" r="7" fill="#fff"/>
+                <rect x="80" y="58" width="22" height="22" rx="3" fill="#78350f"/><circle cx="91" cy="69" r="8" fill="#fff"/>
+                <rect x="134" y="60" width="20" height="20" rx="3" fill="#78350f"/><circle cx="144" cy="70" r="7" fill="#fff"/>
+            </svg>`,
+
+            // Hình 1b: Vận hành, sử dụng (Xem giờ 10:10 trên đồng hồ để bàn)
+            fig1b_Operation: `<svg viewBox="0 0 180 115" class="w-40 h-24 mx-auto">
+                <rect x="4" y="4" width="172" height="107" rx="16" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="2"/>
+                <circle cx="68" cy="34" r="13" fill="#fed7aa"/>
+                <path d="M55 28 Q68 16 81 28" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+                <path d="M46 82 L54 50 L84 50 L92 82 Z" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+                <rect x="108" y="14" width="54" height="25" rx="12" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+                <text x="135" y="31" text-anchor="middle" font-size="13" font-weight="900" fill="#0f172a">10:10</text>
+                <rect x="14" y="82" width="152" height="14" rx="4" fill="#fdba74"/>
+                <rect x="116" y="54" width="26" height="28" rx="3" fill="#78350f"/>
+                <circle cx="129" cy="68" r="9" fill="#ffffff"/>
+                <line x1="129" y1="68" x2="125" y2="63" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/>
+                <line x1="129" y1="68" x2="134" y2="63" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`,
+
+            // Hình 1c: Thiết kế (Vẽ bản phác thảo kỹ thuật chiếc đồng hồ trên giấy)
+            fig1c_Design: `<svg viewBox="0 0 180 115" class="w-40 h-24 mx-auto">
+                <rect x="4" y="4" width="172" height="107" rx="16" fill="#fae8ff" stroke="#e879f9" stroke-width="2"/>
+                <rect x="16" y="14" width="28" height="34" rx="2" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+                <circle cx="30" cy="31" r="7" fill="none" stroke="#ca8a04" stroke-width="1.5"/>
+                <rect x="136" y="14" width="28" height="34" rx="2" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+                <circle cx="150" cy="31" r="7" fill="none" stroke="#ca8a04" stroke-width="1.5"/>
+                <circle cx="90" cy="32" r="13" fill="#fed7aa"/>
+                <path d="M77 26 Q90 15 103 26" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+                <path d="M64 78 L72 48 L108 48 L116 78 Z" fill="#0284c7"/>
+                <rect x="20" y="76" width="140" height="26" rx="4" fill="#94a3b8"/>
+                <polygon points="56,98 66,78 114,78 124,98" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+                <circle cx="90" cy="88" r="7" fill="none" stroke="#0284c7" stroke-width="1.5"/>
+                <line x1="98" y1="68" x2="90" y2="86" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+            </svg>`,
+
+            // Hình 1d: Bảo dưỡng, sửa chữa (Mở nắp sau đồng hồ để kiểm tra, sửa bánh răng)
+            fig1d_Maintenance: `<svg viewBox="0 0 180 115" class="w-40 h-24 mx-auto">
+                <rect x="4" y="4" width="172" height="107" rx="16" fill="#dcfce7" stroke="#86efac" stroke-width="2"/>
+                <circle cx="72" cy="32" r="13" fill="#fed7aa"/>
+                <path d="M59 26 Q72 15 85 26" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+                <path d="M48 80 L56 48 L88 48 L96 80 Z" fill="#3b82f6"/>
+                <rect x="14" y="80" width="152" height="16" rx="4" fill="#fdba74"/>
+                <rect x="112" y="52" width="28" height="28" rx="3" fill="#78350f"/>
+                <circle cx="126" cy="66" r="9" fill="#ffffff"/>
+                <line x1="140" y1="52" x2="152" y2="38" stroke="#78350f" stroke-width="4" stroke-linecap="round"/>
+                <line x1="94" y1="58" x2="116" y2="62" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+            </svg>`,
+
+            // Hình 2a: Đồng hồ báo thức để bàn (Tròn, 2 chuông trên đỉnh, màu xanh ngọc)
+            clock2a: `<svg viewBox="0 0 130 130" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto">
+                <line x1="42" y1="104" x2="32" y2="118" stroke="#0284c7" stroke-width="5" stroke-linecap="round"/>
+                <line x1="88" y1="104" x2="98" y2="118" stroke="#0284c7" stroke-width="5" stroke-linecap="round"/>
+                <path d="M24 38 A16 16 0 0 1 52 24 Z" fill="#06b6d4" stroke="#0e7490" stroke-width="2.5"/>
+                <path d="M106 38 A16 16 0 0 0 78 24 Z" fill="#06b6d4" stroke="#0e7490" stroke-width="2.5"/>
+                <line x1="65" y1="14" x2="65" y2="28" stroke="#0e7490" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="65" cy="68" r="40" fill="#22d3ee" stroke="#0891b2" stroke-width="4"/>
+                <circle cx="65" cy="68" r="32" fill="#ffffff"/>
+                <line x1="65" y1="68" x2="65" y2="45" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+                <line x1="65" y1="68" x2="48" y2="68" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="65" cy="68" r="3.5" fill="#ef4444"/>
+            </svg>`,
+
+            // Hình 2b: Đồng hồ treo tường (Hình vuông, khung nâu gỗ, mặt trắng)
+            clock2b: `<svg viewBox="0 0 130 130" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto">
+                <rect x="18" y="18" width="94" height="94" rx="8" fill="#78350f" stroke="#451a03" stroke-width="3"/>
+                <rect x="27" y="27" width="76" height="76" rx="4" fill="#f8fafc"/>
+                <text x="65" y="41" text-anchor="middle" font-size="11" font-weight="900" fill="#1e293b">12</text>
+                <text x="94" y="69" text-anchor="middle" font-size="11" font-weight="900" fill="#1e293b">3</text>
+                <text x="65" y="98" text-anchor="middle" font-size="11" font-weight="900" fill="#1e293b">6</text>
+                <text x="36" y="69" text-anchor="middle" font-size="11" font-weight="900" fill="#1e293b">9</text>
+                <line x1="65" y1="65" x2="50" y2="52" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="65" y1="65" x2="86" y2="50" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="65" cy="65" r="3" fill="#0f172a"/>
+            </svg>`,
+
+            // Hình 2c: Đồng hồ đeo tay (Mặt tròn nhỏ gọn, dây đeo da màu nâu, viền vàng)
+            clock2c: `<svg viewBox="0 0 130 130" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto">
+                <rect x="49" y="10" width="32" height="110" rx="8" fill="#9a3412" stroke="#7c2d12" stroke-width="2.5"/>
+                <circle cx="65" cy="24" r="2.5" fill="#fed7aa"/>
+                <circle cx="65" cy="106" r="2.5" fill="#fed7aa"/>
+                <circle cx="65" cy="65" r="30" fill="#f59e0b" stroke="#b45309" stroke-width="3"/>
+                <circle cx="65" cy="65" r="24" fill="#ffffff"/>
+                <line x1="65" y1="65" x2="55" y2="53" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+                <line x1="65" y1="65" x2="78" y2="56" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="65" cy="65" r="2.5" fill="#d97706"/>
+            </svg>`,
+
+            // Hình 2d: Đồng hồ cát (Hai bầu thủy tinh nối nhau trong khung gỗ đứng)
+            clock2d: `<svg viewBox="0 0 130 130" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto">
+                <rect x="30" y="16" width="70" height="10" rx="4" fill="#78350f"/>
+                <rect x="30" y="104" width="70" height="10" rx="4" fill="#78350f"/>
+                <rect x="36" y="26" width="6" height="78" fill="#92400e"/>
+                <rect x="88" y="26" width="6" height="78" fill="#92400e"/>
+                <path d="M46 26 C46 54, 62 60, 65 65 C68 60, 84 54, 84 26 Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+                <path d="M46 104 C46 76, 62 70, 65 65 C68 70, 84 76, 84 104 Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+                <path d="M53 46 Q65 56 77 46 L65 63 Z" fill="#facc15"/>
+                <line x1="65" y1="64" x2="65" y2="96" stroke="#eab308" stroke-width="2.5" stroke-dasharray="3 2"/>
+                <path d="M49 102 Q65 82 81 102 Z" fill="#eab308"/>
+            </svg>`,
+
+            // Hình 4a: Bản phác thảo Hộp bút (Trang 16)
+            sketch4a_PencilCase: `<svg viewBox="0 0 200 110" class="w-40 h-24 mx-auto">
+                <polygon points="28,62 135,28 166,46 58,86" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+                <path d="M28,62 L28,86 L58,102 L166,64 L166,46" fill="#f1f5f9" stroke="#334155" stroke-width="2.5"/>
+                <line x1="42" y1="68" x2="150" y2="33" stroke="#475569" stroke-width="2" stroke-dasharray="4 3"/>
+                <text x="85" y="80" font-size="16" fill="#475569">☆ ☆</text>
+                <line x1="100" y1="39" x2="132" y2="10" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+                <line x1="112" y1="38" x2="152" y2="18" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+            </svg>`,
+
+            // Hình 4b: Bản phác thảo Chong chóng (Trang 16)
+            sketch4b_Pinwheel: `<svg viewBox="0 0 200 110" class="w-40 h-24 mx-auto">
+                <line x1="100" y1="50" x2="94" y2="106" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+                <path d="M100 50 L65 12 L102 28 Z" fill="#f1f5f9" stroke="#334155" stroke-width="2.2"/>
+                <path d="M100 50 L144 18 L120 52 Z" fill="#e2e8f0" stroke="#334155" stroke-width="2.2"/>
+                <path d="M100 50 L135 88 L98 70 Z" fill="#f1f5f9" stroke="#334155" stroke-width="2.2"/>
+                <path d="M100 50 L56 80 L80 48 Z" fill="#e2e8f0" stroke="#334155" stroke-width="2.2"/>
+                <circle cx="100" cy="50" r="4.5" fill="#334155"/>
+            </svg>`,
+
+            // Hình 4c: Bản phác thảo Lọ hoa (Trang 16)
+            sketch4c_Vase: `<svg viewBox="0 0 200 110" class="w-40 h-24 mx-auto">
+                <circle cx="85" cy="24" r="7" fill="none" stroke="#475569" stroke-width="2"/>
+                <circle cx="105" cy="18" r="8" fill="none" stroke="#475569" stroke-width="2"/>
+                <circle cx="120" cy="26" r="6" fill="none" stroke="#475569" stroke-width="2"/>
+                <path d="M72 40 Q85 21 90 44" fill="none" stroke="#475569" stroke-width="2"/>
+                <path d="M128 40 Q115 21 110 44" fill="none" stroke="#475569" stroke-width="2"/>
+                <rect x="74" y="42" width="52" height="60" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+                <line x1="84" y1="42" x2="84" y2="102" stroke="#475569" stroke-width="1.8"/>
+                <line x1="94" y1="42" x2="94" y2="102" stroke="#475569" stroke-width="1.8"/>
+                <line x1="104" y1="42" x2="104" y2="102" stroke="#475569" stroke-width="1.8"/>
+                <line x1="114" y1="42" x2="114" y2="102" stroke="#475569" stroke-width="1.8"/>
+                <rect x="72" y="58" width="56" height="6" rx="2" fill="#cbd5e1" stroke="#334155" stroke-width="1.8"/>
+                <rect x="72" y="82" width="56" height="6" rx="2" fill="#cbd5e1" stroke="#334155" stroke-width="1.8"/>
+            </svg>`
+        };
+
+        /**************************************************************
+         * 4. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG BÀI HỌC
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động
+            goalsChecked: [false, false, false],
+            houseStoryDone: false,
+            introBridgeDone: false,
+
+            // Chặng 2: Khám phá
+            selectedTag1: null,
+            fig1Matched: {},
+            fig1FirstDone: false,
+            clocksInspected: { a: true, b: false, c: false, d: false },
+            activeClockTab: 'a',
+            fig2QuestionDone: false,
+            designTasksExplored: { 1: true, 2: false, 3: false, 4: false },
+            activeTaskTab: 1,
+            fig3Ordered: [],
+
+            // Chặng 3: Luyện tập
+            pracQuiz1Done: false,
+            pracQuiz2Done: false,
+            pracQuiz3Done: false,
+            pracQuiz4Done: false,
+            fig4ActiveTab: 'a',
+            fig4Completed: { a: false, b: false, c: false },
+
+            // Chặng 4: Vận dụng
+            myDesign: {
+                category: 'Đồ dùng học tập',
+                name: 'Hộp bút đa năng',
+                func: 'Đựng bút, thước, tẩy gọn gàng',
+                material: 'Vải hoặc bìa cứng, khóa kéo, kéo, chỉ'
+            },
+            ideaConfirmed: false,
+            brushColor: '#1e293b',
+            brushSize: 4,
+            sketchTemplate: 'pencilcase',
+            showGuideOverlay: true,
+            savedCanvasDataUrl: null,
+            hasDrawn: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-800 border-amber-300',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học',
+                        subtitle: 'Em hãy bấm vào từng mục tiêu để mở khóa hành trình tìm hiểu thiết kế nhé!',
+                        voiceText: 'Chào mừng em đến với Bài 3: Tìm hiểu thiết kế. Học xong bài này, em sẽ: Nhận thức được muốn tạo ra sản phẩm công nghệ cần phải thiết kế; thiết kế là một quá trình sáng tạo. Kể được tên các công việc chính khi thiết kế. Vẽ phác thảo, nêu được ý tưởng thiết kế một sản phẩm công nghệ đơn giản.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Tình huống khởi động (Trang 14)',
+                        subtitle: 'Quan sát cuộc trò chuyện của hai bố con bên máy tính và trả lời câu hỏi.',
+                        voiceText: 'Bạn nhỏ hỏi: Bố đang làm gì thế ạ? Bố trả lời: Bố đang xem bản thiết kế ngôi nhà mới của gia đình mình. Trước khi xây dựng ngôi nhà mới, bố và các kiến trúc sư cần chuẩn bị điều gì trên máy tính?',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Kết nối vào bài học',
+                        subtitle: 'Suy nghĩ và chọn câu trả lời đúng nhất để bước sang Chặng Khám Phá.',
+                        voiceText: 'Theo em, vì sao cần có bản thiết kế trước khi bắt tay vào xây nhà hoặc chế tạo sản phẩm công nghệ?',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-500 to-blue-600',
+                badgeBg: 'bg-sky-100 text-sky-800 border-sky-300',
+                steps: [
+                    {
+                        title: '1. Thiết kế trong cuộc sống – Ghép thẻ Hình 1',
+                        subtitle: 'Em hãy bấm chọn thẻ tên hoạt động bên trái rồi ghép vào Hình a, b, c, d cho phù hợp.',
+                        voiceText: 'Em hãy ghép thẻ tên hoạt động: Bảo dưỡng sửa chữa, Thiết kế, Vận hành sử dụng, Sản xuất với hình mô tả hoạt động ở Hình 1 cho phù hợp.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: 'Câu hỏi khám phá Hình 1 (Trang 14)',
+                        subtitle: 'Xác định hoạt động khởi đầu để tạo ra một sản phẩm công nghệ.',
+                        voiceText: 'Trong 4 hoạt động ở Hình 1 gồm Thiết kế, Sản xuất, Vận hành sử dụng, Bảo dưỡng sửa chữa, hoạt động nào phải được thực hiện đầu tiên để tạo ra sản phẩm công nghệ?',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: 'Quan sát Hình 2 – Sự đa dạng của sản phẩm (Trang 15)',
+                        subtitle: 'Bấm vào từng chiếc đồng hồ 2a, 2b, 2c, 2d để khám phá sự khác nhau về kiểu dáng, màu sắc và mục đích sử dụng.',
+                        voiceText: 'Em hãy quan sát và nêu sự khác nhau về kiểu dáng, màu sắc của những chiếc đồng hồ trong Hình 2: đồng hồ báo thức để bàn, đồng hồ treo tường, đồng hồ đeo tay và đồng hồ cát.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: 'Câu hỏi khám phá Hình 2 & Ghi nhớ 1 (Trang 15)',
+                        subtitle: 'Trả lời câu hỏi để mở khóa hộp Ghi nhớ phần 1.',
+                        voiceText: 'Hoạt động nào đã tạo nên sự khác nhau về kiểu dáng, màu sắc và cấu tạo của những chiếc đồng hồ trong Hình 2? Muốn tạo ra sản phẩm công nghệ cần phải bắt đầu từ việc thiết kế sản phẩm. Thiết kế là quá trình sáng tạo để tạo ra sản phẩm đáp ứng tốt hơn nhu cầu của con người.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '2. Các công việc chính của thiết kế – Tìm hiểu Hình 3',
+                        subtitle: 'Bấm vào từng thẻ công việc trong sơ đồ Hình 3 để xem biểu tượng và ví dụ minh họa cụ thể.',
+                        voiceText: 'Phần 2: Các công việc chính của thiết kế. Em hãy bấm vào từng thẻ công việc để tìm hiểu 4 công việc chính khi thiết kế một sản phẩm công nghệ.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: 'Sắp xếp thứ tự 4 bước thiết kế – Hình 3 & Ghi nhớ 2',
+                        subtitle: 'Sắp xếp 4 thẻ công việc đang bị xáo trộn trong Hình 3 vào đúng thứ tự Bước 1 đến Bước 4.',
+                        voiceText: 'Em hãy sắp xếp các công việc chính của thiết kế trong Hình 3 theo thứ tự hợp lí từ Bước 1 đến Bước 4. Ghi nhớ: Để thiết kế một sản phẩm, em cần thực hiện 4 bước chính, gồm: Hình thành ý tưởng về sản phẩm; Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ; Làm sản phẩm mẫu; Đánh giá và hoàn thiện sản phẩm.',
+                        render: renderStep2_6
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-500 to-teal-600',
+                badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                steps: [
+                    {
+                        title: 'Câu hỏi trắc nghiệm 1 – Nhận diện công việc thiết kế trong thực tế',
+                        subtitle: 'Đọc kỹ tình huống của bạn Nam và chọn bước thiết kế tương ứng.',
+                        voiceText: 'Bạn Nam thấy góc học tập của mình có nhiều bút và thước bị thất lạc. Nam nảy ra suy nghĩ sẽ tự làm một chiếc ống cắm bút có chia ngăn tiện lợi. Hoạt động của Nam thuộc bước nào trong quá trình thiết kế?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi trắc nghiệm 2 – Phân biệt các bước thiết kế',
+                        subtitle: 'Đọc kỹ tình huống của bạn Lan và xác định công việc thiết kế đang thực hiện.',
+                        voiceText: 'Sau khi có ý tưởng làm chiếc chong chóng gió, bạn Lan lấy giấy vẽ hình dáng chiếc chong chóng và chuẩn bị giấy màu, que tre, đinh ghim, kéo. Lan đang thực hiện công việc nào?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi trắc nghiệm 3 – Ý nghĩa của bước Làm sản phẩm mẫu & Đánh giá',
+                        subtitle: 'Tìm hiểu vì sao cần đánh giá và hoàn thiện sản phẩm sau khi làm mẫu.',
+                        voiceText: 'Khi thiết kế chiếc lọ hoa bằng que gỗ, vì sao sau khi làm xong sản phẩm mẫu, người thiết kế cần phải thực hiện bước Đánh giá và hoàn thiện sản phẩm?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi trắc nghiệm 4 – Thiết kế là một quá trình sáng tạo',
+                        subtitle: 'Chọn nhận định giải thích đúng nhất bản chất sáng tạo của hoạt động thiết kế.',
+                        voiceText: 'Nhận định nào dưới đây giải thích đúng nhất vì sao thiết kế được gọi là một quá trình sáng tạo?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Bài tập tương tác Hình 4 – Khám phá 3 hồ sơ thiết kế mẫu (Trang 16)',
+                        subtitle: 'Ghép đúng thông tin Chức năng và Vật liệu còn khuyết vào 3 bản thiết kế mẫu a, b, c.',
+                        voiceText: 'Quan sát 3 trang sổ tay lò xo trong Hình 4 gồm Hộp bút, Chong chóng và Lọ hoa. Em hãy chọn đúng thông tin Chức năng và Vật liệu cho từng mẫu thiết kế nhé!',
+                        render: renderStep3_5
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-500 to-indigo-600',
+                badgeBg: 'bg-purple-100 text-purple-800 border-purple-300',
+                steps: [
+                    {
+                        title: 'Bước 1/3: Lập phiếu ý tưởng thiết kế của em',
+                        subtitle: 'Chọn nhóm sản phẩm và trình bày ý tưởng thiết kế gồm Tên sản phẩm, Chức năng, Vật liệu & Dụng cụ.',
+                        voiceText: 'Em hãy chọn nhóm sản phẩm muốn thiết kế, sau đó nhập hoặc chọn nhanh Tên sản phẩm, Chức năng và Vật liệu dự kiến theo gợi ý ở Hình 4.',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Bước 2/3: Xưởng vẽ phác thảo sản phẩm',
+                        subtitle: 'Vẽ phác thảo sản phẩm của em lên trang giấy sổ lò xo (có nút Hiện nét gợi ý mờ).',
+                        voiceText: 'Chào mừng em đến với Xưởng vẽ phác thảo! Em hãy dùng bút màu và nút Hiện nét gợi ý mờ để vẽ phác thảo sản phẩm lên trang sổ tay lò xo nhé.',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Bước 3/3: Triển lãm bản thiết kế & Tổng kết bài học',
+                        subtitle: 'Trưng bày trang sổ tay thiết kế hoàn chỉnh của em và nhận huy hiệu Nhà Thiết Kế Nhí Tài Ba!',
+                        voiceText: 'Chúc mừng em đã hoàn thành xuất sắc Bài 3: Tìm hiểu thiết kế! Hãy cùng ngắm nhìn bản thiết kế hoàn chỉnh của em và nhận huy hiệu Nhà Thiết Kế Nhí Tài Ba!',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 5. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-300', 'text-emerald-900', 'bg-rose-50', 'border-rose-300', 'text-rose-900');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-50', 'border-emerald-300', 'text-emerald-900');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-lg shrink-0">✓</span>
+                        <span class="font-extrabold text-sm sm:text-base">${message}</span>
+                    </div>
+                    <span class="text-xs sm:text-sm font-black bg-amber-200 text-amber-900 px-3 py-1 rounded-full shrink-0">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-900');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center font-black text-lg shrink-0">!</span>
+                        <span class="font-extrabold text-sm sm:text-base">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC)
+         **************************************************************/
+        // Bước 1/3: Mở khóa 3 mục tiêu bài học
+        function renderStep1_1(container) {
+            const goals = [
+                {
+                    icon: '💡',
+                    text: 'Nhận thức được muốn tạo ra sản phẩm công nghệ cần phải thiết kế; thiết kế là một quá trình sáng tạo.'
+                },
+                {
+                    icon: '📋',
+                    text: 'Kể được tên các công việc chính khi thiết kế.'
+                },
+                {
+                    icon: '✏️',
+                    text: 'Vẽ phác thảo, nêu được ý tưởng thiết kế một sản phẩm công nghệ đơn giản.'
+                }
+            ];
+            const allChecked = state.goalsChecked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="text-3xl">🎯</span>
+                        <p class="text-base sm:text-lg font-extrabold text-sky-900">
+                            Học xong bài này, em sẽ đạt được 3 mục tiêu dưới đây. Hãy bấm vào từng thẻ để sẵn sàng vào bài học nhé!
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                        ${goals.map((g, i) => {
+                            const checked = state.goalsChecked[i];
+                            return `
+                                <button onclick="toggleGoal3(${i})"
+                                    class="btn-kid text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                                        checked
+                                            ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
+                                            : 'bg-white hover:bg-amber-50/60 border-slate-200 text-slate-800'
+                                    }">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
+                                        checked ? 'bg-emerald-500 text-white font-black' : 'bg-amber-100'
+                                    }">
+                                        ${checked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-black uppercase tracking-wider ${checked ? 'text-emerald-600' : 'text-slate-400'}">
+                                            Mục tiêu ${i + 1} ${checked ? '• Đã mở khóa!' : '• Bấm để chọn'}
+                                        </div>
+                                        <div class="text-base sm:text-lg font-extrabold leading-snug mt-0.5">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allChecked) {
+                showFeedback(true, 'Tuyệt vời! Em đã mở khóa đủ 3 mục tiêu của Bài 3: Tìm hiểu thiết kế!');
+            }
+        }
+
+        function toggleGoal3(idx) {
+            state.goalsChecked[idx] = true;
+            playSound('pop');
+            rewardStar('b3_goal_' + idx, 1);
+            if (state.goalsChecked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Tình huống hai bố con bên máy tính mở bản vẽ ngôi nhà
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    label: 'A. Bản thiết kế ngôi nhà mới',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Bố đang xem bản thiết kế ngôi nhà mới của gia đình trên máy tính.'
+                },
+                {
+                    label: 'B. Danh sách các món đồ nội thất đã mua sẵn',
+                    correct: false,
+                    explain: 'Chưa đúng! Trên màn hình máy tính của bố đang hiển thị bản vẽ kỹ thuật thiết kế ngôi nhà mới.'
+                },
+                {
+                    label: 'C. Hình chụp ngôi nhà sau khi đã xây xong',
+                    correct: false,
+                    explain: 'Chưa đúng! Ngôi nhà mới chưa được xây dựng, bố đang xem bản thiết kế trước khi xây.'
+                },
+                {
+                    label: 'D. Lịch phân công dọn dẹp vệ sinh ngôi nhà',
+                    correct: false,
+                    explain: 'Chưa đúng! Đây là bản vẽ thiết kế ngôi nhà mới của gia đình.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-gradient-to-r from-emerald-50 via-sky-50 to-amber-50 border-2 border-sky-200 rounded-3xl p-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                        <div class="flex flex-col items-center text-center">
+                            <div class="bg-white border-2 border-pink-300 rounded-2xl p-3 shadow-sm mb-2">
+                                <p class="text-base font-extrabold text-slate-800">"Bố đang làm gì thế ạ?"</p>
+                            </div>
+                            <div class="text-4xl">👧🏻</div>
+                            <span class="text-xs font-black text-pink-700 mt-1">Bạn nhỏ</span>
+                        </div>
+
+                        <div class="flex flex-col items-center">
+                            ${SVGS.houseBlueprintMonitor}
+                            <span class="text-xs font-extrabold text-sky-800 mt-1">Bản vẽ thiết kế ngôi nhà trên máy tính</span>
+                        </div>
+
+                        <div class="flex flex-col items-center text-center">
+                            <div class="bg-white border-2 border-sky-300 rounded-2xl p-3 shadow-sm mb-2">
+                                <p class="text-base font-extrabold text-slate-800">
+                                    "Bố đang xem <span class="text-sky-700 underline">bản thiết kế ngôi nhà mới</span> của gia đình mình."
+                                </p>
+                            </div>
+                            <div class="text-4xl">👨🏻</div>
+                            <span class="text-xs font-black text-sky-800 mt-1">Bố</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-2 border-slate-200 rounded-2xl p-4">
+                        <h3 class="text-base sm:text-lg font-black text-slate-900 mb-2.5">
+                            ❓ Trước khi xây dựng ngôi nhà mới, bố và các kiến trúc sư cần chuẩn bị điều gì trên máy tính?
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${options.map(opt => `
+                                <button onclick="answerHouseStory(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-3 rounded-xl border-2 font-extrabold text-sm sm:text-base transition-all ${
+                                        state.houseStoryDone && opt.correct
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-800 border-slate-300'
+                                    }">
+                                    ${opt.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.houseStoryDone) {
+                showFeedback(true, 'Chính xác! Trước khi xây dựng ngôi nhà mới, cần chuẩn bị bản thiết kế ngôi nhà.');
+            }
+        }
+
+        function answerHouseStory(isCorrect, explain) {
+            if (isCorrect) {
+                state.houseStoryDone = true;
+                playSound('correct');
+                rewardStar('house_story', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Kết nối vào bài
+        function renderStep1_3(container) {
+            const options = [
+                {
+                    label: 'A. Giúp xác định rõ hình dáng, kích thước, cấu tạo và vật liệu phù hợp để khi xây dựng hoặc chế tạo không bị sai hỏng.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Bản thiết kế là kim chỉ nam giúp người thợ làm ra sản phẩm đúng ý tưởng, chính xác và tiết kiệm vật liệu.'
+                },
+                {
+                    label: 'B. Giúp thay thế hoàn toàn cho các nguyên vật liệu thực tế như gạch, đá, gỗ, kim loại trong quá trình chế tạo sản phẩm.',
+                    correct: false,
+                    explain: 'Chưa đúng! Bản thiết kế chỉ định hướng cách làm, còn khi chế tạo thực tế vẫn bắt buộc phải có vật liệu thật.'
+                },
+                {
+                    label: 'C. Giúp người sử dụng sửa chữa các bộ phận đã bị hao mòn sau nhiều năm đưa sản phẩm vào vận hành.',
+                    correct: false,
+                    explain: 'Đó là vai trò của hoạt động bảo dưỡng, sửa chữa sau khi sản phẩm đã được dùng lâu ngày.'
+                },
+                {
+                    label: 'D. Giúp sản phẩm tự động lắp ráp trên dây chuyền mà không cần con người suy nghĩ ý tưởng hay chuẩn bị dụng cụ.',
+                    correct: false,
+                    explain: 'Chưa hợp lí! Chính con người phải suy nghĩ ý tưởng và lập bản thiết kế trước khi đưa vào dây chuyền sản xuất.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 sm:p-5 text-center">
+                        <div class="text-3xl sm:text-4xl mb-1">🏠 📐 ⏰ 🎒</div>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 leading-snug">
+                            Theo em, vì sao cần có <span class="text-amber-700 underline">bản thiết kế</span> trước khi bắt tay vào xây nhà hoặc chế tạo một sản phẩm công nghệ?
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        ${options.map(opt => `
+                            <button onclick="answerIntroBridge(${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-3.5 rounded-2xl border-2 font-extrabold text-sm sm:text-base transition-all ${
+                                    state.introBridgeDone && opt.correct
+                                        ? 'bg-emerald-500 text-white border-emerald-600'
+                                        : 'bg-white hover:bg-sky-50 text-slate-800 border-slate-300'
+                                }">
+                                ${opt.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (state.introBridgeDone) {
+                showFeedback(true, 'Xuất sắc! Em đã hoàn thành Chặng 1: Khởi động. Hãy bấm "Tiếp theo" để sang Chặng 2: Khám phá nhé!');
+            }
+        }
+
+        function answerIntroBridge(isCorrect, explain) {
+            if (isCorrect) {
+                state.introBridgeDone = true;
+                playSound('correct');
+                rewardStar('intro_bridge', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 2: KHÁM PHÁ (6 BƯỚC)
+         **************************************************************/
+        const FIG1_TAGS = [
+            { id: 'Bảo dưỡng, sửa chữa', color: 'bg-lime-200 border-lime-500 text-lime-950' },
+            { id: 'Thiết kế', color: 'bg-purple-200 border-purple-500 text-purple-950' },
+            { id: 'Vận hành, sử dụng', color: 'bg-sky-200 border-sky-500 text-sky-950' },
+            { id: 'Sản xuất', color: 'bg-orange-200 border-orange-500 text-orange-950' }
+        ];
+
+        const FIG1_PICTURES = [
+            { key: 'a', title: 'Hình a', desc: 'Lắp ráp đồng hồ trên dây chuyền nhà máy', target: 'Sản xuất', svg: SVGS.fig1a_Production },
+            { key: 'b', title: 'Hình b', desc: 'Xem giờ (10:10) trên đồng hồ để bàn', target: 'Vận hành, sử dụng', svg: SVGS.fig1b_Operation },
+            { key: 'c', title: 'Hình c', desc: 'Vẽ bản phác thảo chiếc đồng hồ trên giấy', target: 'Thiết kế', svg: SVGS.fig1c_Design },
+            { key: 'd', title: 'Hình d', desc: 'Mở nắp sau đồng hồ để kiểm tra, sửa chữa', target: 'Bảo dưỡng, sửa chữa', svg: SVGS.fig1d_Maintenance }
+        ];
+
+        // Bước 1/6: Ghép thẻ Hình 1
+        function renderStep2_1(container) {
+            const matchedCount = Object.keys(state.fig1Matched).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3">
+                    <div class="bg-sky-50 border-2 border-sky-200 px-4 py-2 rounded-2xl text-center text-sm sm:text-base font-extrabold text-sky-900">
+                        👉 Bước 1: Bấm chọn 1 <b>Thẻ tên hoạt động</b> bên trái • Bước 2: Bấm vào <b>Hình a, b, c hoặc d</b> tương ứng (${matchedCount}/4 hình)
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <div class="lg:col-span-4 flex flex-col gap-2.5">
+                            ${FIG1_TAGS.map(tag => {
+                                const isUsed = Object.values(state.fig1Matched).includes(tag.id);
+                                const isSelected = state.selectedTag1 === tag.id;
+                                return `
+                                    <button onclick="selectFig1Tag('${tag.id}')"
+                                        ${isUsed ? 'disabled' : ''}
+                                        class="btn-kid p-3.5 rounded-2xl border-2 font-black text-base flex items-center justify-between ${
+                                            isUsed
+                                                ? 'bg-emerald-100 border-emerald-400 text-emerald-800 opacity-75'
+                                                : isSelected
+                                                ? `${tag.color} ring-4 ring-amber-300 scale-[1.02]`
+                                                : `${tag.color} hover:brightness-95`
+                                        }">
+                                        <span>${tag.id}</span>
+                                        <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-white/75">
+                                            ${isUsed ? '✓ Đã ghép' : isSelected ? '● Đang chọn' : 'Bấm chọn'}
+                                        </span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${FIG1_PICTURES.map(pic => {
+                                const matchedVal = state.fig1Matched[pic.key];
+                                return `
+                                    <button onclick="matchFig1Picture('${pic.key}')"
+                                        ${matchedVal ? 'disabled' : ''}
+                                        class="btn-kid p-2.5 rounded-2xl border-2 text-center flex flex-col items-center justify-between gap-1 ${
+                                            matchedVal
+                                                ? 'bg-emerald-50 border-emerald-400'
+                                                : 'bg-white hover:bg-amber-50/50 border-slate-300'
+                                        }">
+                                        <div class="w-full flex items-center justify-between px-1">
+                                            <span class="w-7 h-7 rounded-full bg-sky-500 text-white font-black text-sm flex items-center justify-center">${pic.key}</span>
+                                            <span class="text-xs font-bold text-slate-500">${pic.desc}</span>
+                                        </div>
+                                        ${pic.svg}
+                                        <div class="w-full py-1.5 px-3 rounded-xl font-black text-sm ${
+                                            matchedVal
+                                                ? 'bg-emerald-500 text-white'
+                                                : 'bg-slate-100 text-slate-600 border border-dashed border-slate-300'
+                                        }">
+                                            ${matchedVal ? '✓ ' + matchedVal : '❓ Bấm để ghép thẻ vào đây'}
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (matchedCount === 4) {
+                showFeedback(true, 'Giỏi lắm! Em đã ghép đúng cả 4 hoạt động ở Hình 1: a - Sản xuất, b - Vận hành sử dụng, c - Thiết kế, d - Bảo dưỡng sửa chữa!');
+            }
+        }
+
+        function selectFig1Tag(tagId) {
+            playSound('click');
+            state.selectedTag1 = tagId;
+            hideFeedback();
+            renderApp();
+        }
+
+        function matchFig1Picture(picKey) {
+            if (!state.selectedTag1) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy bấm chọn một Thẻ tên hoạt động ở cột bên trái trước nhé!');
+                return;
+            }
+            const picObj = FIG1_PICTURES.find(p => p.key === picKey);
+            if (picObj && picObj.target === state.selectedTag1) {
+                state.fig1Matched[picKey] = state.selectedTag1;
+                state.selectedTag1 = null;
+                playSound('correct');
+                rewardStar('fig1_' + picKey, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Thẻ "${state.selectedTag1}" chưa phù hợp với ${picObj.title} (${picObj.desc}). Em quan sát kĩ lại hình nhé!`);
+            }
+        }
+
+        // Bước 2/6: Câu hỏi khám phá Hình 1
+        function renderStep2_2(container) {
+            const options = [
+                {
+                    label: 'A. Hoạt động Sản xuất (Hình a) – lắp ráp sản phẩm trên dây chuyền trước rồi mới vẽ bản thiết kế.',
+                    correct: false,
+                    explain: 'Chưa hợp lí! Nếu chưa có bản thiết kế thì nhà máy không biết hình dáng, kích thước và cấu tạo để sản xuất.'
+                },
+                {
+                    label: 'B. Hoạt động Thiết kế (Hình c) – tạo ra bản vẽ và phương án thiết kế trước khi đưa vào sản xuất.',
+                    correct: true,
+                    explain: 'Chính xác! Thiết kế (Hình c) phải được thực hiện ĐẦU TIÊN để tạo ra sản phẩm công nghệ.'
+                },
+                {
+                    label: 'C. Hoạt động Vận hành, sử dụng (Hình b) – dùng thử sản phẩm trước khi suy nghĩ ý tưởng thiết kế.',
+                    correct: false,
+                    explain: 'Chưa đúng! Phải thiết kế và sản xuất xong thì mới có sản phẩm để vận hành, sử dụng.'
+                },
+                {
+                    label: 'D. Hoạt động Bảo dưỡng, sửa chữa (Hình d) – tháo lắp kiểm tra trước khi chế tạo sản phẩm.',
+                    correct: false,
+                    explain: 'Bảo dưỡng, sửa chữa chỉ diễn ra trong quá trình sử dụng sản phẩm để duy trì độ bền.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-black">
+                        <span class="px-3 py-1.5 rounded-xl ${state.fig1FirstDone ? 'bg-emerald-500 text-white' : 'bg-amber-200 text-amber-900'}">
+                            1. ${state.fig1FirstDone ? 'Thiết kế (Hình c)' : '??? (Hoạt động đầu tiên)'}
+                        </span>
+                        <span>➔</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700">2. Sản xuất (Hình a)</span>
+                        <span>➔</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700">3. Vận hành, sử dụng (Hình b)</span>
+                        <span>➔</span>
+                        <span class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-700">4. Bảo dưỡng, sửa chữa (Hình d)</span>
+                    </div>
+
+                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-4 sm:p-5">
+                        <h3 class="text-base sm:text-lg font-black text-slate-900 mb-3">
+                            ❓ Trong 4 hoạt động ở Hình 1 (Thiết kế; Sản xuất; Vận hành, sử dụng; Bảo dưỡng, sửa chữa), hoạt động nào phải được thực hiện <span class="text-rose-600 underline">ĐẦU TIÊN</span> để tạo ra sản phẩm công nghệ?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-2.5">
+                            ${options.map(opt => `
+                                <button onclick="answerFig1First(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-3.5 rounded-2xl border-2 font-extrabold text-sm sm:text-base ${
+                                        state.fig1FirstDone && opt.correct
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-800 border-slate-300'
+                                    }">
+                                    ${opt.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.fig1FirstDone) {
+                showFeedback(true, 'Đúng rồi! Thứ tự chuẩn là: Thiết kế ➔ Sản xuất ➔ Vận hành, sử dụng ➔ Bảo dưỡng, sửa chữa.');
+            }
+        }
+
+        function answerFig1First(isCorrect, explain) {
+            if (isCorrect) {
+                state.fig1FirstDone = true;
+                playSound('correct');
+                rewardStar('fig1_first', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/6: Quan sát Hình 2 - Sự đa dạng của sản phẩm (4 chiếc đồng hồ)
+        const CLOCKS_INFO = {
+            a: {
+                name: 'Hình 2a: Đồng hồ báo thức để bàn',
+                shape: 'Kiểu dáng hình tròn, có 2 chân đỡ và 2 quả chuông nhỏ trên đỉnh.',
+                color: 'Vỏ màu xanh ngọc tươi sáng, mặt đồng hồ màu trắng.',
+                use: 'Đặt trên bàn học hoặc đầu giường để xem giờ và reo chuông báo thức.',
+                svg: SVGS.clock2a
+            },
+            b: {
+                name: 'Hình 2b: Đồng hồ treo tường',
+                shape: 'Kiểu dáng hình vuông phẳng, mặt số lớn rõ ràng.',
+                color: 'Khung màu nâu gỗ ấm áp, mặt nền trắng, kim màu đen.',
+                use: 'Treo trên tường phòng khách hoặc lớp học để mọi người dễ quan sát giờ.',
+                svg: SVGS.clock2b
+            },
+            c: {
+                name: 'Hình 2c: Đồng hồ đeo tay',
+                shape: 'Kiểu dáng mặt tròn nhỏ gọn kết hợp với dây đeo ôm cổ tay.',
+                color: 'Dây đeo da màu nâu, viền mặt đồng hồ màu vàng kim.',
+                use: 'Đeo trên tay giúp người dùng xem giờ thuận tiện khi đi học, đi làm.',
+                svg: SVGS.clock2c
+            },
+            d: {
+                name: 'Hình 2d: Đồng hồ cát',
+                shape: 'Kiểu dáng hai bầu thủy tinh nối nhau bằng eo hẹp trong khung gỗ đứng.',
+                color: 'Khung gỗ màu nâu, bầu thủy tinh trong suốt, cát màu vàng.',
+                use: 'Đo khoảng thời gian ngắn cố định và dùng làm vật trang trí.',
+                svg: SVGS.clock2d
+            }
+        };
+
+        function renderStep2_3(container) {
+            state.clocksInspected[state.activeClockTab] = true;
+            const inspectedCount = Object.values(state.clocksInspected).filter(Boolean).length;
+            const cur = CLOCKS_INFO[state.activeClockTab];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="flex items-center justify-between bg-amber-50 border-2 border-amber-200 px-4 py-2 rounded-2xl">
+                        <span class="font-extrabold text-sm sm:text-base text-amber-900">
+                            🔍 Bấm vào từng chiếc đồng hồ trong Hình 2 để khám phá kiểu dáng, màu sắc và mục đích sử dụng (${inspectedCount}/4):
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        ${['a', 'b', 'c', 'd'].map(k => {
+                            const item = CLOCKS_INFO[k];
+                            const isCurrent = state.activeClockTab === k;
+                            const isSeen = state.clocksInspected[k];
+                            return `
+                                <button onclick="selectClock2('${k}')"
+                                    class="btn-kid p-2.5 rounded-2xl border-2 flex flex-col items-center gap-1 ${
+                                        isCurrent
+                                            ? 'bg-sky-50 border-sky-500 ring-3 ring-sky-200'
+                                            : isSeen
+                                            ? 'bg-emerald-50/50 border-emerald-300'
+                                            : 'bg-white border-slate-200'
+                                    }">
+                                    ${item.svg}
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${
+                                        isSeen ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-700'
+                                    }">
+                                        Hình 2${k} ${isSeen ? '✓' : ''}
+                                    </span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-white border-2 border-sky-300 rounded-3xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                        <div class="shrink-0">${cur.svg}</div>
+                        <div class="flex-1 flex flex-col gap-1">
+                            <h3 class="text-lg sm:text-xl font-black text-sky-900">${cur.name}</h3>
+                            <p class="text-sm sm:text-base font-bold text-slate-700">📐 <b>Kiểu dáng:</b> ${cur.shape}</p>
+                            <p class="text-sm sm:text-base font-bold text-slate-700">🎨 <b>Màu sắc:</b> ${cur.color}</p>
+                            <p class="text-sm sm:text-base font-bold text-emerald-800">🎯 <b>Mục đích sử dụng:</b> ${cur.use}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (inspectedCount === 4) {
+                rewardStar('clocks_all', 1);
+                showFeedback(true, 'Em đã khám phá đủ 4 chiếc đồng hồ! Nhờ thiết kế mà sản phẩm có kiểu dáng, màu sắc rất đa dạng.');
+            }
+        }
+
+        function selectClock2(key) {
+            playSound('pop');
+            state.activeClockTab = key;
+            state.clocksInspected[key] = true;
+            renderApp();
+        }
+
+        // Bước 4/6: Câu hỏi khám phá Hình 2 & Ghi nhớ 1
+        function renderStep2_4(container) {
+            const options = [
+                {
+                    label: 'A. Thiết kế – người thiết kế sáng tạo ra kiểu dáng, màu sắc và cấu tạo đa dạng để đáp ứng các nhu cầu sử dụng khác nhau.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Chính hoạt động Thiết kế đã tạo nên sự khác nhau về kiểu dáng, màu sắc của các chiếc đồng hồ.'
+                },
+                {
+                    label: 'B. Sản xuất hàng loạt – dây chuyền máy móc tự động thay đổi hình dạng đồng hồ một cách ngẫu nhiên khi đóng gói.',
+                    correct: false,
+                    explain: 'Chưa đúng! Dây chuyền sản xuất chỉ làm ra sản phẩm theo đúng bản vẽ thiết kế đã có trước đó.'
+                },
+                {
+                    label: 'C. Vận hành, sử dụng – người tiêu dùng làm biến đổi hình dạng từ đồng hồ treo tường sang đồng hồ đeo tay khi xem giờ.',
+                    correct: false,
+                    explain: 'Chưa đúng! Hoạt động vận hành, sử dụng chỉ là dùng sản phẩm theo chức năng đã được thiết kế.'
+                },
+                {
+                    label: 'D. Bảo dưỡng, sửa chữa – người thợ sửa đồng hồ tự tạo ra kiểu dáng đồng hồ cát khi thay pin cho khách.',
+                    correct: false,
+                    explain: 'Chưa đúng! Bảo dưỡng, sửa chữa chỉ giúp khắc phục hỏng hóc chứ không tạo ra dòng sản phẩm mới.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-4">
+                        <h3 class="text-base sm:text-lg font-black text-slate-900 mb-2.5">
+                            ❓ Hoạt động nào đã tạo nên sự khác nhau về kiểu dáng, màu sắc và cấu tạo của những chiếc đồng hồ trong Hình 2?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-2">
+                            ${options.map(opt => `
+                                <button onclick="answerFig2Question(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-3 rounded-2xl border-2 font-extrabold text-sm sm:text-base ${
+                                        state.fig2QuestionDone && opt.correct
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-800 border-slate-300'
+                                    }">
+                                    ${opt.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="rounded-3xl p-4 border-2 transition-all ${
+                        state.fig2QuestionDone
+                            ? 'bg-sky-100 border-sky-400'
+                            : 'bg-slate-100 border-dashed border-slate-300 opacity-80'
+                    }">
+                        <div class="flex items-start gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-sky-500 text-white flex items-center justify-center text-2xl shrink-0">🤖</div>
+                            <div>
+                                <div class="text-xs font-black uppercase text-sky-700">Ghi nhớ 1 (SGK Trang 15)</div>
+                                <p class="text-sm sm:text-base font-black text-slate-800 leading-snug mt-0.5">
+                                    "Muốn tạo ra sản phẩm công nghệ cần phải bắt đầu từ việc thiết kế sản phẩm. Thiết kế là quá trình sáng tạo để tạo ra sản phẩm đáp ứng tốt hơn nhu cầu của con người."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.fig2QuestionDone) {
+                showFeedback(true, 'Tuyệt vời! Em đã mở khóa Ghi nhớ 1 của bài học.');
+            }
+        }
+
+        function answerFig2Question(isCorrect, explain) {
+            if (isCorrect) {
+                state.fig2QuestionDone = true;
+                playSound('correct');
+                rewardStar('fig2_q', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 5/6: 2. Các công việc chính của thiết kế - Tìm hiểu Hình 3
+        const DESIGN_TASKS_DETAIL = [
+            {
+                id: 1,
+                name: 'Hình thành ý tưởng về sản phẩm',
+                icon: '💡',
+                badgeName: 'Biểu tượng bóng đèn sáng kiến',
+                color: 'bg-sky-600',
+                desc: 'Suy nghĩ xem mình sẽ làm sản phẩm gì, có chức năng gì, giải quyết nhu cầu nào trong học tập và sinh hoạt.',
+                example: 'Ví dụ: Thấy bút thước để lộn xộn trên bàn, em nảy ra ý tưởng làm một chiếc hộp bút bằng vải có khóa kéo.'
+            },
+            {
+                id: 2,
+                name: 'Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ',
+                icon: '🧰',
+                badgeName: 'Biểu tượng hộp dụng cụ & bản vẽ',
+                color: 'bg-rose-500',
+                desc: 'Vẽ hình dáng, kích thước chính của sản phẩm ra giấy; đồng thời chọn vật liệu (vải, giấy, gỗ,...) và dụng cụ (kéo, thước, keo,...) phù hợp.',
+                example: 'Ví dụ: Em vẽ phác thảo chiếc hộp bút hình chữ nhật lên giấy và chuẩn bị vải, khóa kéo, kim chỉ, kéo.'
+            },
+            {
+                id: 3,
+                name: 'Làm sản phẩm mẫu',
+                icon: '🛠️',
+                badgeName: 'Biểu tượng cờ lê & thước',
+                color: 'bg-amber-500',
+                desc: 'Tiến hành cắt, ghép, lắp ráp các vật liệu theo bản vẽ phác thảo để tạo ra sản phẩm mẫu hoàn chỉnh.',
+                example: 'Ví dụ: Em cắt vải theo kích thước đã vẽ và khâu ghép các mảnh vải lại thành chiếc hộp bút mẫu.'
+            },
+            {
+                id: 4,
+                name: 'Đánh giá và hoàn thiện sản phẩm',
+                icon: '📋',
+                badgeName: 'Biểu tượng bảng kiểm tra đánh giá',
+                color: 'bg-cyan-600',
+                desc: 'Dùng thử sản phẩm mẫu để kiểm tra chức năng, độ chắc chắn, tính thẩm mĩ và chỉnh sửa những điểm chưa hợp lí.',
+                example: 'Ví dụ: Em cho bút, thước, tẩy vào hộp bút mẫu, kéo thử khóa xem có trơn tru không và cắt gọn chỉ thừa.'
+            }
+        ];
+
+        function renderStep2_5(container) {
+            state.designTasksExplored[state.activeTaskTab] = true;
+            const exploredCount = Object.values(state.designTasksExplored).filter(Boolean).length;
+            const currentTask = DESIGN_TASKS_DETAIL.find(t => t.id === state.activeTaskTab);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-indigo-50 border-2 border-indigo-200 px-4 py-2 rounded-2xl text-sm sm:text-base font-extrabold text-indigo-900">
+                        👆 Bấm vào cả 4 thẻ công việc trong sơ đồ Hình 3 dưới đây để tìm hiểu chi tiết (${exploredCount}/4 công việc):
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        ${DESIGN_TASKS_DETAIL.map(t => {
+                            const isActive = state.activeTaskTab === t.id;
+                            const isSeen = state.designTasksExplored[t.id];
+                            return `
+                                <button onclick="selectDesignTaskTab(${t.id})"
+                                    class="btn-kid p-3 rounded-2xl border-2 text-left flex flex-col justify-between gap-2 ${
+                                        isActive
+                                            ? 'bg-sky-600 text-white border-sky-700'
+                                            : isSeen
+                                            ? 'bg-emerald-50 border-emerald-300 text-slate-800'
+                                            : 'bg-white border-slate-300 text-slate-700'
+                                    }">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-2xl">${t.icon}</span>
+                                        <span class="text-xs font-black px-2 py-0.5 rounded-full ${
+                                            isActive ? 'bg-white/20 text-white' : isSeen ? 'bg-emerald-500 text-white' : 'bg-slate-200'
+                                        }">${isSeen ? 'Đã xem ✓' : 'Bấm xem'}</span>
+                                    </div>
+                                    <div class="font-black text-sm leading-snug">${t.name}</div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-white border-2 border-sky-300 rounded-3xl p-4 sm:p-5 flex flex-col gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-12 h-12 rounded-2xl ${currentTask.color} text-white flex items-center justify-center text-2xl shrink-0">${currentTask.icon}</span>
+                            <div>
+                                <span class="text-xs font-black uppercase text-sky-700">${currentTask.badgeName}</span>
+                                <h3 class="text-lg sm:text-xl font-black text-slate-900">${currentTask.name}</h3>
+                            </div>
+                        </div>
+                        <p class="text-sm sm:text-base font-bold text-slate-700 mt-1">${currentTask.desc}</p>
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm sm:text-base font-extrabold text-amber-900">
+                            🌟 ${currentTask.example}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (exploredCount === 4) {
+                rewardStar('explore_4tasks', 1);
+                showFeedback(true, 'Em đã tìm hiểu xong cả 4 công việc chính của thiết kế! Hãy bấm "Tiếp theo" để sắp xếp thứ tự nhé.');
+            }
+        }
+
+        function selectDesignTaskTab(id) {
+            playSound('pop');
+            state.activeTaskTab = id;
+            state.designTasksExplored[id] = true;
+            renderApp();
+        }
+
+        // Bước 6/6: Sắp xếp thứ tự 4 bước thiết kế - Hình 3 & Ghi nhớ 2
+        const FIG3_SHUFFLED_ITEMS = [
+            { id: 'evaluate', name: 'Đánh giá và hoàn thiện sản phẩm', icon: '📋', badgeCol: 'bg-sky-100 border-sky-400' },
+            { id: 'prototype', name: 'Làm sản phẩm mẫu', icon: '🛠️', badgeCol: 'bg-amber-100 border-amber-400' },
+            { id: 'sketch', name: 'Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ', icon: '🧰', badgeCol: 'bg-rose-100 border-rose-400' },
+            { id: 'idea', name: 'Hình thành ý tưởng về sản phẩm', icon: '💡', badgeCol: 'bg-blue-100 border-blue-400' }
+        ];
+        const CORRECT_ORDER_IDS = ['idea', 'sketch', 'prototype', 'evaluate'];
+
+        function renderStep2_6(container) {
+            const currentStepNeeded = state.fig3Ordered.length + 1;
+            const isAllOrdered = state.fig3Ordered.length === 4;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <div class="lg:col-span-6 flex flex-col gap-2 bg-slate-100 p-3.5 rounded-3xl border-2 border-slate-200">
+                            <div class="text-xs sm:text-sm font-black text-slate-700 uppercase">
+                                Sơ đồ Hình 3 (Đang xáo trộn) — Chọn công việc cho <span class="text-sky-700">Bước ${currentStepNeeded <= 4 ? currentStepNeeded : 4}</span>:
+                            </div>
+                            ${FIG3_SHUFFLED_ITEMS.map(item => {
+                                const alreadyPicked = state.fig3Ordered.includes(item.id);
+                                return `
+                                    <button onclick="pickFig3Order('${item.id}')"
+                                        ${alreadyPicked ? 'disabled' : ''}
+                                        class="btn-kid p-2.5 rounded-2xl border-2 text-left flex items-center gap-3 ${
+                                            alreadyPicked
+                                                ? 'bg-slate-200 border-slate-300 text-slate-400 opacity-60'
+                                                : 'bg-white hover:bg-sky-50 border-slate-300 text-slate-800'
+                                        }">
+                                        <span class="w-9 h-9 rounded-full ${item.badgeCol} border-2 flex items-center justify-center text-lg shrink-0">${item.icon}</span>
+                                        <span class="font-extrabold text-sm flex-1">${item.name}</span>
+                                        <span class="text-xs font-black text-sky-600">${alreadyPicked ? 'Đã xếp ✓' : 'Chọn ➔'}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="lg:col-span-6 flex flex-col gap-2 bg-emerald-50/70 p-3.5 rounded-3xl border-2 border-emerald-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs sm:text-sm font-black text-emerald-800 uppercase">
+                                    Thứ tự 4 bước thiết kế chuẩn:
+                                </span>
+                                ${state.fig3Ordered.length > 0 ? `
+                                    <button onclick="resetFig3Order()" class="text-xs font-black text-rose-600 underline">Xếp lại</button>
+                                ` : ''}
+                            </div>
+                            ${[0, 1, 2, 3].map(idx => {
+                                const pickedId = state.fig3Ordered[idx];
+                                const itemObj = FIG3_SHUFFLED_ITEMS.find(i => i.id === pickedId);
+                                return `
+                                    <div class="p-2.5 rounded-2xl border-2 flex items-center gap-3 ${
+                                        itemObj
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : idx === state.fig3Ordered.length
+                                            ? 'bg-amber-50 border-amber-400 border-dashed text-amber-900'
+                                            : 'bg-white/80 border-slate-200 text-slate-400'
+                                    }">
+                                        <span class="w-7 h-7 rounded-xl bg-black/15 font-black text-xs flex items-center justify-center shrink-0">
+                                            ${idx + 1}
+                                        </span>
+                                        <span class="font-extrabold text-sm">
+                                            ${itemObj ? itemObj.icon + ' ' + itemObj.name : `Bước ${idx + 1}: Đang chờ em chọn...`}
+                                        </span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl p-3 border-2 ${
+                        isAllOrdered ? 'bg-sky-100 border-sky-400' : 'bg-slate-100 border-slate-200 opacity-85'
+                    }">
+                        <p class="text-xs sm:text-sm font-black text-slate-800 leading-snug">
+                            📘 <b>Ghi nhớ 2 (SGK Trang 15):</b> "Để thiết kế một sản phẩm, em cần thực hiện 4 bước chính, gồm: Hình thành ý tưởng về sản phẩm; Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ; Làm sản phẩm mẫu; Đánh giá và hoàn thiện sản phẩm."
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (isAllOrdered) {
+                showFeedback(true, 'Hoàn hảo! Em đã sắp xếp đúng thứ tự 4 bước chính của thiết kế và mở khóa Ghi nhớ 2!');
+            }
+        }
+
+        function pickFig3Order(itemId) {
+            const expectedId = CORRECT_ORDER_IDS[state.fig3Ordered.length];
+            const currentStepNum = state.fig3Ordered.length + 1;
+            if (itemId === expectedId) {
+                state.fig3Ordered.push(itemId);
+                playSound('correct');
+                rewardStar('fig3_step_' + currentStepNum, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                const hints = {
+                    1: 'Ở Bước 1 đầu tiên, chúng ta cần suy nghĩ xem mình muốn làm sản phẩm gì (Hình thành ý tưởng về sản phẩm) nhé!',
+                    2: 'Sau khi có ý tưởng ở Bước 1, Bước 2 chúng ta cần vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ!',
+                    3: 'Khi đã có bản vẽ phác thảo và vật liệu ở Bước 2, Bước 3 chúng ta bắt tay vào Làm sản phẩm mẫu!',
+                    4: 'Cuối cùng ở Bước 4, chúng ta thực hiện Đánh giá và hoàn thiện sản phẩm!'
+                };
+                showFeedback(false, hints[currentStepNum]);
+            }
+        }
+
+        function resetFig3Order() {
+            playSound('click');
+            state.fig3Ordered = [];
+            hideFeedback();
+            renderApp();
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 3: LUYỆN TẬP (5 BƯỚC - CÂU HỎI CÓ ĐỘ NHIỄU TỐT)
+         **************************************************************/
+        function renderHighQualityMCQ(container, stateFlag, badgeText, question, options) {
+            const isDone = state[stateFlag];
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-gradient-to-r from-emerald-50 to-sky-50 border-2 border-emerald-200 rounded-3xl p-4 sm:p-5">
+                        <span class="inline-block bg-emerald-600 text-white text-xs font-black uppercase px-3 py-1 rounded-full mb-1.5">
+                            ${badgeText}
+                        </span>
+                        <h3 class="text-base sm:text-xl font-black text-slate-900 leading-snug">
+                            ${question}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-2.5">
+                        ${options.map(opt => `
+                            <button onclick="answerPracticeMCQ('${stateFlag}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-3.5 rounded-2xl border-2 font-extrabold text-sm sm:text-base flex items-center justify-between gap-3 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-500 text-white border-emerald-600'
+                                        : 'bg-white hover:bg-sky-50 text-slate-800 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ Đúng' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function answerPracticeMCQ(stateFlag, isCorrect, explain) {
+            if (isCorrect) {
+                state[stateFlag] = true;
+                playSound('correct');
+                rewardStar('prac_' + stateFlag, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 1/5: Câu hỏi trắc nghiệm 1 (Tình huống bạn Nam)
+        function renderStep3_1(container) {
+            renderHighQualityMCQ(
+                container,
+                'pracQuiz1Done',
+                'Câu hỏi trắc nghiệm 1 / 5',
+                'Bạn Nam thấy góc học tập của mình có nhiều bút và thước bị thất lạc. Nam nảy ra suy nghĩ sẽ tự làm một chiếc ống cắm bút có chia ngăn tiện lợi. Hoạt động của Nam thuộc bước nào trong quá trình thiết kế?',
+                [
+                    {
+                        text: 'A. Hình thành ý tưởng về sản phẩm',
+                        correct: true,
+                        explain: 'Chính xác! Từ nhu cầu thực tế ở góc học tập, Nam đã suy nghĩ và hình thành ý tưởng làm chiếc ống cắm bút chia ngăn.'
+                    },
+                    {
+                        text: 'B. Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ',
+                        correct: false,
+                        explain: 'Chưa đúng! Nam mới chỉ nảy ra suy nghĩ trong đầu chứ chưa bắt tay vào vẽ hình dáng ra giấy hay chọn vật liệu.'
+                    },
+                    {
+                        text: 'C. Làm sản phẩm mẫu',
+                        correct: false,
+                        explain: 'Chưa đúng! Làm sản phẩm mẫu là bước cắt dán, lắp ráp vật liệu sau khi đã có bản vẽ phác thảo.'
+                    },
+                    {
+                        text: 'D. Đánh giá và hoàn thiện sản phẩm',
+                        correct: false,
+                        explain: 'Chưa đúng! Bước đánh giá và hoàn thiện chỉ thực hiện ở cuối cùng sau khi đã làm xong sản phẩm mẫu.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 2/5: Câu hỏi trắc nghiệm 2 (Tình huống bạn Lan)
+        function renderStep3_2(container) {
+            renderHighQualityMCQ(
+                container,
+                'pracQuiz2Done',
+                'Câu hỏi trắc nghiệm 2 / 5',
+                'Sau khi có ý tưởng làm chiếc chong chóng gió, bạn Lan lấy giấy vẽ hình dáng chiếc chong chóng và chuẩn bị giấy màu, que tre, đinh ghim, kéo. Lan đang thực hiện công việc nào?',
+                [
+                    {
+                        text: 'A. Hình thành ý tưởng về sản phẩm',
+                        correct: false,
+                        explain: 'Chưa đúng! Ý tưởng làm chong chóng gió đã được Lan hình thành ở bước trước đó rồi.'
+                    },
+                    {
+                        text: 'B. Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Lan vừa vẽ hình dáng sản phẩm ra giấy, vừa chọn vật liệu (giấy màu, que tre, đinh ghim) và dụng cụ (kéo).'
+                    },
+                    {
+                        text: 'C. Làm sản phẩm mẫu',
+                        correct: false,
+                        explain: 'Chưa đúng! Lan mới đang vẽ phác thảo và chuẩn bị vật liệu, dụng cụ chứ chưa cắt ghép thành chiếc chong chóng mẫu.'
+                    },
+                    {
+                        text: 'D. Đánh giá và hoàn thiện sản phẩm',
+                        correct: false,
+                        explain: 'Chưa đúng! Chỉ sau khi làm xong sản phẩm mẫu và đem thử trước gió thì mới là bước đánh giá, hoàn thiện.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 3/5: Câu hỏi trắc nghiệm 3 (Ý nghĩa của bước Làm sản phẩm mẫu & Đánh giá)
+        function renderStep3_3(container) {
+            renderHighQualityMCQ(
+                container,
+                'pracQuiz3Done',
+                'Câu hỏi trắc nghiệm 3 / 5',
+                'Khi thiết kế chiếc lọ hoa bằng que gỗ, vì sao sau khi làm xong sản phẩm mẫu, người thiết kế cần phải thực hiện bước "Đánh giá và hoàn thiện sản phẩm"?',
+                [
+                    {
+                        text: 'A. Để kiểm tra xem lọ hoa đã chắc chắn, đẹp mắt và cắm hoa tốt chưa, từ đó chỉnh sửa những điểm chưa hợp lí.',
+                        correct: true,
+                        explain: 'Rất chính xác! Bước đánh giá giúp phát hiện những điểm chưa đạt trên sản phẩm mẫu để kịp thời điều chỉnh, hoàn thiện.'
+                    },
+                    {
+                        text: 'B. Để bắt đầu suy nghĩ xem nên làm sản phẩm gì tiếp theo và chọn lại toàn bộ vật liệu từ đầu.',
+                        correct: false,
+                        explain: 'Chưa đúng! Việc suy nghĩ xem làm sản phẩm gì thuộc về bước 1 (Hình thành ý tưởng về sản phẩm).'
+                    },
+                    {
+                        text: 'C. Để đem sản phẩm đã hỏng đi bảo dưỡng định kì sau nhiều năm sử dụng trong gia đình.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đây là bước đánh giá sản phẩm mẫu ngay trong quá trình thiết kế, không phải bảo dưỡng sau nhiều năm sử dụng.'
+                    },
+                    {
+                        text: 'D. Để đóng gói hàng loạt sản phẩm trên dây chuyền nhà máy trước khi vẽ bản phác thảo.',
+                        correct: false,
+                        explain: 'Chưa hợp lí! Bản phác thảo đã phải được vẽ ở bước 2 trước khi làm sản phẩm mẫu.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 4/5: Câu hỏi trắc nghiệm 4 (Vì sao thiết kế là quá trình sáng tạo)
+        function renderStep3_4(container) {
+            renderHighQualityMCQ(
+                container,
+                'pracQuiz4Done',
+                'Câu hỏi trắc nghiệm 4 / 5',
+                'Nhận định nào dưới đây giải thích ĐÚNG NHẤT vì sao thiết kế được gọi là một quá trình sáng tạo?',
+                [
+                    {
+                        text: 'A. Vì người thiết kế luôn tìm tòi ý tưởng mới để tạo ra sản phẩm có kiểu dáng, màu sắc và chức năng đáp ứng ngày càng tốt hơn nhu cầu của con người.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Nhờ sự sáng tạo không ngừng trong thiết kế mà các sản phẩm công nghệ ngày càng đẹp, tiện ích và văn minh hơn.'
+                    },
+                    {
+                        text: 'B. Vì trong quá trình thiết kế, người thợ chỉ cần sao chép y hệt một mẫu sản phẩm cũ mà không được thay đổi kiểu dáng hay vật liệu.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nếu chỉ sao chép y hệt mà không tìm tòi cải tiến thì không tạo ra được các sản phẩm mới đa dạng hơn.'
+                    },
+                    {
+                        text: 'C. Vì hoạt động thiết kế chỉ cần vẽ hình trang trí cho đẹp mắt trên giấy chứ không cần quan tâm đến chức năng hay vật liệu làm sản phẩm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Thiết kế sản phẩm công nghệ phải kết hợp chặt chẽ cả kiểu dáng thẩm mĩ, chức năng sử dụng và vật liệu phù hợp.'
+                    },
+                    {
+                        text: 'D. Vì mọi sản phẩm công nghệ đều do máy móc tự động nghĩ ra ý tưởng mà không cần đến sự suy nghĩ hay thử nghiệm của con người.',
+                        correct: false,
+                        explain: 'Chưa đúng! Con người đóng vai trò quyết định trong việc hình thành ý tưởng, phác thảo, làm mẫu và đánh giá sản phẩm.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 5/5: Bài tập tương tác Hình 4 - Khám phá 3 hồ sơ thiết kế mẫu trong SGK
+        const FIG4_SAMPLES = {
+            a: {
+                group: 'Đồ dùng học tập',
+                name: 'Hộp bút',
+                svg: SVGS.sketch4a_PencilCase,
+                question: 'Em hãy chọn đúng thông tin "Chức năng" và "Vật liệu" còn khuyết cho Mẫu a (Hộp bút):',
+                funcText: 'đựng bút, thước, tẩy,...',
+                matText: 'vải',
+                options: [
+                    { text: 'Chức năng: đựng bút, thước, tẩy,... | Vật liệu: vải', correct: true },
+                    { text: 'Chức năng: giải trí | Vật liệu: giấy', correct: false },
+                    { text: 'Chức năng: cắm hoa | Vật liệu: que gỗ, dây lụa,...', correct: false }
+                ]
+            },
+            b: {
+                group: 'Đồ chơi trẻ em',
+                name: 'Chong chóng',
+                svg: SVGS.sketch4b_Pinwheel,
+                question: 'Em hãy chọn đúng thông tin "Chức năng" và "Vật liệu" còn khuyết cho Mẫu b (Chong chóng):',
+                funcText: 'giải trí',
+                matText: 'giấy',
+                options: [
+                    { text: 'Chức năng: đựng bút, thước, tẩy,... | Vật liệu: vải', correct: false },
+                    { text: 'Chức năng: giải trí | Vật liệu: giấy', correct: true },
+                    { text: 'Chức năng: cắm hoa | Vật liệu: que gỗ, dây lụa,...', correct: false }
+                ]
+            },
+            c: {
+                group: 'Đồ dùng sinh hoạt gia đình',
+                name: 'Lọ hoa',
+                svg: SVGS.sketch4c_Vase,
+                question: 'Em hãy chọn đúng thông tin "Chức năng" và "Vật liệu" còn khuyết cho Mẫu c (Lọ hoa):',
+                funcText: 'cắm hoa',
+                matText: 'que gỗ, dây lụa,...',
+                options: [
+                    { text: 'Chức năng: giải trí | Vật liệu: giấy', correct: false },
+                    { text: 'Chức năng: đựng bút, thước, tẩy,... | Vật liệu: vải', correct: false },
+                    { text: 'Chức năng: cắm hoa | Vật liệu: que gỗ, dây lụa,...', correct: true }
+                ]
+            }
+        };
+
+        function renderStep3_5(container) {
+            const curKey = state.fig4ActiveTab;
+            const item = FIG4_SAMPLES[curKey];
+            const isCurDone = state.fig4Completed[curKey];
+            const totalDone = Object.values(state.fig4Completed).filter(Boolean).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 bg-sky-50 border-2 border-sky-200 px-4 py-2 rounded-2xl">
+                        <span class="font-extrabold text-sm sm:text-base text-sky-900">
+                            📒 Hoàn thành 3 hồ sơ thiết kế mẫu trong Hình 4 trang 16 (${totalDone}/3 mẫu):
+                        </span>
+                        <div class="flex gap-2">
+                            ${['a', 'b', 'c'].map(k => `
+                                <button onclick="switchFig4Tab('${k}')"
+                                    class="px-3.5 py-1 rounded-xl font-black text-xs sm:text-sm transition-all ${
+                                        curKey === k
+                                            ? 'bg-sky-600 text-white shadow'
+                                            : state.fig4Completed[k]
+                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-400'
+                                            : 'bg-white text-slate-700 border border-slate-300'
+                                    }">
+                                    Mẫu ${k}: ${FIG4_SAMPLES[k].name} ${state.fig4Completed[k] ? '✓' : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                        <!-- Trang sổ tay lò xo giống Hình 4 SGK -->
+                        <div class="md:col-span-5 spiral-notebook border-2 border-slate-300 rounded-3xl flex overflow-hidden shadow-sm">
+                            <div class="spiral-holes">
+                                <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                                <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col items-center">
+                                <span class="px-3 py-1 rounded-full bg-teal-100 text-teal-900 font-black text-xs uppercase mb-1">
+                                    ${item.group} (Mẫu ${curKey})
+                                </span>
+                                ${item.svg}
+                                <div class="w-full mt-2 pt-2 border-t border-dashed border-slate-300 text-left text-xs sm:text-sm font-extrabold text-slate-800 space-y-1">
+                                    <div>– <b>Tên sản phẩm:</b> ${item.name.toLowerCase()}</div>
+                                    <div>– <b>Chức năng:</b> ${isCurDone ? `<span class="text-emerald-700">${item.funcText}</span>` : '<span class="text-amber-600">???</span>'}</div>
+                                    <div>– <b>Vật liệu:</b> ${isCurDone ? `<span class="text-purple-700">${item.matText}</span>` : '<span class="text-amber-600">???</span>'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-7 bg-white border-2 border-slate-200 rounded-3xl p-4 flex flex-col gap-2.5">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">${item.question}</h3>
+                            <div class="flex flex-col gap-2.5">
+                                ${item.options.map(opt => `
+                                    <button onclick="answerFig4Sample('${curKey}', ${opt.correct})"
+                                        class="btn-kid text-left p-3.5 rounded-2xl border-2 font-extrabold text-sm sm:text-base ${
+                                            isCurDone && opt.correct
+                                                ? 'bg-emerald-500 text-white border-emerald-600'
+                                                : 'bg-slate-50 hover:bg-sky-50 text-slate-800 border-slate-300'
+                                        }">
+                                        ${opt.text}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (totalDone === 3) {
+                showFeedback(true, 'Xuất sắc! Em đã hoàn thành cả 3 hồ sơ thiết kế mẫu trong Hình 4 (Hộp bút, Chong chóng, Lọ hoa)!');
+            }
+        }
+
+        function switchFig4Tab(k) {
+            playSound('click');
+            state.fig4ActiveTab = k;
+            hideFeedback();
+            renderApp();
+        }
+
+        function answerFig4Sample(key, isCorrect) {
+            if (isCorrect) {
+                state.fig4Completed[key] = true;
+                playSound('correct');
+                rewardStar('fig4_' + key, 1);
+                const nextKey = ['a', 'b', 'c'].find(k => !state.fig4Completed[k]);
+                if (nextKey) state.fig4ActiveTab = nextKey;
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng với sản phẩm trong bản vẽ rồi! Em hãy quan sát lại hình vẽ và chọn lại nhé.');
+            }
+        }
+
+        /**************************************************************
+         * 9. CHẶNG 4: VẬN DỤNG (3 BƯỚC - XƯỞNG THIẾT KẾ NHÍ)
+         **************************************************************/
+        const PRESET_IDEAS = [
+            {
+                id: 'pencilcase',
+                category: 'Đồ dùng học tập',
+                name: 'Hộp bút đa năng',
+                func: 'Đựng bút, thước, tẩy gọn gàng',
+                material: 'Vải hoặc bìa cứng, khóa kéo, kéo, chỉ'
+            },
+            {
+                id: 'pinwheel',
+                category: 'Đồ chơi trẻ em',
+                name: 'Chong chóng gió sắc màu',
+                func: 'Giải trí, đón gió quay đẹp mắt',
+                material: 'Giấy màu, que tre, đinh ghim, kéo'
+            },
+            {
+                id: 'vase',
+                category: 'Đồ dùng sinh hoạt gia đình',
+                name: 'Lọ hoa để bàn',
+                func: 'Cắm hoa trang trí góc học tập, nhà ở',
+                material: 'Que gỗ, dây lụa, keo dán'
+            },
+            {
+                id: 'free',
+                category: 'Đồ dùng học tập',
+                name: 'Giá đỡ sách đọc bài',
+                func: 'Giữ sách đứng nghiêng giúp chống mỏi mắt',
+                material: 'Bìa các-tông cứng, thước kẻ, keo dán'
+            }
+        ];
+
+        // Bước 1/3: Lập phiếu ý tưởng thiết kế của em
+        function renderStep4_1(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3 text-sm sm:text-base font-extrabold text-purple-900">
+                        💡 <b>Hoạt động 1:</b> Chọn nhanh 1 mẫu gợi ý bên dưới hoặc tự nhập ý tưởng thiết kế sản phẩm của riêng em:
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        ${PRESET_IDEAS.map(p => `
+                            <button onclick="applyPresetIdea('${p.id}')"
+                                class="btn-kid p-3 rounded-2xl border-2 text-left transition-all ${
+                                    state.sketchTemplate === p.id
+                                        ? 'bg-purple-600 text-white border-purple-700'
+                                        : 'bg-white hover:bg-purple-50 text-slate-800 border-slate-300'
+                                }">
+                                <div class="text-xs font-bold opacity-85">${p.category}</div>
+                                <div class="font-black text-sm sm:text-base mt-0.5">${p.name}</div>
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-white border-2 border-purple-300 rounded-3xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-black uppercase text-purple-700 mb-1">Nhóm sản phẩm thiết kế:</label>
+                            <select onchange="updateMyDesignField('category', this.value)"
+                                class="w-full px-3.5 py-2 rounded-xl border-2 border-slate-300 font-extrabold text-slate-800 focus:border-purple-500 outline-none">
+                                <option value="Đồ dùng học tập" ${state.myDesign.category === 'Đồ dùng học tập' ? 'selected' : ''}>Đồ dùng học tập</option>
+                                <option value="Đồ chơi trẻ em" ${state.myDesign.category === 'Đồ chơi trẻ em' ? 'selected' : ''}>Đồ chơi trẻ em</option>
+                                <option value="Đồ dùng sinh hoạt gia đình" ${state.myDesign.category === 'Đồ dùng sinh hoạt gia đình' ? 'selected' : ''}>Đồ dùng sinh hoạt gia đình</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase text-purple-700 mb-1">– Tên sản phẩm:</label>
+                            <input type="text" value="${state.myDesign.name}"
+                                oninput="updateMyDesignField('name', this.value)"
+                                class="w-full px-3.5 py-2 rounded-xl border-2 border-slate-300 font-extrabold text-slate-800 focus:border-purple-500 outline-none"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase text-purple-700 mb-1">– Chức năng:</label>
+                            <input type="text" value="${state.myDesign.func}"
+                                oninput="updateMyDesignField('func', this.value)"
+                                class="w-full px-3.5 py-2 rounded-xl border-2 border-slate-300 font-extrabold text-slate-800 focus:border-purple-500 outline-none"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase text-purple-700 mb-1">– Vật liệu & Dụng cụ dự kiến:</label>
+                            <input type="text" value="${state.myDesign.material}"
+                                oninput="updateMyDesignField('material', this.value)"
+                                class="w-full px-3.5 py-2 rounded-xl border-2 border-slate-300 font-extrabold text-slate-800 focus:border-purple-500 outline-none"/>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button onclick="confirmMyIdea()"
+                            class="btn-kid px-6 py-2.5 rounded-2xl font-black text-base ${
+                                state.ideaConfirmed
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-amber-400 hover:bg-amber-500 text-slate-900'
+                            }">
+                            ${state.ideaConfirmed ? '✓ Đã lưu phiếu ý tưởng thiết kế!' : '💾 Lưu phiếu ý tưởng thiết kế của em'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (state.ideaConfirmed) {
+                showFeedback(true, `Đã lưu ý tưởng "${state.myDesign.name}"! Hãy bấm "Tiếp theo" để vào Xưởng vẽ phác thảo nhé!`);
+            }
+        }
+
+        function applyPresetIdea(presetId) {
+            const found = PRESET_IDEAS.find(p => p.id === presetId);
+            if (!found) return;
+            playSound('pop');
+            state.sketchTemplate = presetId;
+            state.myDesign = {
+                category: found.category,
+                name: found.name,
+                func: found.func,
+                material: found.material
+            };
+            state.ideaConfirmed = true;
+            rewardStar('idea_preset', 1);
+            renderApp();
+        }
+
+        function updateMyDesignField(field, val) {
+            state.myDesign[field] = val;
+        }
+
+        function confirmMyIdea() {
+            state.ideaConfirmed = true;
+            playSound('correct');
+            rewardStar('idea_confirm', 1);
+            renderApp();
+        }
+
+        // Bước 2/3: Xưởng vẽ phác thảo sản phẩm - Interactive Canvas
+        function renderStep4_2(container) {
+            const colors = [
+                { hex: '#1e293b', name: 'Chì đen' },
+                { hex: '#2563eb', name: 'Xanh dương' },
+                { hex: '#dc2626', name: 'Đỏ' },
+                { hex: '#16a34a', name: 'Xanh lá' },
+                { hex: '#d97706', name: 'Cam vàng' },
+                { hex: '#9333ea', name: 'Tím' },
+                { hex: '#ffffff', name: 'Tẩy' }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                    <div class="lg:col-span-4 bg-slate-100 border-2 border-slate-200 rounded-3xl p-4 flex flex-col gap-3">
+                        <div>
+                            <div class="text-xs font-black uppercase text-slate-600 mb-1.5">1. Chọn màu bút vẽ / Tẩy:</div>
+                            <div class="flex flex-wrap gap-2">
+                                ${colors.map(c => `
+                                    <button onclick="setBrushColor('${c.hex}')" title="${c.name}"
+                                        class="w-9 h-9 rounded-full border-2 transition-transform flex items-center justify-center text-xs font-black ${
+                                            state.brushColor === c.hex ? 'scale-125 ring-3 ring-sky-400 border-slate-900' : 'border-slate-300'
+                                        }"
+                                        style="background-color: ${c.hex};">
+                                        ${c.hex === '#ffffff' ? 'Tẩy' : ''}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-black uppercase text-slate-600 mb-1.5">2. Chọn độ đậm nét bút:</div>
+                            <div class="flex gap-2">
+                                ${[
+                                    { size: 2.5, label: 'Nét mảnh' },
+                                    { size: 4.5, label: 'Nét vừa' },
+                                    { size: 8, label: 'Nét đậm' }
+                                ].map(b => `
+                                    <button onclick="setBrushSize(${b.size})"
+                                        class="btn-kid flex-1 py-1.5 rounded-xl border font-extrabold text-xs ${
+                                            state.brushSize === b.size ? 'bg-sky-600 text-white border-sky-700' : 'bg-white text-slate-700 border-slate-300'
+                                        }">
+                                        ${b.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-black uppercase text-slate-600 mb-1.5">3. Hiện nét gợi ý mờ trên giấy:</div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <button onclick="drawTemplateOnCanvas('pencilcase')" class="btn-kid bg-white p-2 rounded-xl border border-slate-300 font-extrabold text-xs">✏️ Hộp bút</button>
+                                <button onclick="drawTemplateOnCanvas('pinwheel')" class="btn-kid bg-white p-2 rounded-xl border border-slate-300 font-extrabold text-xs">🌀 Chong chóng</button>
+                                <button onclick="drawTemplateOnCanvas('vase')" class="btn-kid bg-white p-2 rounded-xl border border-slate-300 font-extrabold text-xs">🏺 Lọ hoa</button>
+                                <button onclick="drawTemplateOnCanvas('free')" class="btn-kid bg-white p-2 rounded-xl border border-slate-300 font-extrabold text-xs">✨ Tự do</button>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-1">
+                            <button onclick="clearSketchCanvas()"
+                                class="btn-kid flex-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-black py-2 rounded-xl text-xs sm:text-sm">
+                                🗑️ Xóa vẽ lại
+                            </button>
+                            <button onclick="completeSketchDrawing()"
+                                class="btn-kid flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2 rounded-xl text-xs sm:text-sm">
+                                ✓ Lưu bản vẽ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Trang sổ lò xo Hình 4 tích hợp Canvas -->
+                    <div class="lg:col-span-8 spiral-notebook border-3 border-slate-400 rounded-3xl flex overflow-hidden shadow-md">
+                        <div class="spiral-holes">
+                            <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                            <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                            <div class="spiral-hole"></div><div class="spiral-hole"></div>
+                        </div>
+                        <div class="p-3.5 sm:p-4 flex-1 flex flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <span class="px-3 py-1 rounded-full bg-teal-100 border border-teal-300 text-teal-900 font-black text-xs sm:text-sm">
+                                    ${state.myDesign.category}
+                                </span>
+                                <span class="text-xs font-bold text-slate-500">Vẽ phác thảo sản phẩm lên khung giấy</span>
+                            </div>
+
+                            <div class="w-full bg-white rounded-2xl border-2 border-slate-300 overflow-hidden">
+                                <canvas id="sketch-canvas" width="560" height="200" class="w-full h-[180px] sm:h-[200px] cursor-crosshair touch-none"></canvas>
+                            </div>
+
+                            <div class="bg-white/95 rounded-2xl px-3.5 py-2 border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div>– <b>Tên sản phẩm:</b> <span class="text-sky-700">${state.myDesign.name}</span></div>
+                                <div>– <b>Chức năng:</b> <span class="text-emerald-700">${state.myDesign.func}</span></div>
+                                <div>– <b>Vật liệu:</b> <span class="text-purple-700">${state.myDesign.material}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                initSketchCanvas();
+            }, 30);
+
+            if (state.hasDrawn) {
+                showFeedback(true, 'Đã lưu bức vẽ phác thảo của em! Hãy bấm "Tiếp theo" để sang Triển lãm bản thiết kế nhé!');
+            }
+        }
+
+        function setBrushColor(hex) {
+            playSound('click');
+            saveCurrentCanvasSnapshot();
+            state.brushColor = hex;
+            if (hex === '#ffffff') state.brushSize = 16;
+            else if (state.brushSize === 16) state.brushSize = 4.5;
+            renderApp();
+        }
+
+        function setBrushSize(sz) {
+            playSound('click');
+            saveCurrentCanvasSnapshot();
+            state.brushSize = sz;
+            if (state.brushColor === '#ffffff') state.brushColor = '#1e293b';
+            renderApp();
+        }
+
+        function saveCurrentCanvasSnapshot() {
+            const canvas = document.getElementById('sketch-canvas');
+            if (canvas) {
+                state.savedCanvasDataUrl = canvas.toDataURL('image/png');
+            }
+        }
+
+        function initSketchCanvas() {
+            const canvas = document.getElementById('sketch-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (state.savedCanvasDataUrl) {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = state.savedCanvasDataUrl;
+            } else {
+                drawGuideShape(ctx, state.sketchTemplate);
+                state.savedCanvasDataUrl = canvas.toDataURL('image/png');
+            }
+
+            let drawing = false;
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height)
+                };
+            }
+
+            canvas.onmousedown = (e) => {
+                drawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            };
+            canvas.onmousemove = (e) => {
+                if (!drawing) return;
+                const pos = getPos(e);
+                ctx.strokeStyle = state.brushColor;
+                ctx.lineWidth = state.brushSize;
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            };
+            window.onmouseup = () => {
+                if (drawing) {
+                    drawing = false;
+                    saveCurrentCanvasSnapshot();
+                    rewardStar('draw_canvas', 1);
+                }
+            };
+
+            canvas.ontouchstart = (e) => {
+                e.preventDefault();
+                drawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            };
+            canvas.ontouchmove = (e) => {
+                e.preventDefault();
+                if (!drawing) return;
+                const pos = getPos(e);
+                ctx.strokeStyle = state.brushColor;
+                ctx.lineWidth = state.brushSize;
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            };
+            canvas.ontouchend = () => {
+                drawing = false;
+                saveCurrentCanvasSnapshot();
+                rewardStar('draw_canvas', 1);
+            };
+        }
+
+        function drawGuideShape(ctx, tpl) {
+            ctx.save();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.setLineDash([5, 4]);
+            ctx.lineWidth = 2.2;
+            if (tpl === 'pencilcase') {
+                ctx.strokeRect(140, 50, 280, 95);
+                ctx.beginPath();
+                ctx.moveTo(140, 72);
+                ctx.lineTo(420, 72);
+                ctx.stroke();
+                ctx.font = 'bold 20px Nunito, sans-serif';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillText('☆   ☆   ☆', 235, 115);
+            } else if (tpl === 'pinwheel') {
+                ctx.beginPath();
+                ctx.moveTo(280, 90);
+                ctx.lineTo(280, 185);
+                ctx.stroke();
+                const pts = [[220, 30], [340, 30], [340, 140], [220, 140]];
+                pts.forEach(([x, y]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(280, 90);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(280 + (x - 280) * 0.3, y + (90 - y) * 0.5);
+                    ctx.closePath();
+                    ctx.stroke();
+                });
+            } else if (tpl === 'vase') {
+                ctx.strokeRect(220, 70, 120, 110);
+                for (let x = 240; x < 340; x += 20) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 70);
+                    ctx.lineTo(x, 180);
+                    ctx.stroke();
+                }
+                ctx.beginPath();
+                ctx.arc(260, 42, 15, 0, Math.PI * 2);
+                ctx.arc(300, 42, 15, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function drawTemplateOnCanvas(tpl) {
+            playSound('pop');
+            state.sketchTemplate = tpl;
+            const canvas = document.getElementById('sketch-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGuideShape(ctx, tpl);
+            saveCurrentCanvasSnapshot();
+        }
+
+        function clearSketchCanvas() {
+            playSound('click');
+            const canvas = document.getElementById('sketch-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveCurrentCanvasSnapshot();
+        }
+
+        function completeSketchDrawing() {
+            saveCurrentCanvasSnapshot();
+            state.hasDrawn = true;
+            playSound('correct');
+            rewardStar('sketch_done', 2);
+            showFeedback(true, 'Tuyệt vời! Bản vẽ phác thảo sản phẩm của em đã được lưu vào sổ tay thiết kế!');
+        }
+
+        // Bước 3/3: Triển lãm bản thiết kế & Tổng kết bài học
+        function renderStep4_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-gradient-to-r from-amber-100 via-yellow-50 to-emerald-100 border-3 border-amber-300 rounded-3xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="text-4xl sm:text-5xl">🏆🎨</div>
+                            <div>
+                                <div class="text-xs font-black uppercase text-amber-700 tracking-wider">Chứng nhận hoàn thành Bài 3</div>
+                                <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+                                    Huy Hiệu: Nhà Thiết Kế Nhí Tài Ba!
+                                </h2>
+                                <p class="text-sm sm:text-base font-extrabold text-slate-700">
+                                    Tổng số Sao em đạt được: <span class="text-amber-600 font-black text-xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="celebrateFinishLesson()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black px-4 py-2.5 rounded-2xl text-sm sm:text-base">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-sky-50 text-sky-900 border-2 border-sky-300 font-black px-4 py-2.5 rounded-2xl text-sm sm:text-base">
+                                🔄 Học lại
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
+                        <!-- Trang sổ tay hoàn chỉnh trưng bày bản vẽ + thông tin của học sinh -->
+                        <div class="md:col-span-7 spiral-notebook border-2 border-slate-300 rounded-3xl flex overflow-hidden shadow-sm">
+                            <div class="spiral-holes">
+                                <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                                <div class="spiral-hole"></div><div class="spiral-hole"></div><div class="spiral-hole"></div>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col justify-between gap-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="px-3 py-0.5 rounded-full bg-teal-100 text-teal-900 font-black text-xs uppercase">
+                                        ${state.myDesign.category}
+                                    </span>
+                                    <span class="text-xs font-black text-purple-700">📒 Hồ sơ thiết kế của em</span>
+                                </div>
+                                <div class="w-full h-32 bg-white rounded-2xl border border-slate-200 flex items-center justify-center overflow-hidden">
+                                    ${state.savedCanvasDataUrl
+                                        ? `<img src="${state.savedCanvasDataUrl}" alt="Bản vẽ phác thảo của em" class="max-h-full object-contain"/>`
+                                        : SVGS.sketch4a_PencilCase
+                                    }
+                                </div>
+                                <div class="text-xs sm:text-sm font-extrabold text-slate-800 space-y-0.5 pt-1 border-t border-dashed border-slate-300">
+                                    <div>– <b>Tên sản phẩm:</b> ${state.myDesign.name}</div>
+                                    <div>– <b>Chức năng:</b> ${state.myDesign.func}</div>
+                                    <div>– <b>Vật liệu:</b> ${state.myDesign.material}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tổng kết kiến thức cốt lõi Bài 3 -->
+                        <div class="md:col-span-5 bg-sky-50 border-2 border-sky-200 rounded-3xl p-4 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-black uppercase text-sky-700 tracking-wider">🌟 Kiến thức cốt lõi cần nhớ</div>
+                                <p class="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+                                    Muốn tạo ra sản phẩm công nghệ cần phải bắt đầu từ việc <b>thiết kế</b>. Thiết kế là quá trình sáng tạo gồm <b>4 bước chính</b>:
+                                </p>
+                                <ol class="text-xs sm:text-sm font-extrabold text-slate-900 space-y-1.5 mt-2 list-decimal list-inside">
+                                    <li>Hình thành ý tưởng về sản phẩm</li>
+                                    <li>Vẽ phác thảo sản phẩm và lựa chọn vật liệu, dụng cụ</li>
+                                    <li>Làm sản phẩm mẫu</li>
+                                    <li>Đánh giá và hoàn thiện sản phẩm</li>
+                                </ol>
+                            </div>
+                            <div class="bg-emerald-100 border border-emerald-300 rounded-2xl p-2.5 text-xs font-black text-emerald-900 text-center mt-2">
+                                ✓ Em đã nắm vững toàn bộ Bài 3: Tìm hiểu thiết kế!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function celebrateFinishLesson() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng Nhà Thiết Kế Nhí Tài Ba đã hoàn thành xuất sắc Bài 3!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            if (state.stageIdx === 3 && state.stepIdx === 1) {
+                saveCurrentCanvasSnapshot();
+            }
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            if (state.stageIdx === 3 && state.stepIdx === 1) {
+                saveCurrentCanvasSnapshot();
+            }
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if (state.stageIdx === 3 && state.stepIdx === 1) {
+                saveCurrentCanvasSnapshot();
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-3.5 py-1.5 rounded-xl font-black text-sm sm:text-base transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-600 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase border ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="text-lg sm:text-2xl font-black text-slate-900 mt-0.5 leading-tight">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="text-xs sm:text-base font-bold text-slate-600">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-3.5 rounded-full transition-all ${
+                            active ? 'w-9 bg-sky-600' : 'w-3.5 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

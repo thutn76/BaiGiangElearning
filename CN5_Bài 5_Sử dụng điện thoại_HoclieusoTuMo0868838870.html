@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 5: Sử Dụng Điện Thoại - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Quicksand:wght@700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+            --tv-scale: 1;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            color: #0f172a;
+        }
+        /* Hệ thống cỡ chữ tối ưu cho trình chiếu Tivi lớp học */
+        body.tv-normal {
+            --title-size: clamp(1.45rem, 2.2vw, 2.1rem);
+            --subtitle-size: clamp(1.05rem, 1.45vw, 1.35rem);
+            --card-title: clamp(1.2rem, 1.7vw, 1.6rem);
+            --body-size: clamp(1.1rem, 1.5vw, 1.42rem);
+            --option-size: clamp(1.12rem, 1.55vw, 1.45rem);
+            --badge-size: clamp(0.9rem, 1.15vw, 1.1rem);
+        }
+        body.tv-large {
+            --title-size: clamp(1.65rem, 2.5vw, 2.35rem);
+            --subtitle-size: clamp(1.18rem, 1.65vw, 1.5rem);
+            --card-title: clamp(1.35rem, 1.95vw, 1.8rem);
+            --body-size: clamp(1.22rem, 1.7vw, 1.6rem);
+            --option-size: clamp(1.25rem, 1.75vw, 1.62rem);
+            --badge-size: clamp(1rem, 1.25vw, 1.2rem);
+        }
+        body.tv-xlarge {
+            --title-size: clamp(1.85rem, 2.8vw, 2.6rem);
+            --subtitle-size: clamp(1.3rem, 1.8vw, 1.65rem);
+            --card-title: clamp(1.5rem, 2.15vw, 2rem);
+            --body-size: clamp(1.35rem, 1.9vw, 1.75rem);
+            --option-size: clamp(1.38rem, 1.95vw, 1.8rem);
+            --badge-size: clamp(1.08rem, 1.35vw, 1.3rem);
+        }
+        .tv-title { font-size: var(--title-size); line-height: 1.22; font-weight: 900; }
+        .tv-subtitle { font-size: var(--subtitle-size); line-height: 1.35; font-weight: 800; }
+        .tv-card-title { font-size: var(--card-title); line-height: 1.28; font-weight: 900; }
+        .tv-body { font-size: var(--body-size); line-height: 1.4; font-weight: 800; }
+        .tv-option { font-size: var(--option-size); line-height: 1.36; font-weight: 800; }
+        .tv-badge { font-size: var(--badge-size); line-height: 1.2; font-weight: 900; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(15, 23, 42, 0.22);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.1), 0 8px 14px -6px rgba(15, 23, 42, 0.06);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.97) translateY(6px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="tv-large flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN (TỐI ƯU TIVI RÕ NÉT) -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-300 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-xs font-black uppercase tracking-wider leading-none">Bài</span>
+                <span class="text-2xl sm:text-3xl font-black leading-none">5</span>
+            </div>
+            <div>
+                <div class="text-xs sm:text-sm font-black text-sky-700 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Sử dụng điện thoại</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn -->
+        <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-300" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Chỉnh cỡ chữ Tivi, Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Nút chỉnh cỡ chữ Tivi cho học sinh bàn cuối -->
+            <button onclick="cycleFontSize()" title="Thay đổi cỡ chữ cho màn hình Tivi"
+                class="btn-kid flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-400 text-violet-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>🔍 Cỡ chữ:</span>
+                <span id="font-size-label" class="bg-violet-600 text-white px-2 py-0.5 rounded-lg">To (TV)</span>
+            </button>
+
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3.5 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-7 h-7 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-xl sm:text-2xl font-black text-amber-900">0</span>
+                <span class="text-sm font-black text-amber-800 hidden sm:inline">Sao</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden md:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-600 hover:bg-sky-700 text-white p-2.5 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="xl:hidden bg-white/90 border-b-2 border-sky-200 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - RỘNG RÃI, CHỮ TO RÕ CHO TIVI) -->
+    <main class="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-sky-300 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3 bg-gradient-to-r from-sky-100/90 via-indigo-50 to-amber-100/80 border-b-2 border-sky-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-4 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-300 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-800 font-black px-5 sm:px-7 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-sm sm:text-base font-black text-slate-700">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-black px-6 sm:px-9 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI 5 -->
+    <script>
+        /**************************************************************
+         * 1. CHẾ ĐỘ CỠ CHỮ TIVI & HỆ THỐNG ÂM THANH (WEB AUDIO + DTMF)
+         **************************************************************/
+        const fontModes = [
+            { cls: 'tv-normal', label: 'Chuẩn TV' },
+            { cls: 'tv-large', label: 'To (TV)' },
+            { cls: 'tv-xlarge', label: 'Siêu to' }
+        ];
+        let currentFontModeIdx = 1; // Mặc định chế độ "To (TV)" cho học sinh bàn cuối
+
+        function cycleFontSize() {
+            playSound('click');
+            document.body.classList.remove(fontModes[currentFontModeIdx].cls);
+            currentFontModeIdx = (currentFontModeIdx + 1) % fontModes.length;
+            document.body.classList.add(fontModes[currentFontModeIdx].cls);
+            document.getElementById('font-size-label').textContent = fontModes[currentFontModeIdx].label;
+        }
+
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Bảng tần số âm thanh bấm phím điện thoại thực tế (DTMF)
+        const DTMF_FREQS = {
+            '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+            '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+            '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+            '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+        };
+
+        function playDTMF(key) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+                const pair = DTMF_FREQS[key] || [770, 1336];
+                pair.forEach(freq => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                });
+            } catch (e) {}
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(580, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.065);
+                    gain.gain.setValueAtTime(0.16, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(460, now);
+                    osc.frequency.exponentialRampToValueAtTime(940, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'ring') {
+                    // Tiếng chuông điện thoại reo vui nhộn
+                    [0, 0.14, 0.28].forEach((offset, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(i % 2 === 0 ? 880 : 1174.66, now + offset);
+                        gain.gain.setValueAtTime(0.18, now + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.12);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + offset);
+                        osc.stop(now + offset + 0.13);
+                    });
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.24, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.26);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.27);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 235];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.13, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.04;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#eab308'];
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 300,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 11 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. BỘ BIỂU TƯỢNG SVG RÕ NÉT BÁM SÁT SGK TRANG 19 - 25
+         **************************************************************/
+        const ICONS_SVG = {
+            // 9 biểu tượng Cột A trang 21
+            icon1_lowbat: `<svg viewBox="0 0 90 50" class="w-20 h-12 mx-auto">
+                <rect x="8" y="10" width="66" height="30" rx="5" fill="#ffffff" stroke="#1e293b" stroke-width="3.5"/>
+                <rect x="74" y="18" width="7" height="14" rx="2" fill="#1e293b"/>
+                <rect x="13" y="15" width="14" height="20" rx="2" fill="#ef4444"/>
+            </svg>`,
+            icon2_airplane: `<svg viewBox="0 0 70 50" class="w-16 h-12 mx-auto">
+                <path d="M12 26 L26 24 L38 8 L45 8 L39 24 L54 24 L59 18 L63 18 L60 25 L63 32 L59 32 L54 26 L39 26 L45 42 L38 42 L26 26 Z" fill="#f97316"/>
+            </svg>`,
+            icon3_call: `<svg viewBox="0 0 60 60" class="w-14 h-14 mx-auto">
+                <circle cx="30" cy="30" r="26" fill="#16a34a"/>
+                <path d="M20 22 C18 27, 23 36, 31 40 C35 42, 39 40, 41 37 L36 33 C34 34, 32 34, 30 33 C27 31, 25 28, 26 25 L22 20 Z" fill="#ffffff"/>
+            </svg>`,
+            icon4_charging: `<svg viewBox="0 0 90 50" class="w-20 h-12 mx-auto">
+                <rect x="8" y="10" width="66" height="30" rx="5" fill="#ffffff" stroke="#1e293b" stroke-width="3.5"/>
+                <rect x="74" y="18" width="7" height="14" rx="2" fill="#1e293b"/>
+                <rect x="13" y="15" width="45" height="20" rx="2" fill="#84cc16"/>
+                <polygon points="43,12 31,26 40,26 37,38 51,23 42,23" fill="#1e293b"/>
+            </svg>`,
+            icon5_camera: `<svg viewBox="0 0 70 55" class="w-16 h-13 mx-auto">
+                <path d="M23 12 L27 6 H43 L47 12 H58 C61 12, 63 14, 63 17 V44 C63 47, 61 49, 58 49 H12 C9 49, 7 47, 7 44 V17 C7 14, 9 12, 12 12 Z" fill="#1e293b"/>
+                <circle cx="35" cy="30" r="11" fill="#ffffff"/>
+                <circle cx="53" cy="19" r="2.5" fill="#ffffff"/>
+            </svg>`,
+            icon6_contacts: `<svg viewBox="0 0 65 65" class="w-14 h-14 mx-auto">
+                <rect x="14" y="6" width="40" height="52" rx="6" fill="#818cf8" stroke="#4f46e5" stroke-width="2"/>
+                <rect x="10" y="14" width="6" height="6" rx="2" fill="#cbd5e1"/>
+                <rect x="10" y="28" width="6" height="6" rx="2" fill="#cbd5e1"/>
+                <rect x="10" y="42" width="6" height="6" rx="2" fill="#cbd5e1"/>
+                <path d="M28 22 C26 27, 30 36, 37 40 C40 41, 43 39, 44 37 L40 33 C38 34, 36 33, 34 31 C32 29, 32 27, 33 25 L29 21 Z" fill="#ffffff"/>
+            </svg>`,
+            icon7_wifi: `<svg viewBox="0 0 70 55" class="w-16 h-13 mx-auto">
+                <path d="M8 20 Q35 -2 62 20" fill="none" stroke="#0284c7" stroke-width="5.5" stroke-linecap="round"/>
+                <path d="M16 30 Q35 14 54 30" fill="none" stroke="#0284c7" stroke-width="5.5" stroke-linecap="round"/>
+                <path d="M25 40 Q35 31 45 40" fill="none" stroke="#0284c7" stroke-width="5.5" stroke-linecap="round"/>
+                <circle cx="35" cy="48" r="4.5" fill="#0284c7"/>
+            </svg>`,
+            icon8_signal: `<svg viewBox="0 0 75 55" class="w-16 h-13 mx-auto">
+                <polygon points="6,12 22,12 14,24" fill="none" stroke="#22c55e" stroke-width="3"/>
+                <line x1="14" y1="12" x2="14" y2="48" stroke="#22c55e" stroke-width="3.5"/>
+                <rect x="24" y="38" width="7" height="10" rx="1.5" fill="#22c55e"/>
+                <rect x="35" y="31" width="7" height="17" rx="1.5" fill="#22c55e"/>
+                <rect x="46" y="23" width="7" height="25" rx="1.5" fill="#22c55e"/>
+                <rect x="57" y="14" width="7" height="34" rx="1.5" fill="#ffffff" stroke="#22c55e" stroke-width="2.5"/>
+            </svg>`,
+            icon9_endcall: `<svg viewBox="0 0 60 60" class="w-14 h-14 mx-auto">
+                <circle cx="30" cy="30" r="26" fill="#ef4444"/>
+                <path d="M14 31 C22 23, 38 23, 46 31 L42 37 C39 35, 37 33, 35 31 C32 29, 28 29, 25 31 C23 33, 21 35, 18 37 Z" fill="#ffffff"/>
+            </svg>`
+        };
+
+        /**************************************************************
+         * 4. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG (21 BƯỚC)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động (3 bước)
+            goalsUnlocked: [false, false, false, false],
+            introCallDone: false,
+            historyIdx: 0,
+            historySeen: { 0: true },
+
+            // Chặng 2: Khám phá (8 bước)
+            fig1Matched: {},
+            fig1SelectedCard: null,
+            fig3Tab: 'mobile', // 'landline' hoặc 'mobile'
+            fig3SelectedPart: 1,
+            fig3PartsSeen: { 'mobile_1': true },
+            statusSelectedIcon: null,
+            statusMatched: {},
+            funcMatched: {},
+            fig4Solved: false,
+            fig5Order: [],
+            emergencySelected: '111',
+            emergencySeen: { '111': true },
+            fig6UnsafeChecked: {},
+            fig7Solved: false,
+            fig8Solved: false,
+
+            // Chặng 3: Luyện tập (6 câu hỏi trắc nghiệm khách quan)
+            prac1Done: false,
+            prac2Done: false,
+            prac3Done: false,
+            prac4Done: false,
+            prac5Done: false,
+            prac6Done: false,
+
+            // Chặng 4: Vận dụng (4 bước)
+            dialTaskIdx: 0,
+            dialInput: '',
+            dialTasksSolved: [false, false, false],
+            roleplay1Done: false,
+            roleplay2Done: false,
+            roleplay3Done: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-900 border-amber-400',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học (Trang 19)',
+                        subtitle: 'Bấm vào từng mục tiêu dưới đây để mở khóa hành trình Bài 5: Sử dụng điện thoại!',
+                        voiceText: 'Chào mừng các em đến với Bài 5: Sử dụng điện thoại. Học xong bài này, em sẽ: Một, trình bày được tác dụng của điện thoại. Hai, nhận biết được các bộ phận cơ bản và các biểu tượng thể hiện trạng thái, chức năng hoạt động của điện thoại. Ba, ghi nhớ và thực hiện được cuộc gọi tới người thân và các số điện thoại khẩn cấp khi cần thiết. Bốn, sử dụng điện thoại an toàn, tiết kiệm, hiệu quả và phù hợp với quy tắc giao tiếp.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Cuộc trò chuyện ấm áp với bố ở xa (Trang 19)',
+                        subtitle: 'Quan sát cuộc trò chuyện của hai mẹ con bạn nhỏ với bố và trả lời câu hỏi.',
+                        voiceText: 'Bạn nhỏ nói: Con chào bố ạ! Bố có khoẻ không ạ? Con nhớ bố lắm! Bố trả lời: Bố khoẻ con ạ. Bố cũng nhớ hai mẹ con nhiều! Nhờ thiết bị công nghệ nào mà hai mẹ con bạn nhỏ có thể trò chuyện và nhìn thấy bố ngay lập tức dù bố đang ở rất xa?',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Lịch sử phát triển của điện thoại từ năm 1876 đến nay (Hình 2 – Trang 20)',
+                        subtitle: 'Bấm vào các mẫu điện thoại trong Hình 2 để khám phá sự thay đổi kiểu dáng và tính năng!',
+                        voiceText: 'Chiếc điện thoại đầu tiên được ra đời năm 1876. Điện thoại đã được nghiên cứu và cải tiến với nhiều kiểu dáng và tính năng khác nhau từ năm 1876 đến hiện nay.',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-600 to-blue-700',
+                badgeBg: 'bg-sky-100 text-sky-900 border-sky-400',
+                steps: [
+                    {
+                        title: '1. Tác dụng của điện thoại (Hình 1 – Trang 19, 20)',
+                        subtitle: 'Quan sát Hình 1a, 1b, 1c và chọn đúng tác dụng của điện thoại trong từng tình huống.',
+                        voiceText: 'Mục 1: Tác dụng của điện thoại. Quan sát Hình 1 và cho biết tác dụng của điện thoại. Điện thoại dùng để liên lạc. Điện thoại di động hiện đại còn hỗ trợ các tiện ích khác như: nghe nhạc, xem phim, định vị, truy cập internet.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '2. Một số bộ phận cơ bản của điện thoại (Hình 3 – Trang 20)',
+                        subtitle: 'Khám phá các bộ phận cơ bản trên Điện thoại cố định (Hình 3a) và Điện thoại di động (Hình 3b).',
+                        voiceText: 'Mục 2: Một số bộ phận cơ bản của điện thoại. Điện thoại cố định thường gồm hai bộ phận cơ bản là ống nghe và nói, bàn phím. Điện thoại di động thường có các bộ phận cơ bản như: loa, micro, phím, màn hình, camera, cổng cắm nguồn, đèn pin.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '3a. Biểu tượng thể hiện trạng thái của điện thoại (Trang 21)',
+                        subtitle: 'Ghép 5 biểu tượng trạng thái ở cột A với mô tả phù hợp ở cột B.',
+                        voiceText: 'Mục 3a: Em hãy lựa chọn mô tả ở cột B sao cho phù hợp với 5 biểu tượng trạng thái điện thoại ở cột A gồm: Pin yếu, Chế độ máy bay, Điện thoại đang sạc pin, Mức sóng wifi, và Mức sóng điện thoại.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '3a. Biểu tượng chức năng & Điều kiện gọi điện (Hình 4 – Trang 21)',
+                        subtitle: 'Nhận biết 4 biểu tượng chức năng và cho biết trường hợp nào ở Hình 4 gọi điện được bình thường.',
+                        voiceText: 'Quan sát 4 biểu tượng chức năng: Thực hiện cuộc gọi, Máy ảnh, Danh bạ điện thoại, Kết thúc cuộc gọi. Sau đó quan sát Hình 4a, 4b, 4c và cho biết trường hợp nào có thể thực hiện được cuộc gọi điện thoại bình thường.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '3b. Các bước thực hiện cuộc gọi bằng điện thoại (Hình 5 – Trang 22, 23)',
+                        subtitle: 'Sắp xếp thứ tự các hình minh họa a, b, c, d trong Hình 5 để thể hiện đúng 4 bước gọi điện.',
+                        voiceText: 'Mục 3b: Các bước thực hiện một cuộc gọi điện thoại: Bước 1 Mở ứng dụng Điện thoại. Bước 2 Chọn người cần gọi hoặc nhập số. Bước 3 Nhấn vào biểu tượng Gọi màu xanh. Bước 4 Khi gọi điện xong, nhấn vào biểu tượng Kết thúc cuộc gọi màu đỏ.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '3c. Số điện thoại cần nhớ & 5 số điện thoại khẩn cấp (Trang 22)',
+                        subtitle: 'Bấm vào từng số điện thoại khẩn cấp (111, 112, 113, 114, 115) để biết khi nào cần gọi!',
+                        voiceText: 'Mục 3c: Số điện thoại cần nhớ. Em cần nhớ số điện thoại của người thân trong gia đình và 5 số điện thoại khẩn cấp: 111 Tổng đài Quốc gia bảo vệ trẻ em; 112 Tìm kiếm cứu nạn; 113 Gọi công an; 114 Gọi cứu hỏa; 115 Cấp cứu y tế. Lưu ý chỉ gọi khi thực sự cần thiết.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '4a. Sử dụng điện thoại an toàn, tiết kiệm (Hình 6 – Trang 23)',
+                        subtitle: 'Quan sát Hình 6 (a, b, c, d, e, g) và bấm chọn 3 hình thể hiện sử dụng điện thoại KHÔNG an toàn, KHÔNG tiết kiệm.',
+                        voiceText: 'Mục 4a: Sử dụng điện thoại an toàn, tiết kiệm. Em hãy quan sát Hình 6 và cho biết những hình ảnh nào thể hiện sử dụng điện thoại không an toàn, không tiết kiệm?',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '4b. Sử dụng điện thoại phù hợp với quy tắc giao tiếp (Hình 7, 8 – Trang 24)',
+                        subtitle: 'Lựa chọn cách giao tiếp lịch sự, lễ phép nhất khi bắt đầu cuộc gọi (Hình 7) và khi trả lời điện thoại (Hình 8).',
+                        voiceText: 'Mục 4b: Sử dụng điện thoại hiệu quả, phù hợp với quy tắc giao tiếp. Hãy chọn cách giao tiếp mà em thấy phù hợp nhất trong Hình 7 khi bắt đầu cuộc gọi và Hình 8 khi trả lời điện thoại.',
+                        render: renderStep2_8
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-600 to-teal-700',
+                badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+                steps: [
+                    {
+                        title: 'Câu hỏi 1/6 – Nhận biết trạng thái thực hiện cuộc gọi',
+                        subtitle: 'Phân tích biểu tượng trạng thái trên màn hình điện thoại để xác định khả năng gọi điện.',
+                        voiceText: 'Câu hỏi 1: Trên màn hình điện thoại di động đang hiển thị biểu tượng chiếc máy bay màu cam và biểu tượng mức sóng wifi đầy vạch. Khi đó, người sử dụng có thể thực hiện cuộc gọi điện thoại thông thường qua mạng di động được không? Vì sao?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi 2/6 – Thao tác chọn người cần gọi nhanh nhất',
+                        subtitle: 'Vận dụng 4 cách chọn người cần gọi trong hộp Ghi nhớ trang 23 SGK.',
+                        voiceText: 'Câu hỏi 2: Khi muốn gọi điện cho mẹ mà số điện thoại của mẹ đã được lưu sẵn trong danh bạ và em cũng vừa mới gọi cho mẹ tối hôm qua, thao tác nào dưới đây giúp em chọn số của mẹ nhanh chóng mà không cần gõ lại từng chữ số?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi 3/6 – Lựa chọn đúng số điện thoại khẩn cấp khi có cháy',
+                        subtitle: 'Phân biệt chính xác chức năng của các số khẩn cấp 111, 112, 113, 114, 115.',
+                        voiceText: 'Câu hỏi 3: Khi phát hiện có đám cháy lớn bốc khói tại nhà kho trong khu dân cư, em cần báo cho người lớn và gọi ngay tới số điện thoại khẩn cấp nào dưới đây?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi 4/6 – Chức năng của Tổng đài 111',
+                        subtitle: 'Hiểu đúng vai trò của Tổng đài điện thoại Quốc gia bảo vệ trẻ em.',
+                        voiceText: 'Câu hỏi 4: Số điện thoại 111 là Tổng đài điện thoại Quốc gia bảo vệ trẻ em. Em hoặc người xung quanh nên gọi tới số 111 trong trường hợp nào dưới đây?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Câu hỏi 5/6 – Sử dụng điện thoại an toàn, tiết kiệm và bảo mật',
+                        subtitle: 'Xác định hành vi đúng đắn để bảo vệ bản thân và thông tin cá nhân.',
+                        voiceText: 'Câu hỏi 5: Thói quen nào dưới đây đảm bảo an toàn, tiết kiệm và bảo mật thông tin khi sử dụng điện thoại?',
+                        render: renderStep3_5
+                    },
+                    {
+                        title: 'Câu hỏi 6/6 – Quy tắc giao tiếp văn minh qua điện thoại',
+                        subtitle: 'Vận dụng 4 quy tắc giao tiếp khi sử dụng điện thoại ở trang 25 SGK.',
+                        voiceText: 'Câu hỏi 6: Theo quy tắc giao tiếp khi sử dụng điện thoại, ngay khi người nhận nhấc máy trả lời, người gọi cần thực hiện điều gì đầu tiên?',
+                        render: renderStep3_6
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-600 to-indigo-700',
+                badgeBg: 'bg-purple-100 text-purple-900 border-purple-400',
+                steps: [
+                    {
+                        title: 'Thực hành bấm số gọi điện thoại trên bàn phím mô phỏng',
+                        subtitle: 'Đọc tình huống ở cột trái, bấm đúng số điện thoại trên bàn phím ở cột phải rồi nhấn nút Gọi màu xanh!',
+                        voiceText: 'Chào mừng các em đến với phần Thực hành bấm số điện thoại! Em hãy đọc kỹ từng tình huống khẩn cấp ở bên trái, bấm đúng số điện thoại trên bàn phím và nhấn nút Gọi màu xanh nhé!',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Đóng vai xử lí Tình huống 1 (SGK Trang 25)',
+                        subtitle: 'Tình huống 1: Khi em ở nhà một mình và có cuộc gọi đến điện thoại cố định từ một người lạ.',
+                        voiceText: 'Đóng vai xử lí Tình huống 1 trang 25: Khi em ở nhà một mình và có cuộc gọi đến điện thoại cố định từ một người lạ hỏi bố mẹ có ở nhà không và yêu cầu em đọc địa chỉ nhà. Em sẽ xử lí như thế nào?',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Đóng vai xử lí Tình huống 2 (SGK Trang 25)',
+                        subtitle: 'Tình huống 2: Khi gọi điện thoại cho một người nhưng người khác nghe máy.',
+                        voiceText: 'Đóng vai xử lí Tình huống 2 trang 25: Khi em gọi điện thoại tới số của bạn Lan nhưng mẹ của bạn Lan là người nhấc máy. Em nên nói như thế nào cho lễ phép và đúng quy tắc giao tiếp?',
+                        render: renderStep4_3
+                    },
+                    {
+                        title: 'Đóng vai xử lí Tình huống 3 & Tổng kết trao Huy hiệu (Trang 25)',
+                        subtitle: 'Tình huống 3: Gọi điện thoại cho bạn để trao đổi về nội dung bài học & Nhận huy hiệu tổng kết.',
+                        voiceText: 'Đóng vai xử lí Tình huống 3 trang 25: Gọi điện thoại cho bạn để trao đổi về nội dung bài học. Sau khi trả lời xong, chúc mừng em nhận Huy hiệu Đại Sứ Văn Minh Điện Thoại!',
+                        render: renderStep4_4
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 5. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI (CHỮ TO RÕ)
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-950', 'bg-rose-100', 'border-rose-500', 'text-rose-950');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shrink-0">✓</span>
+                        <span class="tv-body text-emerald-950">${message}</span>
+                    </div>
+                    <span class="tv-badge bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full shrink-0 border-2 border-amber-500">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-black text-2xl shrink-0">!</span>
+                        <span class="tv-body text-rose-950">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC)
+         **************************************************************/
+        // Bước 1/3: Mục tiêu bài học (Trang 19)
+        function renderStep1_1(container) {
+            const goals = [
+                { icon: '📞', title: 'Mục tiêu 1', text: 'Trình bày được tác dụng của điện thoại trong đời sống.' },
+                { icon: '📱', title: 'Mục tiêu 2', text: 'Nhận biết được các bộ phận cơ bản; các biểu tượng trạng thái và chức năng của điện thoại.' },
+                { icon: '🚨', title: 'Mục tiêu 3', text: 'Ghi nhớ, thực hiện được cuộc gọi tới người thân và các số điện thoại khẩn cấp (111, 112, 113, 114, 115).' },
+                { icon: '🤝', title: 'Mục tiêu 4', text: 'Sử dụng điện thoại an toàn, tiết kiệm, hiệu quả và phù hợp với quy tắc giao tiếp.' }
+            ];
+            const allDone = state.goalsUnlocked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1440px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-sky-100 to-emerald-100 border-3 border-sky-400 rounded-3xl p-4 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-sky-600 text-white flex items-center justify-center text-3xl shrink-0 shadow">🎯</div>
+                        <div>
+                            <div class="tv-badge uppercase text-sky-800">Học xong bài này, em sẽ đạt được 4 mục tiêu:</div>
+                            <p class="tv-body text-slate-800">👉 Em hãy bấm vào cả 4 thẻ mục tiêu dưới đây để mở khóa bài học nhé!</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${goals.map((g, i) => {
+                            const unlocked = state.goalsUnlocked[i];
+                            return `
+                                <button onclick="unlockGoal5(${i})"
+                                    class="btn-kid text-left p-5 rounded-3xl border-4 flex items-start gap-4 transition-all ${
+                                        unlocked
+                                            ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
+                                            : 'bg-white hover:bg-amber-50 border-slate-300 text-slate-900'
+                                    }">
+                                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 ${
+                                        unlocked ? 'bg-emerald-600 text-white font-black' : 'bg-amber-100 border-2 border-amber-300'
+                                    }">
+                                        ${unlocked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="tv-badge uppercase ${unlocked ? 'text-emerald-700' : 'text-sky-700'}">
+                                            ${g.title} ${unlocked ? '• ĐÃ MỞ KHÓA' : '• BẤM ĐỂ MỞ'}
+                                        </div>
+                                        <div class="tv-card-title text-slate-900 mt-1">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Tuyệt vời! Em đã mở khóa đủ 4 mục tiêu của Bài 5: Sử dụng điện thoại!');
+            }
+        }
+
+        function unlockGoal5(idx) {
+            state.goalsUnlocked[idx] = true;
+            playSound('pop');
+            rewardStar('b5_goal_' + idx, 1);
+            if (state.goalsUnlocked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Tình huống mở đầu (Trang 19)
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    text: 'A. Nhờ chiếc điện thoại thông minh kết nối cuộc gọi giữa hai mẹ con và bố.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Nhờ có chiếc điện thoại mà hai mẹ con có thể trò chuyện và nhìn thấy bố ngay lập tức dù ở rất xa.'
+                },
+                {
+                    text: 'B. Nhờ gửi thư viết tay qua bưu điện để trò chuyện trực tiếp cùng lúc.',
+                    correct: false,
+                    explain: 'Chưa đúng! Thư viết tay qua bưu điện cần nhiều ngày vận chuyển chứ không thể nghe giọng nói và nhìn thấy nhau ngay lập tức.'
+                },
+                {
+                    text: 'C. Nhờ xem chương trình phát sóng thời sự trên chiếc tivi trong phòng khách.',
+                    correct: false,
+                    explain: 'Chưa đúng! Trong tranh, hai mẹ con đang cầm chiếc điện thoại để gọi điện trực tiếp cho bố.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Tranh tình huống hai mẹ con gọi điện cho bố (Trang 19) -->
+                    <div class="lg:col-span-6 bg-gradient-to-br from-amber-50 via-sky-50 to-indigo-100 border-4 border-sky-300 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="bg-white border-3 border-sky-400 rounded-2xl p-4 shadow-sm">
+                            <div class="tv-badge text-sky-700 uppercase mb-1">👧🏻 Bạn nhỏ nói với bố:</div>
+                            <p class="tv-card-title text-slate-900 italic">
+                                “Con chào bố ạ! Bố có khoẻ không ạ? Con nhớ bố lắm!”
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-around py-2">
+                            <div class="flex flex-col items-center">
+                                <div class="text-6xl">👩🏻‍👧🏻📱</div>
+                                <span class="tv-badge bg-pink-100 text-pink-900 px-3 py-1 rounded-full mt-2 border border-pink-300">Hai mẹ con ở nhà</span>
+                            </div>
+                            <div class="text-4xl font-black text-sky-600 animate-pulse">📡 ➔ 📲</div>
+                            <div class="flex flex-col items-center">
+                                <div class="text-6xl">👨🏻📱</div>
+                                <span class="tv-badge bg-sky-200 text-sky-950 px-3 py-1 rounded-full mt-2 border border-sky-400">Bố đang ở xa</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border-3 border-emerald-400 rounded-2xl p-4 shadow-sm">
+                            <div class="tv-badge text-emerald-700 uppercase mb-1">👨🏻 Bố trả lời qua điện thoại:</div>
+                            <p class="tv-card-title text-slate-900 italic">
+                                “Bố khoẻ con ạ. Bố cũng nhớ hai mẹ con nhiều!”
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Câu hỏi tương tác -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Nhờ thiết bị công nghệ nào mà hai mẹ con bạn nhỏ có thể trò chuyện và nhìn thấy bố ngay lập tức dù bố đang công tác ở rất xa?
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerIntroCall5(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.introCallDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.introCallDone) {
+                showFeedback(true, 'Chính xác! Điện thoại giúp kết nối tình cảm giữa những người thân dù ở cách xa nhau.');
+            }
+        }
+
+        function answerIntroCall5(isCorrect, explain) {
+            if (isCorrect) {
+                state.introCallDone = true;
+                playSound('ring');
+                rewardStar('intro_call_5', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Dòng thời gian phát triển của điện thoại từ năm 1876 đến nay (Hình 2 - Trang 20)
+        const PHONE_HISTORY = [
+            {
+                era: 'Năm 1876',
+                name: 'Chiếc điện thoại đầu tiên',
+                desc: 'Do nhà sáng chế A-lếch-xan-đơ Gra-ham Beo chế tạo năm 1876, có phễu loa đứng để truyền giọng nói qua dây dẫn.',
+                svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 mx-auto"><rect x="20" y="78" width="60" height="10" rx="3" fill="#1e293b"/><rect x="44" y="34" width="12" height="44" fill="#334155"/><circle cx="50" cy="24" r="14" fill="#0f172a"/><circle cx="50" cy="24" r="6" fill="#cbd5e1"/><path d="M26 78 Q12 52 34 38" fill="none" stroke="#1e293b" stroke-width="5"/></svg>`
+            },
+            {
+                era: 'Cuối thế kỉ XIX',
+                name: 'Điện thoại hộp gỗ treo tường',
+                desc: 'Thân máy dạng hộp gắn cố định trên tường, người dùng quay tay quay để đổ chuông và áp ống nghe vào tai.',
+                svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 mx-auto"><rect x="28" y="14" width="48" height="74" rx="5" fill="#1e293b"/><circle cx="52" cy="46" r="10" fill="#cbd5e1"/><rect x="14" y="34" width="10" height="28" rx="4" fill="#334155"/><line x1="24" y1="42" x2="28" y2="42" stroke="#1e293b" stroke-width="4"/></svg>`
+            },
+            {
+                era: 'Thế kỉ XX',
+                name: 'Điện thoại bàn quay số',
+                desc: 'Đặt trên bàn, có đĩa tròn gồm các lỗ số từ 0 đến 9 để dùng ngón tay xoay từng số và ống nghe đặt ngang phía trên.',
+                svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 mx-auto"><path d="M20 78 L30 44 H70 L80 78 Z" fill="#1e293b"/><circle cx="50" cy="63" r="13" fill="#e2e8f0" stroke="#0f172a" stroke-width="2"/><path d="M16 32 Q50 18 84 32" fill="none" stroke="#0f172a" stroke-width="10" stroke-linecap="round"/></svg>`
+            },
+            {
+                era: 'Cuối thế kỉ XX',
+                name: 'Điện thoại di động có ăng-ten & phím bấm',
+                desc: 'Không cần dây nối cố định, có ăng-ten thu phát sóng, màn hình nhỏ và bàn phím cứng bấm số để mang theo người.',
+                svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 mx-auto"><line x1="62" y1="8" x2="62" y2="30" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/><rect x="32" y="28" width="36" height="64" rx="6" fill="#1e293b"/><rect x="37" y="34" width="26" height="18" rx="2" fill="#bae6fd"/><circle cx="42" cy="60" r="2.5" fill="#cbd5e1"/><circle cx="50" cy="60" r="2.5" fill="#cbd5e1"/><circle cx="58" cy="60" r="2.5" fill="#cbd5e1"/><circle cx="42" cy="70" r="2.5" fill="#cbd5e1"/><circle cx="50" cy="70" r="2.5" fill="#cbd5e1"/><circle cx="58" cy="70" r="2.5" fill="#cbd5e1"/></svg>`
+            },
+            {
+                era: 'Hiện nay',
+                name: 'Điện thoại thông minh màn hình cảm ứng',
+                desc: 'Thiết kế mỏng nhẹ, màn hình cảm ứng rộng; ngoài nghe gọi còn giúp nghe nhạc, xem phim, chụp ảnh, định vị, truy cập internet.',
+                svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 mx-auto"><rect x="28" y="12" width="44" height="78" rx="8" fill="#0f172a"/><rect x="31" y="17" width="38" height="68" rx="5" fill="#38bdf8"/><line x1="44" y1="21" x2="56" y2="21" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/></svg>`
+            }
+        ];
+
+        function renderStep1_3(container) {
+            const cur = PHONE_HISTORY[state.historyIdx];
+            const seenCount = Object.keys(state.historySeen).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1440px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3.5 text-center tv-body text-sky-950">
+                        📖 <b>Hình 2 (Trang 20):</b> Chiếc điện thoại đầu tiên ra đời năm <b>1876</b>. Hãy bấm vào từng mốc dưới đây để xem sự cải tiến của điện thoại (${seenCount}/5 mốc):
+                    </div>
+
+                    <!-- Dòng thời gian 5 mẫu điện thoại Hình 2 -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        ${PHONE_HISTORY.map((item, idx) => {
+                            const active = state.historyIdx === idx;
+                            const seen = state.historySeen[idx];
+                            return `
+                                <button onclick="selectPhoneHistory(${idx})"
+                                    class="btn-kid p-3 rounded-3xl border-4 flex flex-col items-center justify-between ${
+                                        active
+                                            ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-300'
+                                            : seen
+                                            ? 'bg-emerald-50 border-emerald-400'
+                                            : 'bg-white border-slate-300'
+                                    }">
+                                    <span class="tv-badge px-3 py-1 rounded-full ${active ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-800'}">
+                                        ${item.era}
+                                    </span>
+                                    <div class="my-1">${item.svg}</div>
+                                    <span class="text-sm sm:text-base font-black text-center text-slate-900 leading-tight">${item.name}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Hộp giải thích chi tiết mốc đang chọn -->
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center gap-5">
+                        <div class="p-3 bg-sky-50 rounded-2xl border-2 border-sky-200 shrink-0">
+                            ${cur.svg}
+                        </div>
+                        <div class="flex-1">
+                            <div class="tv-badge uppercase text-sky-700">${cur.era}</div>
+                            <h3 class="tv-card-title text-slate-900 mt-0.5">${cur.name}</h3>
+                            <p class="tv-body text-slate-700 mt-1.5">${cur.desc}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (seenCount >= 3) {
+                rewardStar('history_5', 1);
+                showFeedback(true, 'Em đã tìm hiểu hành trình phát triển của điện thoại từ năm 1876 đến hiện nay!');
+            }
+        }
+
+        function selectPhoneHistory(idx) {
+            playSound('pop');
+            state.historyIdx = idx;
+            state.historySeen[idx] = true;
+            renderApp();
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 2: KHÁM PHÁ (8 BƯỚC TÁCH NHỎ TỪNG MỤC SGK)
+         **************************************************************/
+        // Bước 1/8: 1. Tác dụng của điện thoại (Hình 1a, 1b, 1c - Trang 19, 20)
+        const FIG1_SCENES = [
+            {
+                key: 'a',
+                title: 'Hình 1a: Bạn nữ nói "Ông bà có khoẻ không ạ?"',
+                typeNote: 'Sử dụng điện thoại cố định (để bàn)',
+                emoji: '👧🏻☎️👵🏻👴🏻',
+                correctUse: 'Liên lạc, trò chuyện hỏi thăm người thân',
+                options: [
+                    'Liên lạc, trò chuyện hỏi thăm người thân',
+                    'Nghe nhạc giải trí qua tai nghe',
+                    'Tra cứu tài liệu phục vụ học tập'
+                ]
+            },
+            {
+                key: 'b',
+                title: 'Hình 1b: Bạn nam ngồi bàn học tra cứu bài',
+                typeNote: 'Sử dụng điện thoại di động thông minh',
+                emoji: '👦🏻📱📚✍️',
+                correctUse: 'Truy cập internet, tra cứu thông tin học tập',
+                options: [
+                    'Liên lạc qua điện thoại bàn có dây',
+                    'Truy cập internet, tra cứu thông tin học tập',
+                    'Chụp ảnh phong cảnh ngoài trời'
+                ]
+            },
+            {
+                key: 'c',
+                title: 'Hình 1c: Bạn nữ đeo tai nghe thư giãn',
+                typeNote: 'Sử dụng điện thoại di động (mang theo người)',
+                emoji: '👧🏻🎧📱🎵',
+                correctUse: 'Nghe nhạc, giải trí thư giãn',
+                options: [
+                    'Gọi điện thoại cố định để bàn',
+                    'Định vị bản đồ đường đi',
+                    'Nghe nhạc, giải trí thư giãn'
+                ]
+            }
+        ];
+
+        function renderStep2_1(container) {
+            const doneCount = Object.keys(state.fig1Matched).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        ${FIG1_SCENES.map(sc => {
+                            const matched = state.fig1Matched[sc.key];
+                            return `
+                                <div class="bg-white rounded-3xl border-4 p-4 flex flex-col justify-between gap-3 ${
+                                    matched ? 'border-emerald-500 bg-emerald-50/40' : 'border-sky-300'
+                                }">
+                                    <div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="tv-badge bg-sky-600 text-white px-3 py-1 rounded-xl">Hình 1${sc.key}</span>
+                                            <span class="text-xs sm:text-sm font-black text-slate-600">${sc.typeNote}</span>
+                                        </div>
+                                        <div class="text-5xl text-center my-3 py-2 bg-sky-50 rounded-2xl border border-sky-200">${sc.emoji}</div>
+                                        <h4 class="tv-card-title text-slate-900">${sc.title}</h4>
+                                    </div>
+
+                                    <div class="flex flex-col gap-2">
+                                        <div class="text-xs sm:text-sm font-black text-sky-800 uppercase">👇 Chọn tác dụng của điện thoại:</div>
+                                        ${sc.options.map(opt => {
+                                            const isRightSelected = matched === opt;
+                                            return `
+                                                <button onclick="checkFig1Use('${sc.key}', '${opt}')"
+                                                    ${matched ? 'disabled' : ''}
+                                                    class="btn-kid text-left p-3 rounded-2xl border-2 text-sm sm:text-lg font-extrabold ${
+                                                        isRightSelected
+                                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                                            : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                                    }">
+                                                    ${isRightSelected ? '✓ ' : ''}${opt}
+                                                </button>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Hộp Ghi nhớ SGK trang 20 -->
+                    <div class="bg-sky-100 border-3 border-sky-400 rounded-3xl p-4 flex items-center gap-4">
+                        <span class="text-4xl shrink-0">🤖</span>
+                        <p class="tv-body text-sky-950">
+                            <b>Ghi nhớ (Trang 20):</b> Điện thoại dùng để <b>liên lạc</b>. Điện thoại di động hiện đại còn hỗ trợ: <b>nghe nhạc, xem phim, định vị, truy cập internet,...</b> Điện thoại có thể để bàn (<b>điện thoại cố định</b>) hoặc mang theo người (<b>điện thoại di động</b>).
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (doneCount === 3) {
+                showFeedback(true, 'Xuất sắc! Em đã nắm vững các tác dụng của điện thoại cố định và điện thoại di động!');
+            }
+        }
+
+        function checkFig1Use(sceneKey, chosenOpt) {
+            const sc = FIG1_SCENES.find(s => s.key === sceneKey);
+            if (sc && sc.correctUse === chosenOpt) {
+                state.fig1Matched[sceneKey] = chosenOpt;
+                playSound('correct');
+                rewardStar('fig1_' + sceneKey, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa đúng với Hình 1${sceneKey}! Em hãy quan sát kỹ hoạt động của bạn nhỏ trong hình nhé.`);
+            }
+        }
+
+        // Bước 2/8: 2. Một số bộ phận cơ bản của điện thoại (Hình 3a & 3b - Trang 20)
+        const FIG3_DATA = {
+            landline: {
+                name: 'Hình 3a: Điện thoại cố định (Để bàn)',
+                parts: [
+                    { num: 1, title: 'Số (1): Ống nghe và nói', desc: 'Bộ phận cầm tay nối với thân máy, gồm loa ở đầu trên (áp vào tai để nghe) và micro ở đầu dưới (gần miệng để nói).' },
+                    { num: 2, title: 'Số (2): Bàn phím (và thân máy)', desc: 'Gồm các phím chữ số từ 0 đến 9, phím *, # và các phím chức năng dùng để bấm số điện thoại cần gọi.' }
+                ]
+            },
+            mobile: {
+                name: 'Hình 3b: Điện thoại di động (Thông minh)',
+                parts: [
+                    { num: 1, title: 'Số (1): Loa nghe (loa trong) và Camera trước', desc: 'Đặt ở phía trên mặt trước, giúp nghe tiếng người nói chuyện và chụp ảnh/gọi video mặt trước.' },
+                    { num: 2, title: 'Số (2): Màn hình cảm ứng', desc: 'Hiển thị hình ảnh, biểu tượng trạng thái, bàn phím ảo và nhận thao tác chạm của ngón tay.' },
+                    { num: 3, title: 'Số (3): Phím điều chỉnh âm lượng', desc: 'Nằm ở cạnh bên của điện thoại, dùng để tăng hoặc giảm độ to của âm thanh cuộc gọi, nhạc.' },
+                    { num: 4, title: 'Số (4): Cụm Camera sau và Đèn pin (Flash)', desc: 'Nằm ở mặt lưng điện thoại, dùng để chụp ảnh, quay video sắc nét và bật đèn pin chiếu sáng.' },
+                    { num: 5, title: 'Số (5): Phím nguồn (Tắt/Mở màn hình)', desc: 'Nằm ở cạnh bên, dùng để bật/tắt nguồn hoặc khóa/mở sáng màn hình điện thoại.' },
+                    { num: 6, title: 'Số (6): Loa ngoài và Micro thu âm', desc: 'Nằm ở cạnh dưới của máy, giúp thu giọng nói của em (micro) và phát âm thanh ra ngoài (loa).' },
+                    { num: 7, title: 'Số (7): Cổng cắm nguồn (Cổng sạc pin)', desc: 'Nằm ở giữa cạnh dưới, dùng để cắm dây sạc nạp điện cho pin khi điện thoại báo pin yếu.' }
+                ]
+            }
+        };
+
+        function renderStep2_2(container) {
+            const isMobile = state.fig3Tab === 'mobile';
+            const currentGroup = FIG3_DATA[state.fig3Tab];
+            const currentPart = currentGroup.parts.find(p => p.num === state.fig3SelectedPart) || currentGroup.parts[0];
+            const seenCount = Object.keys(state.fig3PartsSeen).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <!-- Thanh chuyển đổi giữa Hình 3a (Điện thoại cố định) và Hình 3b (Điện thoại di động) -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex gap-3">
+                            <button onclick="switchFig3Tab('landline')"
+                                class="btn-kid px-5 py-2.5 rounded-2xl border-3 tv-option ${
+                                    !isMobile ? 'bg-amber-500 text-white border-amber-700' : 'bg-white text-slate-800 border-slate-300'
+                                }">
+                                ☎️ Hình 3a: Điện thoại cố định (2 bộ phận)
+                            </button>
+                            <button onclick="switchFig3Tab('mobile')"
+                                class="btn-kid px-5 py-2.5 rounded-2xl border-3 tv-option ${
+                                    isMobile ? 'bg-sky-600 text-white border-sky-800' : 'bg-white text-slate-800 border-slate-300'
+                                }">
+                                📱 Hình 3b: Điện thoại di động (7 vị trí)
+                            </button>
+                        </div>
+                        <span class="tv-badge bg-emerald-100 text-emerald-900 border-2 border-emerald-400 px-4 py-1.5 rounded-full">
+                            Đã khám phá: ${seenCount} bộ phận
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <!-- Cột trái: Sơ đồ minh họa Hình 3a hoặc Hình 3b với các nút số -->
+                        <div class="lg:col-span-6 bg-slate-50 border-4 border-sky-300 rounded-3xl p-4 flex flex-col items-center justify-center min-h-[300px]">
+                            ${!isMobile ? `
+                                <!-- Sơ đồ Hình 3a: Điện thoại cố định -->
+                                <svg viewBox="0 0 380 230" class="w-full max-w-[420px] h-auto">
+                                    <!-- Thân máy để bàn -->
+                                    <rect x="60" y="55" width="185" height="145" rx="14" fill="#1e293b" stroke="#0f172a" stroke-width="4"/>
+                                    <rect x="125" y="70" width="98" height="28" rx="4" fill="#bef264" stroke="#0f172a" stroke-width="2"/>
+                                    <!-- Bàn phím số (2) -->
+                                    <g fill="#cbd5e1">
+                                        <rect x="130" y="112" width="22" height="14" rx="3"/><rect x="160" y="112" width="22" height="14" rx="3"/><rect x="190" y="112" width="22" height="14" rx="3"/>
+                                        <rect x="130" y="132" width="22" height="14" rx="3"/><rect x="160" y="132" width="22" height="14" rx="3"/><rect x="190" y="132" width="22" height="14" rx="3"/>
+                                        <rect x="130" y="152" width="22" height="14" rx="3"/><rect x="160" y="152" width="22" height="14" rx="3"/><rect x="190" y="152" width="22" height="14" rx="3"/>
+                                        <rect x="160" y="172" width="22" height="14" rx="3"/>
+                                    </g>
+                                    <!-- Ống nghe và nói (1) -->
+                                    <path d="M255 38 C280 35, 315 110, 310 165 C295 175, 275 160, 275 140 L255 75 C245 65, 240 42, 255 38 Z" fill="#334155" stroke="#0f172a" stroke-width="4"/>
+                                    <!-- Dây xoắn -->
+                                    <path d="M90 198 Q180 225 295 168" fill="none" stroke="#0f172a" stroke-width="6" stroke-dasharray="8 4"/>
+                                    <!-- Đường chỉ số (1) và (2) -->
+                                    <line x1="272" y1="55" x2="330" y2="35" stroke="#ef4444" stroke-width="3"/>
+                                    <circle cx="335" cy="35" r="16" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+                                    <text x="335" y="41" text-anchor="middle" font-size="18" font-weight="900" fill="#92400e">1</text>
+
+                                    <line x1="160" y1="140" x2="32" y2="140" stroke="#ef4444" stroke-width="3"/>
+                                    <circle cx="26" cy="140" r="16" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+                                    <text x="26" y="146" text-anchor="middle" font-size="18" font-weight="900" fill="#92400e">2</text>
+                                </svg>
+                            ` : `
+                                <!-- Sơ đồ Hình 3b: Điện thoại di động (1 -> 7) -->
+                                <svg viewBox="0 0 430 235" class="w-full max-w-[460px] h-auto">
+                                    <!-- Mặt trước (1, 2) -->
+                                    <rect x="45" y="25" width="95" height="190" rx="14" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+                                    <rect x="50" y="31" width="85" height="178" rx="10" fill="#38bdf8"/>
+                                    <rect x="78" y="34" width="30" height="7" rx="3.5" fill="#0f172a"/>
+                                    <text x="92" y="75" text-anchor="middle" font-size="22" font-weight="900" fill="#ffffff">10:10</text>
+                                    <!-- Cạnh trái (3) -->
+                                    <rect x="160" y="25" width="12" height="190" rx="4" fill="#475569"/>
+                                    <rect x="157" y="65" width="4" height="28" rx="1" fill="#ef4444"/>
+                                    <!-- Mặt lưng (4) -->
+                                    <rect x="192" y="25" width="95" height="190" rx="14" fill="#475569" stroke="#1e293b" stroke-width="3"/>
+                                    <rect x="200" y="33" width="42" height="42" rx="8" fill="#1e293b"/>
+                                    <circle cx="211" cy="44" r="7" fill="#0f172a"/><circle cx="211" cy="63" r="7" fill="#0f172a"/>
+                                    <circle cx="230" cy="54" r="7" fill="#0f172a"/><circle cx="230" cy="41" r="4.5" fill="#fef08a"/>
+                                    <!-- Cạnh phải (5) -->
+                                    <rect x="305" y="25" width="12" height="190" rx="4" fill="#475569"/>
+                                    <rect x="317" y="75" width="4" height="32" rx="1" fill="#ef4444"/>
+                                    <!-- Cạnh đáy xoay dọc (6, 7) -->
+                                    <rect x="342" y="45" width="16" height="120" rx="5" fill="#475569"/>
+                                    <circle cx="350" cy="65" r="3" fill="#0f172a"/><circle cx="350" cy="75" r="3" fill="#0f172a"/>
+                                    <rect x="346" y="95" width="8" height="20" rx="2" fill="#0f172a"/>
+
+                                    <!-- Nhãn số 1 -> 7 -->
+                                    <g font-size="14" font-weight="900" fill="#92400e" text-anchor="middle">
+                                        <circle cx="92" cy="12" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="92" y="17">1</text>
+                                        <circle cx="20" cy="125" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="20" y="130">2</text>
+                                        <circle cx="166" cy="12" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="166" y="17">3</text>
+                                        <circle cx="215" cy="12" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="215" y="17">4</text>
+                                        <circle cx="311" cy="12" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="311" y="17">5</text>
+                                        <circle cx="395" cy="70" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="395" y="75">6</text>
+                                        <circle cx="395" cy="105" r="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="395" y="110">7</text>
+                                    </g>
+                                </svg>
+                            `}
+                        </div>
+
+                        <!-- Cột phải: Các nút chọn số (1 -> 7) và hộp giải thích chữ cực to -->
+                        <div class="lg:col-span-6 flex flex-col gap-3.5">
+                            <div class="tv-body text-slate-700">
+                                👆 Bấm vào các số dưới đây để xem tên gọi và chức năng của từng bộ phận:
+                            </div>
+
+                            <div class="flex flex-wrap gap-2.5">
+                                ${currentGroup.parts.map(p => {
+                                    const active = state.fig3SelectedPart === p.num;
+                                    const seen = state.fig3PartsSeen[state.fig3Tab + '_' + p.num];
+                                    return `
+                                        <button onclick="selectFig3Part(${p.num})"
+                                            class="btn-kid px-4 py-2.5 rounded-2xl border-3 font-black text-base sm:text-xl ${
+                                                active
+                                                    ? 'bg-amber-500 text-white border-amber-700 scale-105'
+                                                    : seen
+                                                    ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                                                    : 'bg-white text-slate-800 border-slate-300'
+                                            }">
+                                            Vị trí (${p.num}) ${seen ? '✓' : ''}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            <div class="bg-amber-50 border-4 border-amber-400 rounded-3xl p-5">
+                                <div class="tv-badge uppercase text-amber-800">${currentGroup.name}</div>
+                                <h3 class="tv-card-title text-slate-900 mt-1">${currentPart.title}</h3>
+                                <p class="tv-body text-slate-800 mt-2">${currentPart.desc}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (seenCount >= 4) {
+                rewardStar('fig3_parts', 1);
+                showFeedback(true, 'Tuyệt vời! Em đã nhận biết được các bộ phận cơ bản trên điện thoại cố định và điện thoại di động.');
+            }
+        }
+
+        function switchFig3Tab(tab) {
+            playSound('click');
+            state.fig3Tab = tab;
+            state.fig3SelectedPart = 1;
+            state.fig3PartsSeen[tab + '_1'] = true;
+            renderApp();
+        }
+
+        function selectFig3Part(num) {
+            playSound('pop');
+            state.fig3SelectedPart = num;
+            state.fig3PartsSeen[state.fig3Tab + '_' + num] = true;
+            renderApp();
+        }
+
+        // Bước 3/8: 3a. Biểu tượng thể hiện trạng thái của điện thoại (Phần 1 - Trang 21)
+        const STATUS_ICONS_5 = [
+            { num: '1', key: 'lowbat', svg: ICONS_SVG.icon1_lowbat, label: 'c) Pin yếu' },
+            { num: '2', key: 'airplane', svg: ICONS_SVG.icon2_airplane, label: 'a) Chế độ máy bay' },
+            { num: '4', key: 'charging', svg: ICONS_SVG.icon4_charging, label: 'h) Điện thoại đang sạc pin' },
+            { num: '7', key: 'wifi', svg: ICONS_SVG.icon7_wifi, label: 'i) Mức sóng wifi' },
+            { num: '8', key: 'signal', svg: ICONS_SVG.icon8_signal, label: 'e) Mức sóng điện thoại' }
+        ];
+
+        function renderStep2_3(container) {
+            const matchedCount = Object.keys(state.statusMatched).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3 text-center tv-body text-sky-950">
+                        👉 <b>Bước 1:</b> Bấm chọn 1 biểu tượng ở <b>Hàng A</b> • <b>Bước 2:</b> Bấm vào tên trạng thái tương ứng ở <b>Hàng B</b> (${matchedCount}/5):
+                    </div>
+
+                    <!-- Hàng A: 5 biểu tượng trạng thái (1, 2, 4, 7, 8 trong SGK trang 21) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        ${STATUS_ICONS_5.map(item => {
+                            const isDone = !!state.statusMatched[item.key];
+                            const isSel = state.statusSelectedIcon === item.key;
+                            return `
+                                <button onclick="selectStatusIconA('${item.key}')"
+                                    ${isDone ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-3xl border-4 flex flex-col items-center justify-between ${
+                                        isDone
+                                            ? 'bg-emerald-50 border-emerald-500 opacity-75'
+                                            : isSel
+                                            ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-300 scale-105'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300'
+                                    }">
+                                    <span class="tv-badge bg-amber-200 text-amber-950 px-3 py-0.5 rounded-full">Biểu tượng số ${item.num}</span>
+                                    <div class="my-2">${item.svg}</div>
+                                    <span class="text-sm font-black ${isDone ? 'text-emerald-700' : 'text-slate-600'}">
+                                        ${isDone ? '✓ Đã ghép đúng' : isSel ? '● Đang chọn' : 'Bấm chọn'}
+                                    </span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Hàng B: 5 thẻ mô tả trạng thái -->
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                        ${STATUS_ICONS_5.map(item => {
+                            const isMatched = state.statusMatched[item.key];
+                            return `
+                                <button onclick="matchStatusLabelB('${item.key}')"
+                                    ${isMatched ? 'disabled' : ''}
+                                    class="btn-kid p-4 rounded-2xl border-3 tv-option text-center ${
+                                        isMatched
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-white hover:bg-amber-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${item.label} ${isMatched ? '✓' : ''}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (matchedCount === 5) {
+                showFeedback(true, 'Chính xác! Em đã nhận biết đúng cả 5 biểu tượng thể hiện trạng thái của điện thoại.');
+            }
+        }
+
+        function selectStatusIconA(key) {
+            playSound('click');
+            state.statusSelectedIcon = key;
+            hideFeedback();
+            renderApp();
+        }
+
+        function matchStatusLabelB(targetKey) {
+            if (!state.statusSelectedIcon) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy bấm chọn 1 biểu tượng ở Hàng A phía trên trước nhé!');
+                return;
+            }
+            if (state.statusSelectedIcon === targetKey) {
+                state.statusMatched[targetKey] = true;
+                state.statusSelectedIcon = null;
+                playSound('correct');
+                rewardStar('status_icon_' + targetKey, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa khớp rồi! Em hãy quan sát kỹ hình dạng và màu sắc của biểu tượng nhé.');
+            }
+        }
+
+        // Bước 4/8: Biểu tượng chức năng & Quan sát Hình 4 (Trang 21)
+        const FUNC_ICONS_4 = [
+            { num: '3', svg: ICONS_SVG.icon3_call, name: 'k) Thực hiện cuộc gọi' },
+            { num: '5', svg: ICONS_SVG.icon5_camera, name: 'b) Máy ảnh' },
+            { num: '6', svg: ICONS_SVG.icon6_contacts, name: 'd) Danh bạ điện thoại' },
+            { num: '9', svg: ICONS_SVG.icon9_endcall, name: 'g) Kết thúc cuộc gọi' }
+        ];
+
+        function renderStep2_4(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: 4 biểu tượng chức năng (3, 5, 6, 9) -->
+                    <div class="lg:col-span-5 bg-slate-50 border-3 border-slate-300 rounded-3xl p-4 flex flex-col gap-3">
+                        <div class="tv-badge uppercase text-sky-800">4 Biểu tượng chức năng (Cột A & B – Trang 21):</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            ${FUNC_ICONS_4.map(f => `
+                                <div class="bg-white border-2 border-slate-300 rounded-2xl p-3 flex flex-col items-center text-center gap-1.5">
+                                    <span class="text-xs font-black bg-sky-100 text-sky-900 px-2.5 py-0.5 rounded-full">Số ${f.num}</span>
+                                    ${f.svg}
+                                    <div class="tv-body text-slate-900">${f.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bài tập Hình 4 (3 màn hình lúc 15:52: a, b, c) -->
+                    <div class="lg:col-span-7 bg-white border-4 border-sky-300 rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Quan sát <b>Hình 4</b> (trang 21): Trường hợp nào dưới đây có thể thực hiện được cuộc gọi điện thoại bình thường?
+                        </h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Hình 4a: Mất sóng điện thoại -->
+                            <button onclick="answerFig4('a')"
+                                class="btn-kid p-3.5 rounded-3xl border-3 bg-gradient-to-b from-slate-200 to-slate-300 border-slate-400 flex flex-col items-center gap-2">
+                                <div class="w-full bg-slate-700 text-white rounded-xl px-3 py-2 flex items-center justify-between text-xs font-black">
+                                    <span>15:52</span>
+                                    <span class="text-rose-300">.... 🔋 (Mất vạch sóng)</span>
+                                </div>
+                                <div class="text-3xl font-black text-slate-800 my-1">15:52</div>
+                                <span class="tv-badge bg-white text-slate-900 px-4 py-1 rounded-full border-2 border-slate-400">
+                                    Hình 4a
+                                </span>
+                                <span class="text-xs sm:text-sm font-extrabold text-slate-700">Không có vạch sóng di động</span>
+                            </button>
+
+                            <!-- Hình 4b: Đang bật Chế độ máy bay -->
+                            <button onclick="answerFig4('b')"
+                                class="btn-kid p-3.5 rounded-3xl border-3 bg-gradient-to-b from-slate-200 to-slate-300 border-slate-400 flex flex-col items-center gap-2">
+                                <div class="w-full bg-slate-700 text-white rounded-xl px-3 py-2 flex items-center justify-between text-xs font-black">
+                                    <span>15:52</span>
+                                    <span class="text-amber-300">✈️ 🔋 (Chế độ máy bay)</span>
+                                </div>
+                                <div class="text-3xl font-black text-slate-800 my-1">15:52</div>
+                                <span class="tv-badge bg-white text-slate-900 px-4 py-1 rounded-full border-2 border-slate-400">
+                                    Hình 4b
+                                </span>
+                                <span class="text-xs sm:text-sm font-extrabold text-slate-700">Đang bật Chế độ máy bay ✈️</span>
+                            </button>
+
+                            <!-- Hình 4c: Có đầy đủ sóng điện thoại, wifi và pin -->
+                            <button onclick="answerFig4('c')"
+                                class="btn-kid p-3.5 rounded-3xl border-4 flex flex-col items-center gap-2 ${
+                                    state.fig4Solved
+                                        ? 'bg-emerald-100 border-emerald-600 ring-4 ring-emerald-300'
+                                        : 'bg-gradient-to-b from-sky-100 to-sky-200 border-sky-400'
+                                }">
+                                <div class="w-full bg-sky-900 text-white rounded-xl px-3 py-2 flex items-center justify-between text-xs font-black">
+                                    <span>15:52</span>
+                                    <span class="text-emerald-300">📶 🛜 🔋 (Đủ sóng & pin)</span>
+                                </div>
+                                <div class="text-3xl font-black text-sky-950 my-1">15:52</div>
+                                <span class="tv-badge px-4 py-1 rounded-full ${state.fig4Solved ? 'bg-emerald-600 text-white' : 'bg-white text-sky-950 border-2 border-sky-500'}">
+                                    Hình 4c ${state.fig4Solved ? '✓ ĐÚNG' : ''}
+                                </span>
+                                <span class="text-xs sm:text-sm font-extrabold text-sky-950">Có vạch sóng di động & còn pin</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.fig4Solved) {
+                showFeedback(true, 'Chính xác! Chỉ có Hình 4c thực hiện được cuộc gọi bình thường vì máy có sóng điện thoại và còn pin.');
+            }
+        }
+
+        function answerFig4(choice) {
+            if (choice === 'c') {
+                state.fig4Solved = true;
+                playSound('correct');
+                rewardStar('fig4_solved', 1);
+                renderApp();
+            } else if (choice === 'a') {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng! Ở Hình 4a, điện thoại bị mất sóng di động (chỉ có các chấm nhỏ) nên không thể thực hiện cuộc gọi.');
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng! Ở Hình 4b, điện thoại đang bật Chế độ máy bay (✈️) làm ngắt kết nối sóng nên không gọi được.');
+            }
+        }
+
+        // Bước 5/8: 3b. Các bước thực hiện cuộc gọi (Hình 5 - Trang 22, 23)
+        const FIG5_CARDS = [
+            { id: 'a', label: 'Hình 5a: Mở ứng dụng Điện thoại (nhấn vào biểu tượng ống nghe xanh trên màn hình chính).', icon: '📱🟢' },
+            { id: 'b', label: 'Hình 5b: Khi gọi điện xong, nhấn vào biểu tượng Kết thúc cuộc gọi (ống nghe màu đỏ).', icon: '🔴📴' },
+            { id: 'c', label: 'Hình 5c: Nhập số điện thoại trên bàn phím số (hoặc chọn người cần gọi trong Danh bạ).', icon: '🔢👆' },
+            { id: 'd', label: 'Hình 5d: Nhấn vào biểu tượng Gọi (ống nghe màu xanh) sau khi đã nhập xong số.', icon: '📞🟢' }
+        ];
+        // Theo Hình 5 trang 22: a (chạm mở ứng dụng Điện thoại) -> c (bấm các phím số) -> d (đã hiện dãy số 09xxxxxxxx và nhấn nút Gọi xanh) -> b (đang gọi 00:01 và nhấn nút Kết thúc đỏ)
+        const FIG5_CORRECT = ['a', 'c', 'd', 'b'];
+
+        function renderStep2_5(container) {
+            const nextStepNum = state.fig5Order.length + 1;
+            const isAllDone = state.fig5Order.length === 4;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: 4 hình minh họa a, b, c, d trong Hình 5 -->
+                    <div class="lg:col-span-6 bg-slate-100 p-4 rounded-3xl border-3 border-slate-300 flex flex-col gap-3">
+                        <div class="tv-badge text-slate-800 uppercase">
+                            Các hình trong Hình 5 (Trang 22) — Hãy bấm chọn cho <span class="text-sky-700">Bước ${nextStepNum <= 4 ? nextStepNum : 4}</span>:
+                        </div>
+                        ${FIG5_CARDS.map(c => {
+                            const used = state.fig5Order.includes(c.id);
+                            return `
+                                <button onclick="pickFig5Step('${c.id}')"
+                                    ${used ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left flex items-center gap-3.5 ${
+                                        used
+                                            ? 'bg-slate-200 border-slate-300 text-slate-400 opacity-55'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300 text-slate-900'
+                                    }">
+                                    <span class="w-14 h-14 rounded-2xl bg-sky-100 border-2 border-sky-300 flex items-center justify-center text-2xl shrink-0">${c.icon}</span>
+                                    <span class="tv-option flex-1">${c.label}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Cột phải: Thứ tự 4 bước đã xếp -->
+                    <div class="lg:col-span-6 bg-emerald-50/80 p-4 rounded-3xl border-3 border-emerald-300 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="tv-badge text-emerald-950 uppercase">Thứ tự 4 bước thực hiện cuộc gọi:</span>
+                            ${state.fig5Order.length > 0 ? `
+                                <button onclick="resetFig5Order()" class="tv-badge text-rose-700 underline">Xếp lại</button>
+                            ` : ''}
+                        </div>
+
+                        ${[0, 1, 2, 3].map(idx => {
+                            const cid = state.fig5Order[idx];
+                            const obj = FIG5_CARDS.find(x => x.id === cid);
+                            return `
+                                <div class="p-3.5 rounded-2xl border-3 flex items-center gap-3.5 ${
+                                    obj
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : idx === state.fig5Order.length
+                                        ? 'bg-amber-50 border-amber-500 border-dashed text-amber-950'
+                                        : 'bg-white/80 border-slate-300 text-slate-400'
+                                }">
+                                    <span class="px-3 py-1 rounded-xl bg-black/20 font-black text-base shrink-0">
+                                        Bước ${idx + 1}
+                                    </span>
+                                    <span class="tv-option">
+                                        ${obj ? obj.icon + ' ' + obj.label : 'Đang chờ em chọn hình...'}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isAllDone) {
+                showFeedback(true, 'Hoàn toàn chính xác! Thứ tự đúng trong Hình 5 là: Hình a ➔ Hình c ➔ Hình d ➔ Hình b.');
+            }
+        }
+
+        function pickFig5Step(id) {
+            const expected = FIG5_CORRECT[state.fig5Order.length];
+            const stepNum = state.fig5Order.length + 1;
+            if (id === expected) {
+                state.fig5Order.push(id);
+                playSound('correct');
+                rewardStar('fig5_step_' + stepNum, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                const hints = {
+                    1: 'Ở Bước 1 đầu tiên, chúng ta cần chạm mở ứng dụng Điện thoại trên màn hình chính (Hình 5a)!',
+                    2: 'Sau khi mở ứng dụng Điện thoại, Bước 2 là bấm các chữ số điện thoại trên bàn phím (Hình 5c)!',
+                    3: 'Khi đã nhập xong dãy số 09xxxxxxxx, Bước 3 là nhấn vào biểu tượng Gọi màu xanh (Hình 5d)!',
+                    4: 'Cuối cùng ở Bước 4, khi nói chuyện xong, ta nhấn biểu tượng Kết thúc cuộc gọi màu đỏ (Hình 5b)!'
+                };
+                showFeedback(false, hints[stepNum]);
+            }
+        }
+
+        function resetFig5Order() {
+            playSound('click');
+            state.fig5Order = [];
+            hideFeedback();
+            renderApp();
+        }
+
+        // Bước 6/8: 3c. Số điện thoại cần nhớ & 5 số điện thoại khẩn cấp (Trang 22)
+        const EMERGENCY_NUMBERS = [
+            {
+                num: '111',
+                name: 'Số dịch vụ gọi Tổng đài điện thoại Quốc gia bảo vệ trẻ em',
+                icon: '🧒🛡️',
+                when: 'Gọi khi trẻ em cần tư vấn, hỗ trợ tâm lí hoặc phát hiện trẻ em bị bạo lực, xâm hại, bóc lột, bỏ rơi.',
+                color: 'bg-rose-600'
+            },
+            {
+                num: '112',
+                name: 'Số dịch vụ gọi tìm kiếm, cứu nạn',
+                icon: '🛟🚁',
+                when: 'Gọi khi xảy ra thiên tai, bão lũ, sạt lở, tai nạn trên sông biển hoặc có người bị mắc kẹt cần cứu nạn khẩn cấp.',
+                color: 'bg-amber-600'
+            },
+            {
+                num: '113',
+                name: 'Số dịch vụ gọi công an',
+                icon: '👮‍♂️🚓',
+                when: 'Gọi khi phát hiện trộm cắp, cướp giật, đánh nhau, mất an ninh trật tự hoặc tai nạn giao thông nghiêm trọng.',
+                color: 'bg-blue-700'
+            },
+            {
+                num: '114',
+                name: 'Số dịch vụ gọi cứu hoả',
+                icon: '🚒🔥',
+                when: 'Gọi ngay khi phát hiện xảy ra cháy nổ tại nhà ở, trường học, khu dân cư, rừng hoặc sự cố mắc kẹt trong đám cháy.',
+                color: 'bg-red-600'
+            },
+            {
+                num: '115',
+                name: 'Số dịch vụ gọi cấp cứu y tế',
+                icon: '🚑🏥',
+                when: 'Gọi khi có người bị tai nạn thương tích nặng, ngất xỉu, đuối nước, ngộ độc hoặc bệnh nguy kịch cần xe cấp cứu y tế.',
+                color: 'bg-emerald-600'
+            }
+        ];
+
+        function renderStep2_6(container) {
+            const cur = EMERGENCY_NUMBERS.find(e => e.num === state.emergencySelected) || EMERGENCY_NUMBERS[0];
+            const seenCount = Object.keys(state.emergencySeen).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-2">
+                        <span class="tv-body text-sky-950">
+                            📞 <b>Mục 3c (Trang 22):</b> Em hãy ghi nhớ số điện thoại của bố mẹ và bấm vào <b>5 số khẩn cấp</b> dưới đây (${seenCount}/5 số):
+                        </span>
+                    </div>
+
+                    <!-- 5 Thẻ số điện thoại khẩn cấp cực lớn, rõ ràng cho học sinh bàn cuối -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+                        ${EMERGENCY_NUMBERS.map(item => {
+                            const active = state.emergencySelected === item.num;
+                            const seen = state.emergencySeen[item.num];
+                            return `
+                                <button onclick="selectEmergencyNum('${item.num}')"
+                                    class="btn-kid p-4 rounded-3xl border-4 flex flex-col items-center justify-between text-center ${
+                                        active
+                                            ? 'bg-rose-50 border-rose-600 ring-4 ring-rose-300 scale-105'
+                                            : seen
+                                            ? 'bg-emerald-50 border-emerald-400'
+                                            : 'bg-white border-slate-300'
+                                    }">
+                                    <div class="text-4xl mb-1">${item.icon}</div>
+                                    <div class="px-4 py-1.5 rounded-2xl ${item.color} text-white font-black text-3xl sm:text-4xl tracking-wider shadow">
+                                        📞 ${item.num}
+                                    </div>
+                                    <div class="text-sm sm:text-base font-black text-slate-900 mt-2 leading-snug">
+                                        ${item.name}
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Chi tiết tình huống khi nào cần gọi -->
+                    <div class="bg-white border-4 border-rose-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center gap-5">
+                        <div class="px-6 py-4 rounded-3xl ${cur.color} text-white font-black text-4xl sm:text-5xl shrink-0 shadow-md">
+                            ${cur.icon} ${cur.num}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="tv-card-title text-slate-900">${cur.name}</h3>
+                            <p class="tv-body text-slate-800 mt-1">
+                                👉 <b>Trường hợp cần gọi:</b> ${cur.when}
+                            </p>
+                            <p class="text-sm sm:text-base font-black text-rose-700 mt-1.5">
+                                ⚠️ Lưu ý (Trang 23): Chỉ thực hiện cuộc gọi khẩn cấp khi thực sự cần thiết, tuyệt đối không gọi trêu đùa!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (seenCount === 5) {
+                rewardStar('emergency_all_5', 1);
+                showFeedback(true, 'Giỏi lắm! Em đã ghi nhớ đầy đủ 5 số điện thoại khẩn cấp: 111, 112, 113, 114 và 115!');
+            }
+        }
+
+        function selectEmergencyNum(num) {
+            playDTMF(num[2]);
+            state.emergencySelected = num;
+            state.emergencySeen[num] = true;
+            renderApp();
+        }
+
+        // Bước 7/8: 4a. Sử dụng điện thoại an toàn, tiết kiệm (Hình 6 - Trang 23)
+        const FIG6_ITEMS = [
+            { key: 'a', title: 'Hình 6a: Dừng dùng khi máy báo pin yếu', desc: 'Khi thấy biểu tượng pin yếu màu đỏ, bạn nam dừng sử dụng để mang đi sạc.', isUnsafe: false, emoji: '👦🏻🪫✅' },
+            { key: 'b', title: 'Hình 6b: Vừa cắm sạc pin vừa ngồi bấm điện thoại', desc: 'Rất nguy hiểm vì làm máy nóng lên, dễ gây chập điện, cháy nổ.', isUnsafe: true, emoji: '👧🏻🔌⚡❌' },
+            { key: 'c', title: 'Hình 6c: Nói chuyện điện thoại quá lâu làm cả nhà chờ cơm', desc: 'Em gái nhắc: "Anh nói chuyện lâu thế. Cả nhà đang đợi." — Không tiết kiệm thời gian và tiền cước.', isUnsafe: true, emoji: '👦🏻📱⏳❌' },
+            { key: 'd', title: 'Hình 6d: Dùng điện thoại hỗ trợ học tập vừa phải', desc: 'Bạn nữ ngồi ngay ngắn dùng điện thoại tra cứu bài học với thời gian hợp lí.', isUnsafe: false, emoji: '👧🏻📖📱✅' },
+            { key: 'e', title: 'Hình 6e: Trao đổi lành mạnh cùng bạn bè', desc: 'Hai bạn sử dụng điện thoại với khoảng cách mắt phù hợp và thời gian vừa phải.', isUnsafe: false, emoji: '👧🏻👦🏻📱✅' },
+            { key: 'g', title: 'Hình 6g: Nhắn tin tiết lộ địa chỉ nhà, thông tin cá nhân cho người lạ', desc: 'Mất an toàn, lộ bí mật thông tin cá nhân và gia đình trên mạng.', isUnsafe: true, emoji: '👧🏻🔓🏠❌' }
+        ];
+
+        function renderStep2_7(container) {
+            const unsafeFoundCount = Object.keys(state.fig6UnsafeChecked).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="bg-amber-100 border-3 border-amber-400 rounded-2xl p-3 text-center tv-body text-amber-950">
+                        🔍 <b>Câu hỏi Hình 6 (Trang 23):</b> Em hãy bấm chọn <b>3 hình ảnh</b> thể hiện việc sử dụng điện thoại <b>KHÔNG an toàn, KHÔNG tiết kiệm</b> (Đã tìm: ${unsafeFoundCount}/3):
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        ${FIG6_ITEMS.map(item => {
+                            const selectedUnsafe = state.fig6UnsafeChecked[item.key];
+                            return `
+                                <button onclick="checkFig6Card('${item.key}')"
+                                    class="btn-kid p-4 rounded-3xl border-4 text-left flex flex-col justify-between gap-2 ${
+                                        selectedUnsafe
+                                            ? 'bg-rose-100 border-rose-600 ring-2 ring-rose-300'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300'
+                                    }">
+                                    <div class="flex items-center justify-between">
+                                        <span class="tv-badge px-3 py-1 rounded-xl ${selectedUnsafe ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-900'}">
+                                            ${item.title.split(':')[0]}
+                                        </span>
+                                        <span class="text-3xl">${item.emoji}</span>
+                                    </div>
+                                    <div class="tv-card-title text-slate-900">${item.title.split(':')[1]}</div>
+                                    <p class="text-sm sm:text-base font-bold text-slate-700">${item.desc}</p>
+                                    <div class="text-xs sm:text-sm font-black uppercase ${selectedUnsafe ? 'text-rose-700' : 'text-sky-700'}">
+                                        ${selectedUnsafe ? '⚠️ Đã đánh dấu: Không an toàn / Không tiết kiệm' : '👆 Bấm nếu hình này Không an toàn, Không tiết kiệm'}
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (unsafeFoundCount === 3) {
+                showFeedback(true, 'Chính xác! Ba hình KHÔNG an toàn, KHÔNG tiết kiệm là: Hình 6b (vừa sạc vừa dùng), Hình 6c (gọi quá lâu) và Hình 6g (lộ địa chỉ nhà).');
+            }
+        }
+
+        function checkFig6Card(key) {
+            const item = FIG6_ITEMS.find(x => x.key === key);
+            if (!item) return;
+            if (item.isUnsafe) {
+                state.fig6UnsafeChecked[key] = true;
+                playSound('correct');
+                rewardStar('fig6_' + key, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Hình 6${key} là hành vi sử dụng điện thoại AN TOÀN và HỢP LÍ! Em hãy tìm hình không an toàn, không tiết kiệm nhé.`);
+            }
+        }
+
+        // Bước 8/8: 4b. Sử dụng điện thoại phù hợp với quy tắc giao tiếp (Hình 7 & Hình 8 - Trang 24)
+        function renderStep2_8(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                    <!-- Tình huống 1: Hình 7 (Khi bắt đầu thực hiện cuộc gọi) -->
+                    <div class="bg-white border-4 border-sky-300 rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <span class="tv-badge bg-sky-600 text-white px-3.5 py-1 rounded-full uppercase">
+                                Tình huống 1 (Hình 7 – Trang 24)
+                            </span>
+                            <h3 class="tv-card-title text-slate-900 mt-2">
+                                1. Khi bắt đầu thực hiện một cuộc gọi bằng điện thoại, cách nói nào phù hợp nhất?
+                            </h3>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button onclick="answerFig78('fig7', 'a')"
+                                class="btn-kid p-4 rounded-2xl border-3 text-left ${
+                                    state.fig7Solved ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-sky-50 hover:bg-sky-100 text-slate-900 border-sky-300'
+                                }">
+                                <div class="tv-badge uppercase opacity-90">👦🏻 Hình 7a ${state.fig7Solved ? '• ✓ PHÙ HỢP NHẤT' : ''}</div>
+                                <div class="tv-option mt-1 italic">
+                                    “Cháu chào ông ạ! Cháu là Nam ạ. Cháu gọi điện hỏi thăm sức khoẻ của ông và bà...”
+                                </div>
+                            </button>
+
+                            <button onclick="answerFig78('fig7', 'b')"
+                                class="btn-kid p-4 rounded-2xl border-3 text-left bg-slate-50 hover:bg-rose-50 text-slate-900 border-slate-300">
+                                <div class="tv-badge uppercase text-slate-600">👦🏻 Hình 7b</div>
+                                <div class="tv-option mt-1 italic">
+                                    “A lô! An có nhà không bác?”
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tình huống 2: Hình 8 (Khi trả lời điện thoại) -->
+                    <div class="bg-white border-4 border-indigo-300 rounded-3xl p-4 sm:p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <span class="tv-badge bg-indigo-600 text-white px-3.5 py-1 rounded-full uppercase">
+                                Tình huống 2 (Hình 8 – Trang 24)
+                            </span>
+                            <h3 class="tv-card-title text-slate-900 mt-2">
+                                2. Khi bạn của anh Dũng gọi đến: <i>"Anh Dũng có ở nhà không em?"</i>, Mai nên trả lời thế nào?
+                            </h3>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button onclick="answerFig78('fig8', 'a')"
+                                class="btn-kid p-4 rounded-2xl border-3 text-left bg-slate-50 hover:bg-rose-50 text-slate-900 border-slate-300">
+                                <div class="tv-badge uppercase text-slate-600">👧🏻 Hình 8a (Vừa ăn bánh vừa nói trống không)</div>
+                                <div class="tv-option mt-1 italic">
+                                    “Anh Dũng đi vắng rồi. Gọi lại sau nhé.”
+                                </div>
+                            </button>
+
+                            <button onclick="answerFig78('fig8', 'b')"
+                                class="btn-kid p-4 rounded-2xl border-3 text-left ${
+                                    state.fig8Solved ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-indigo-50 hover:bg-indigo-100 text-slate-900 border-indigo-300'
+                                }">
+                                <div class="tv-badge uppercase opacity-90">👧🏻 Hình 8b ${state.fig8Solved ? '• ✓ PHÙ HỢP NHẤT' : ''}</div>
+                                <div class="tv-option mt-1 italic">
+                                    “Dạ. Anh Dũng đi vắng rồi. Anh tên là gì ạ? Em sẽ bảo anh Dũng gọi lại cho anh khi anh ấy về ạ.”
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.fig7Solved && state.fig8Solved) {
+                showFeedback(true, 'Quy tắc giao tiếp (Trang 25): Chào hỏi, xưng danh, nêu mục đích; thái độ thân thiện, lịch sự; giọng nói từ tốn; không bất ngờ cúp máy!');
+            }
+        }
+
+        function answerFig78(which, choice) {
+            if (which === 'fig7') {
+                if (choice === 'a') {
+                    state.fig7Solved = true;
+                    playSound('correct');
+                    rewardStar('fig7_ok', 1);
+                    renderApp();
+                } else {
+                    playSound('wrong');
+                    showFeedback(false, 'Chưa phù hợp! Ở Hình 7b, bạn nam chưa chào bác, chưa giới thiệu tên mình mà đã hỏi ngay là thiếu lễ phép.');
+                }
+            } else {
+                if (choice === 'b') {
+                    state.fig8Solved = true;
+                    playSound('correct');
+                    rewardStar('fig8_ok', 1);
+                    renderApp();
+                } else {
+                    playSound('wrong');
+                    showFeedback(false, 'Chưa phù hợp! Ở Hình 8a, Mai vừa nhai đồ ăn vừa nói trống không và cúp máy đột ngột là chưa lịch sự.');
+                }
+            }
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 3: LUYỆN TẬP (6 CÂU HỎI TRẮC NGHIỆM CHẶT CHẼ)
+         **************************************************************/
+        function renderPracticeMCQ5(container, flagName, badgeTitle, questionText, options) {
+            const isDone = state[flagName];
+            container.innerHTML = `
+                <div class="step-enter max-w-[1440px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-emerald-100 to-sky-100 border-4 border-emerald-400 rounded-3xl p-5">
+                        <span class="inline-block bg-emerald-700 text-white tv-badge uppercase px-4 py-1 rounded-full mb-2">
+                            ${badgeTitle}
+                        </span>
+                        <h3 class="tv-card-title text-slate-900 leading-snug">
+                            ${questionText}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        ${options.map(opt => `
+                            <button onclick="selectPrac5Answer('${flagName}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 sm:p-5 rounded-3xl border-3 tv-option flex items-center justify-between gap-4 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ ĐÚNG' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function selectPrac5Answer(flagName, isCorrect, explain) {
+            if (isCorrect) {
+                state[flagName] = true;
+                playSound('correct');
+                rewardStar('prac5_' + flagName, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Câu 1/6
+        function renderStep3_1(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac1Done',
+                'Câu hỏi luyện tập 1 / 6',
+                'Trên màn hình điện thoại di động đang hiển thị biểu tượng chiếc máy bay màu cam (✈️) và biểu tượng pin còn đầy. Khi đó, người sử dụng có thể thực hiện cuộc gọi điện thoại thông thường qua mạng di động được không? Vì sao?',
+                [
+                    {
+                        text: 'A. Thực hiện được bình thường, vì pin của điện thoại vẫn còn đầy và màn hình cảm ứng vẫn đang hoạt động tốt.',
+                        correct: false,
+                        explain: 'Chưa đúng! Dù pin còn đầy nhưng khi bật Chế độ máy bay thì sóng di động đã bị ngắt nên không gọi điện thông thường được.'
+                    },
+                    {
+                        text: 'B. Không thực hiện được, vì điện thoại đang ở Chế độ máy bay làm ngắt kết nối sóng điện thoại di động.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Khi bật Chế độ máy bay (như Hình 4b trang 21), kết nối sóng di động bị tắt nên không thể thực hiện cuộc gọi thông thường.'
+                    },
+                    {
+                        text: 'C. Thực hiện được bình thường, nhưng chỉ gọi được tới các số điện thoại cố định để bàn chứ không gọi được di động.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khi mất sóng di động do bật Chế độ máy bay thì không gọi được cho cả số cố định lẫn số di động.'
+                    },
+                    {
+                        text: 'D. Không thực hiện được, vì biểu tượng chiếc máy bay cho biết điện thoại đang bị hỏng loa nghe và micro.',
+                        correct: false,
+                        explain: 'Chưa đúng! Biểu tượng chiếc máy bay là trạng thái Chế độ máy bay chứ không phải báo hỏng loa hay micro.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 2/6
+        function renderStep3_2(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac2Done',
+                'Câu hỏi luyện tập 2 / 6',
+                'Theo hướng dẫn thực hiện cuộc gọi (trang 23 SGK), khi muốn gọi cho mẹ mà số của mẹ đã lưu trong máy và em cũng vừa gọi cho mẹ tối hôm qua, cách nào dưới đây giúp chọn người cần gọi mà KHÔNG cần bấm lại từng chữ số?',
+                [
+                    {
+                        text: 'A. Nhấn vào biểu tượng Danh bạ hoặc nhấn vào biểu tượng Gần đây (hình đồng hồ) để chọn tên của mẹ rồi nhấn nút Gọi.',
+                        correct: true,
+                        explain: 'Rất chính xác! Theo hộp Ghi nhớ trang 23: Em có thể lấy số từ Danh bạ, chọn số đã gọi gần đây (biểu tượng đồng hồ) hoặc Mục yêu thích (ngôi sao).'
+                    },
+                    {
+                        text: 'B. Nhấn vào biểu tượng Máy ảnh trên màn hình chính để chụp lại số điện thoại của mẹ rồi nhấn nút Kết thúc cuộc gọi.',
+                        correct: false,
+                        explain: 'Chưa đúng! Biểu tượng Máy ảnh dùng để chụp ảnh chứ không dùng để chọn số điện thoại cần gọi.'
+                    },
+                    {
+                        text: 'C. Nhấn vào biểu tượng Chế độ máy bay màu cam để điện thoại tự động tìm kiếm và quay số của người thân.',
+                        correct: false,
+                        explain: 'Chưa đúng! Bật Chế độ máy bay sẽ làm ngắt sóng điện thoại, không thể thực hiện cuộc gọi.'
+                    },
+                    {
+                        text: 'D. Nhấn giữ vào biểu tượng Kết thúc cuộc gọi màu đỏ trong 5 giây để máy tự động gọi lại cuộc gọi gần nhất.',
+                        correct: false,
+                        explain: 'Chưa đúng! Biểu tượng ống nghe màu đỏ chỉ dùng để kết thúc cuộc gọi sau khi đã nói chuyện xong.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 3/6
+        function renderStep3_3(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac3Done',
+                'Câu hỏi luyện tập 3 / 6',
+                'Khi phát hiện có đám cháy lớn bốc khói tại khu dân cư, em cần hô hoán báo cho người lớn xung quanh và gọi ngay tới số điện thoại khẩn cấp nào dưới đây?',
+                [
+                    {
+                        text: 'A. Gọi số 113 để yêu cầu dịch vụ cấp cứu y tế đưa xe cứu thương tới dập lửa.',
+                        correct: false,
+                        explain: 'Chưa đúng! Số 113 là số gọi Công an, còn xe cấp cứu y tế là số 115.'
+                    },
+                    {
+                        text: 'B. Gọi số 114 để báo cho lực lượng Cảnh sát phòng cháy, chữa cháy (cứu hoả) tới dập đám cháy.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Số 114 là số dịch vụ gọi cứu hoả khi phát hiện sự cố cháy nổ.'
+                    },
+                    {
+                        text: 'C. Gọi số 111 để yêu cầu Tổng đài Quốc gia bảo vệ trẻ em điều động xe cứu hoả tới hiện trường.',
+                        correct: false,
+                        explain: 'Chưa đúng! Số 111 là Tổng đài bảo vệ trẻ em, còn khi có hỏa hoạn cần gọi ngay số cứu hoả 114.'
+                    },
+                    {
+                        text: 'D. Gọi số 115 vì đây là số dịch vụ chuyên dụng duy nhất để báo cháy nổ tại các khu dân cư.',
+                        correct: false,
+                        explain: 'Chưa đúng! Số 115 là số gọi cấp cứu y tế khi có người bị thương hoặc bệnh nặng.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 4/6
+        function renderStep3_4(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac4Done',
+                'Câu hỏi luyện tập 4 / 6',
+                'Số điện thoại 111 (Tổng đài điện thoại Quốc gia bảo vệ trẻ em) được sử dụng trong trường hợp nào dưới đây là phù hợp nhất?',
+                [
+                    {
+                        text: 'A. Khi trẻ em cần tư vấn, hỗ trợ hoặc khi phát hiện trẻ em có nguy cơ bị bạo lực, xâm hại, bóc lột.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Tổng đài 111 hoạt động miễn phí 24/24 giờ để tiếp nhận thông tin, tư vấn và bảo vệ trẻ em.'
+                    },
+                    {
+                        text: 'B. Khi học sinh muốn hỏi đáp án bài tập về nhà hoặc hỏi lịch thi học kì của nhà trường.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khi hỏi bài tập em nên trao đổi với thầy cô hoặc bạn bè, không gọi tới các số dịch vụ khẩn cấp.'
+                    },
+                    {
+                        text: 'C. Khi em muốn đặt mua đồ chơi trẻ em, truyện tranh hoặc đặt đồ ăn giao tới tận nhà.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tổng đài 111 là số khẩn cấp bảo vệ trẻ em, không phải số mua sắm hàng hóa.'
+                    },
+                    {
+                        text: 'D. Khi rảnh rỗi ở nhà và muốn gọi thử xem các cô chú tổng đài viên có nhấc máy trả lời hay không.',
+                        correct: false,
+                        explain: 'Tuyệt đối không nên! Chỉ gọi tới các số khẩn cấp khi thực sự cần thiết để không làm nghẽn đường dây cứu giúp người khác.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 5/6
+        function renderStep3_5(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac5Done',
+                'Câu hỏi luyện tập 5 / 6',
+                'Thói quen nào dưới đây đảm bảo AN TOÀN, TIẾT KIỆM và BẢO MẬT THÔNG TIN khi sử dụng điện thoại?',
+                [
+                    {
+                        text: 'A. Vừa cắm sạc điện thoại vào ổ điện vừa gọi điện thoại nói chuyện hàng giờ liền để máy không bị sập nguồn.',
+                        correct: false,
+                        explain: 'Rất nguy hiểm! Vừa sạc pin vừa sử dụng điện thoại (như Hình 6b) dễ gây nóng máy, chập cháy nổ.'
+                    },
+                    {
+                        text: 'B. Không sử dụng khi đang sạc pin hoặc khi pin yếu; chỉ gọi khi cần thiết với thời gian vừa phải và giữ kín thông tin cá nhân.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Đây chính là 4 lưu ý quan trọng khi sử dụng điện thoại trong hộp Ghi nhớ trang 25 SGK.'
+                    },
+                    {
+                        text: 'C. Cung cấp ngay họ tên, địa chỉ nhà và mật khẩu cho bất kỳ tin nhắn lạ nào hứa tặng quà trúng thưởng trên điện thoại.',
+                        correct: false,
+                        explain: 'Chưa an toàn! Việc gửi địa chỉ nhà và mật khẩu cho người lạ (như Hình 6g) làm mất an toàn và lộ thông tin cá nhân.'
+                    },
+                    {
+                        text: 'D. Bật màn hình điện thoại ở độ sáng cao nhất và mở video liên tục suốt đêm ngay cả khi không xem.',
+                        correct: false,
+                        explain: 'Chưa đúng! Làm như vậy gây lãng phí điện năng, nhanh hỏng pin và không tiết kiệm.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 6/6
+        function renderStep3_6(container) {
+            renderPracticeMCQ5(
+                container,
+                'prac6Done',
+                'Câu hỏi luyện tập 6 / 6',
+                'Theo quy tắc giao tiếp khi sử dụng điện thoại (trang 25 SGK), ngay khi người nhận nhấc máy, người gọi cần thực hiện điều gì đầu tiên?',
+                [
+                    {
+                        text: 'A. Hỏi dồn dập xem người đang cầm máy là ai rồi yêu cầu người đó chuyển máy ngay cho người mình cần gặp.',
+                        correct: false,
+                        explain: 'Chưa lịch sự! Hỏi dồn dập mà chưa chào hỏi và tự giới thiệu tên mình (như Hình 7b) là chưa đúng quy tắc giao tiếp.'
+                    },
+                    {
+                        text: 'B. Chào hỏi lễ phép, tự giới thiệu tên của mình (xưng danh) và nêu rõ mục đích của cuộc gọi với giọng nói từ tốn.',
+                        correct: true,
+                        explain: 'Chính xác! Chào hỏi, xưng danh và nêu mục đích cuộc gọi với thái độ thân thiện, lịch sự là quy tắc hàng đầu khi gọi điện.'
+                    },
+                    {
+                        text: 'C. Giữ im lặng chờ người bên kia đầu dây đoán xem ai đang gọi đến để tạo sự bất ngờ thú vị.',
+                        correct: false,
+                        explain: 'Chưa phù hợp! Im lặng làm mất thời gian của cả hai bên và khiến người nghe lo lắng.'
+                    },
+                    {
+                        text: 'D. Nói thật to và nhanh nội dung mình cần thông báo rồi bấm kết thúc cuộc gọi ngay trước khi người nghe kịp trả lời.',
+                        correct: false,
+                        explain: 'Chưa đúng! Theo quy tắc giao tiếp trang 25: Cần nói với giọng từ tốn, vừa phải và không bất ngờ kết thúc cuộc gọi.'
+                    }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 9. CHẶNG 4: VẬN DỤNG (4 BƯỚC - BÀN PHÍM SỐ & 3 TÌNH HUỐNG)
+         **************************************************************/
+        const DIAL_TASKS = [
+            {
+                title: 'Nhiệm vụ 1/3: Gọi Cứu hoả khi phát hiện đám cháy',
+                situation: 'Em phát hiện có khói và lửa bốc lên từ kho chứa đồ cạnh khu phố. Hãy bấm số điện thoại gọi Cứu hoả rồi nhấn nút Gọi màu xanh!',
+                targetNumber: '114',
+                successMsg: 'Chính xác! Đã kết nối tới số 114 (Dịch vụ gọi cứu hoả)!'
+            },
+            {
+                title: 'Nhiệm vụ 2/3: Gọi Cấp cứu y tế khi có người bị ngất xỉu',
+                situation: 'Có một bác hàng xóm bị ngất xỉu cần xe cứu thương và bác sĩ hỗ trợ gấp. Hãy bấm số gọi Cấp cứu y tế rồi nhấn nút Gọi!',
+                targetNumber: '115',
+                successMsg: 'Tuyệt vời! Đã kết nối tới số 115 (Dịch vụ gọi cấp cứu y tế)!'
+            },
+            {
+                title: 'Nhiệm vụ 3/3: Gọi Tổng đài Quốc gia bảo vệ trẻ em',
+                situation: 'Cần liên hệ Tổng đài điện thoại Quốc gia bảo vệ trẻ em để được tư vấn và bảo vệ quyền trẻ em. Hãy bấm số tổng đài rồi nhấn nút Gọi!',
+                targetNumber: '111',
+                successMsg: 'Xuất sắc! Đã kết nối tới số 111 (Tổng đài Quốc gia bảo vệ trẻ em)!'
+            }
+        ];
+
+        // Bước 1/4: Thực hành bấm số trên bàn phím điện thoại mô phỏng
+        function renderStep4_1(container) {
+            const task = DIAL_TASKS[state.dialTaskIdx];
+            const allSolved = state.dialTasksSolved.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Thẻ nhiệm vụ tình huống -->
+                    <div class="lg:col-span-6 flex flex-col gap-3.5">
+                        <div class="flex flex-wrap gap-2">
+                            ${DIAL_TASKS.map((t, idx) => `
+                                <button onclick="switchDialTask(${idx})"
+                                    class="btn-kid px-4 py-2 rounded-2xl border-3 font-black text-base ${
+                                        state.dialTaskIdx === idx
+                                            ? 'bg-purple-600 text-white border-purple-800'
+                                            : state.dialTasksSolved[idx]
+                                            ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                                            : 'bg-white text-slate-800 border-slate-300'
+                                    }">
+                                    Tình huống ${idx + 1} ${state.dialTasksSolved[idx] ? '✓' : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <div class="bg-amber-50 border-4 border-amber-400 rounded-3xl p-5 flex flex-col gap-3">
+                            <span class="tv-badge uppercase text-amber-800">${task.title}</span>
+                            <p class="tv-card-title text-slate-900 leading-snug">${task.situation}</p>
+                            <div class="bg-white border-2 border-amber-300 rounded-2xl p-3 text-sm sm:text-base font-extrabold text-slate-700">
+                                💡 <b>Hướng dẫn:</b> Bước 1: Bấm các chữ số trên bàn phím bên phải ➔ Bước 2: Nhấn nút <b>Gọi (📞 màu xanh)</b>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bàn phím điện thoại thông minh chữ cực to -->
+                    <div class="lg:col-span-6 bg-slate-900 border-4 border-slate-700 rounded-3xl p-4 sm:p-5 max-w-md mx-auto w-full flex flex-col gap-3 shadow-xl">
+                        <!-- Màn hình hiển thị số đang bấm -->
+                        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl px-4 py-3 flex items-center justify-between">
+                            <span class="text-3xl sm:text-4xl font-black text-emerald-400 tracking-widest min-h-[42px]">
+                                ${state.dialInput || 'Nhập số...'}
+                            </span>
+                            <button onclick="backspaceDial()" title="Xóa 1 số"
+                                class="btn-kid bg-slate-700 hover:bg-slate-600 text-white px-3.5 py-1.5 rounded-xl font-black text-lg">
+                                ⌫ Xóa
+                            </button>
+                        </div>
+
+                        <!-- Lưới phím số 0 - 9, *, # -->
+                        <div class="grid grid-cols-3 gap-2.5">
+                            ${['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map(k => `
+                                <button onclick="pressPhoneKey('${k}')"
+                                    class="btn-kid bg-slate-800 hover:bg-slate-700 active:bg-sky-600 text-white border-2 border-slate-600 rounded-2xl py-2.5 text-2xl sm:text-3xl font-black">
+                                    ${k}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <!-- Nút Gọi xanh & Nút Kết thúc đỏ -->
+                        <div class="grid grid-cols-2 gap-3 mt-1">
+                            <button onclick="submitPhoneCall()"
+                                class="btn-kid bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-2xl text-xl flex items-center justify-center gap-2">
+                                <span>📞</span> <span>GỌI NGAY</span>
+                            </button>
+                            <button onclick="clearDialInput()"
+                                class="btn-kid bg-rose-500 hover:bg-rose-600 text-white font-black py-3 rounded-2xl text-xl flex items-center justify-center gap-2">
+                                <span>📴</span> <span>KẾT THÚC</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allSolved) {
+                showFeedback(true, 'Tuyệt vời! Em đã thực hành thành thạo thao tác bấm số và gọi điện trên bàn phím!');
+            }
+        }
+
+        function switchDialTask(idx) {
+            playSound('click');
+            state.dialTaskIdx = idx;
+            state.dialInput = '';
+            hideFeedback();
+            renderApp();
+        }
+
+        function pressPhoneKey(key) {
+            if (state.dialInput.length < 10) {
+                state.dialInput += key;
+                playDTMF(key);
+                renderApp();
+            }
+        }
+
+        function backspaceDial() {
+            playSound('click');
+            state.dialInput = state.dialInput.slice(0, -1);
+            renderApp();
+        }
+
+        function clearDialInput() {
+            playSound('click');
+            state.dialInput = '';
+            hideFeedback();
+            renderApp();
+        }
+
+        function submitPhoneCall() {
+            const task = DIAL_TASKS[state.dialTaskIdx];
+            if (state.dialInput === task.targetNumber) {
+                state.dialTasksSolved[state.dialTaskIdx] = true;
+                playSound('ring');
+                rewardStar('dial_task_' + state.dialTaskIdx, 1);
+                showFeedback(true, task.successMsg);
+                setTimeout(() => {
+                    if (state.dialTaskIdx < DIAL_TASKS.length - 1 && !state.dialTasksSolved[state.dialTaskIdx + 1]) {
+                        state.dialTaskIdx++;
+                        state.dialInput = '';
+                    }
+                    renderApp();
+                }, 1100);
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Số "${state.dialInput || '...'}" chưa đúng với tình huống này! Em hãy kiểm tra lại nhé.`);
+            }
+        }
+
+        // Bước 2/4: Đóng vai xử lí Tình huống 1 (Trang 25)
+        function renderStep4_2(container) {
+            renderPracticeMCQ5(
+                container,
+                'roleplay1Done',
+                'Đóng vai xử lí Tình huống 1 (SGK Trang 25)',
+                'Tình huống 1: Khi em ở nhà một mình và có cuộc gọi đến điện thoại cố định từ một người lạ hỏi: "Bố mẹ cháu có ở nhà không? Đọc cho cô/chú địa chỉ nhà cháu nhé!". Em nên xử lí như thế nào?',
+                [
+                    {
+                        text: 'A. Thật thà trả lời: "Cháu đang ở nhà một mình, bố mẹ cháu đi làm tối mới về ạ" rồi đọc rõ địa chỉ nhà cho người lạ.',
+                        correct: false,
+                        explain: 'Rất mất an toàn! Tuyệt đối không tiết lộ việc em đang ở nhà một mình và không đọc địa chỉ nhà cho người lạ.'
+                    },
+                    {
+                        text: 'B. Trả lời lịch sự: "Dạ hiện tại bố mẹ cháu đang bận không nghe máy được ạ. Cô/chú tên là gì và có việc gì để cháu nhắn lại ạ?", tuyệt đối không nói mình ở nhà một mình và báo ngay cho bố mẹ.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Cách ứng xử này vừa lịch sự, lễ phép vừa đảm bảo an toàn và bảo mật thông tin gia đình.'
+                    },
+                    {
+                        text: 'C. Hét to vào ống nghe rồi đập mạnh ống nghe xuống bàn phím để người lạ không dám gọi lại nữa.',
+                        correct: false,
+                        explain: 'Chưa phù hợp! Chúng ta cần giữ thái độ bình tĩnh, lịch sự nhưng kiên quyết bảo mật thông tin.'
+                    },
+                    {
+                        text: 'D. Mời người lạ đến thẳng nhà mình ngay bây giờ để tự nói chuyện vì mình không biết nội dung công việc.',
+                        correct: false,
+                        explain: 'Nguy hiểm! Khi ở nhà một mình tuyệt đối không hẹn hoặc mở cửa cho người lạ vào nhà.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 3/4: Đóng vai xử lí Tình huống 2 (Trang 25)
+        function renderStep4_3(container) {
+            renderPracticeMCQ5(
+                container,
+                'roleplay2Done',
+                'Đóng vai xử lí Tình huống 2 (SGK Trang 25)',
+                'Tình huống 2: Khi em gọi điện thoại cho bạn Minh để hỏi bài nhưng bố của bạn Minh lại là người nhấc máy trả lời. Em nên nói như thế nào?',
+                [
+                    {
+                        text: 'A. Im lặng rồi bấm nút Kết thúc cuộc gọi màu đỏ ngay lập tức vì không phải bạn Minh nghe máy.',
+                        correct: false,
+                        explain: 'Chưa đúng quy tắc giao tiếp! Tự ý ngắt cuộc gọi đột ngột (bất ngờ kết thúc cuộc gọi) là thiếu lịch sự.'
+                    },
+                    {
+                        text: 'B. Nói ngắn gọn: "A lô! Cho gặp Minh ngay bây giờ đi ạ!" để tiết kiệm thời gian cuộc gọi.',
+                        correct: false,
+                        explain: 'Chưa lễ phép! Em cần chào hỏi người lớn, tự giới thiệu tên mình trước khi xin phép gặp bạn.'
+                    },
+                    {
+                        text: 'C. Lễ phép nói: "Cháu chào bác ạ! Cháu là An, bạn cùng lớp với Minh ạ. Bác cho cháu xin phép nói chuyện với bạn Minh một chút về bài học được không ạ?".',
+                        correct: true,
+                        explain: 'Xuất sắc! Lời thoại đầy đủ: Chào hỏi lễ phép ➔ Xưng danh ➔ Nêu rõ mục đích cuộc gọi với thái độ tôn trọng.'
+                    },
+                    {
+                        text: 'D. Hỏi ngược lại: "Ai đang cầm máy của Minh đấy? Sao Minh không tự nghe điện thoại?".',
+                        correct: false,
+                        explain: 'Chưa lịch sự! Khi gọi điện, người gọi phải chủ động chào hỏi và xưng danh trước.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 4/4: Đóng vai xử lí Tình huống 3 & Tổng kết trao Huy hiệu (Trang 25)
+        function renderStep4_4(container) {
+            if (!state.roleplay3Done) {
+                renderPracticeMCQ5(
+                    container,
+                    'roleplay3Done',
+                    'Đóng vai xử lí Tình huống 3 (SGK Trang 25)',
+                    'Tình huống 3: Em gọi điện thoại cho bạn cùng lớp để trao đổi về nội dung bài học. Cách thực hiện nào dưới đây vừa hiệu quả vừa đúng quy tắc giao tiếp?',
+                    [
+                        {
+                            text: 'A. Chào bạn, nêu rõ câu hỏi bài tập cần trao đổi với giọng nói từ tốn; khi trao đổi xong thì cảm ơn và chào tạm biệt bạn rồi mới nhấn nút kết thúc cuộc gọi.',
+                            correct: true,
+                            explain: 'Hoàn toàn chính xác! Em đã hoàn thành xuất sắc cả 3 tình huống đóng vai của Bài 5!'
+                        },
+                        {
+                            text: 'B. Vừa cắm dây sạc điện thoại vừa nằm nói chuyện lan man suốt 2 tiếng đồng hồ về các trò chơi điện tử.',
+                            correct: false,
+                            explain: 'Chưa đúng! Vừa sạc vừa dùng gây mất an toàn, và nói chuyện quá lâu không đúng mục đích học tập là không tiết kiệm.'
+                        },
+                        {
+                            text: 'C. Hỏi xong bài tập là bấm tắt máy ngay lập tức mà không cần cảm ơn hay chào tạm biệt bạn.',
+                            correct: false,
+                            explain: 'Chưa đúng quy tắc! Không được bất ngờ kết thúc cuộc gọi mà cần chào tạm biệt lịch sự.'
+                        }
+                    ]
+                );
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-amber-100 via-yellow-50 to-emerald-100 border-4 border-amber-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl sm:text-6xl">🏆📱</div>
+                            <div>
+                                <div class="tv-badge uppercase text-amber-800">Hoàn thành xuất sắc Bài 5: Sử dụng điện thoại</div>
+                                <h2 class="tv-title text-slate-900">
+                                    Huy Hiệu: Đại Sứ Văn Minh Điện Thoại!
+                                </h2>
+                                <p class="tv-body text-slate-800 mt-1">
+                                    Tổng số Sao lớp mình đạt được: <span class="text-amber-600 font-black text-3xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="celebrateFinishLesson5()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-5 py-3 rounded-2xl text-lg">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-sky-50 text-sky-950 border-3 border-sky-400 font-black px-5 py-3 rounded-2xl text-lg">
+                                🔄 Học lại từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng kết ghi nhớ cốt lõi Trang 25 SGK -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-sky-50 border-4 border-sky-300 rounded-3xl p-5">
+                            <div class="tv-card-title text-sky-900 mb-2">🛡️ 1. Lưu ý khi sử dụng điện thoại:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li>Không sử dụng khi đang sạc pin và khi pin yếu.</li>
+                                <li>Chỉ sử dụng khi cần thiết; thời gian vừa phải.</li>
+                                <li>Đảm bảo an toàn, bảo mật thông tin cá nhân.</li>
+                                <li>Nhớ số người thân và 5 số khẩn cấp: <b>111, 112, 113, 114, 115</b>.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-50 border-4 border-emerald-300 rounded-3xl p-5">
+                            <div class="tv-card-title text-emerald-900 mb-2">🤝 2. Quy tắc giao tiếp qua điện thoại:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li>Chào hỏi, xưng danh và nêu mục đích của cuộc gọi.</li>
+                                <li>Thể hiện thái độ thân thiện và lịch sự.</li>
+                                <li>Giọng nói từ tốn, vừa phải.</li>
+                                <li>Không bất ngờ kết thúc cuộc gọi.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showFeedback(true, 'Em hãy chia sẻ với người thân trong gia đình về cách sử dụng điện thoại an toàn, tiết kiệm, hiệu quả nhé!');
+        }
+
+        function celebrateFinishLesson5() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng các em đã nắm vững toàn bộ kiến thức Bài 5: Sử dụng điện thoại!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson5();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-4 py-1.5 rounded-xl font-black text-base sm:text-lg transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-700 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại (Chữ cực to rõ cho Tivi)
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-0.5 rounded-xl tv-badge uppercase border-2 ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="tv-title text-slate-900 mt-1">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="tv-subtitle text-slate-700 mt-0.5">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-4 rounded-full transition-all ${
+                            active ? 'w-10 bg-sky-600' : 'w-4 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 2: Nhà Sáng Chế - Công Nghệ Tiểu Học</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Không chân, tròn đều, đậm nét, hỗ trợ 100% tiếng Việt) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Quicksand:wght@600;700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef9c3 100%);
+            color: #1e293b;
+        }
+        /* Thanh cuộn mượt mà trong khung nội dung nếu màn hình nhỏ */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.5);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 9999px;
+        }
+        /* Hiệu ứng nút bấm 3D thân thiện với học sinh tiểu học */
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.6); }
+            50% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); }
+        }
+        .glow-yellow {
+            animation: pulseGlow 2s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA GIẤY KHI HOÀN THÀNH -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG (TOP BAR) -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-200 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên bài học -->
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider leading-none opacity-90">Bài</span>
+                <span class="text-xl sm:text-2xl font-black leading-none">2</span>
+            </div>
+            <div>
+                <div class="text-xs font-extrabold text-sky-600 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-lg sm:text-2xl font-black text-slate-800 tracking-tight leading-tight">Nhà sáng chế</h1>
+            </div>
+        </div>
+
+        <!-- 4 Chặng Học Lớn -->
+        <nav class="hidden lg:flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200" id="stage-tabs">
+            <!-- Render bằng JS -->
+        </nav>
+
+        <!-- Cụm nút công cụ: Điểm Sao, Đọc bài, Âm thanh, Fullscreen -->
+        <div class="flex items-center gap-2">
+            <!-- Điểm ngôi sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-2xl">
+                <svg class="w-6 h-6 text-amber-500 fill-current animate-spin" style="animation-duration: 10s;" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-lg sm:text-xl font-black text-amber-800">0</span>
+                <span class="text-xs font-extrabold text-amber-700 hidden sm:inline">Sao</span>
+            </div>
+
+            <!-- Nút đọc giọng nói -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden sm:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút bật/tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHẶNG DÀNH CHO MOBILE / TABLET NHỎ -->
+    <div class="lg:hidden bg-white/80 border-b-2 border-sky-100 px-3 py-1.5 flex items-center justify-center gap-1.5 shrink-0" id="stage-tabs-mobile">
+        <!-- Render bằng JS -->
+    </div>
+
+    <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN STAGE - CHỈ HIỂN THỊ 1 ĐƠN VỊ KIẾN THỨC MỖI LẦN) -->
+    <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-sky-200 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề bước nhỏ hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3.5 bg-gradient-to-r from-sky-50 via-indigo-50 to-amber-50 border-b-2 border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <!-- Render bằng JS -->
+            </div>
+
+            <!-- Khu vực hiển thị nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-7 overflow-y-auto custom-scroll flex flex-col justify-center">
+                <!-- Render bằng JS -->
+            </div>
+
+            <!-- Hộp phản hồi Đúng/Sai ngay phía dưới màn hình tương tác -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-2 items-center justify-between gap-4 shrink-0 transition-all">
+                <!-- Render bằng JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH ĐIỀU HƯỚNG DƯỚI CÙNG (BOTTOM BAR) -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-200 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-extrabold px-4 sm:px-6 py-2.5 rounded-2xl text-base sm:text-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình từng bước trong chặng -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+                <!-- Render bằng JS -->
+            </div>
+            <div id="step-counter-text" class="text-xs sm:text-sm font-extrabold text-slate-500">
+                Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-black px-5 sm:px-8 py-2.5 rounded-2xl text-base sm:text-lg">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- JAVASCRIPT XỬ LÝ ÂM THANH, NỘI DUNG & TƯƠNG TÁC -->
+    <script>
+        /**************************************************************
+         * 1. HỆ THỐNG ÂM THANH SINH ĐỘNG (WEB AUDIO API + SPEECH)
+         **************************************************************/
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.13);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.22, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.28);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.3);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 240];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+                        gain.gain.setValueAtTime(0.14, now + idx * 0.14);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.22);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.14);
+                        osc.stop(now + idx * 0.14 + 0.24);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+                    const times = [0, 0.12, 0.24, 0.36, 0.52, 0.68];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.35);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.36);
+                    });
+                }
+            } catch (e) {
+                // Bỏ qua nếu trình duyệt chặn tự động phát
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // Đọc giọng nói Tiếng Việt (Web Speech API)
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.05;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA GIẤY (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#eab308'];
+            for (let i = 0; i < 85; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 10 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42; // gravity
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 100) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. KHO HÌNH MINH HỌA SVG TRỰC QUAN CHO HỌC SINH TIỂU HỌC
+         **************************************************************/
+        const SVGS = {
+            toiletPaper: `<svg viewBox="0 0 160 120" class="w-36 h-28 mx-auto">
+                <rect x="10" y="10" width="140" height="100" rx="18" fill="#10b981"/>
+                <rect x="48" y="24" width="64" height="10" rx="4" fill="#334155"/>
+                <ellipse cx="80" cy="60" rx="32" ry="26" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+                <path d="M48 60 v36 h48 v-28" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+                <ellipse cx="96" cy="60" rx="10" ry="24" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                <ellipse cx="96" cy="60" rx="4" ry="10" fill="#64748b"/>
+                <path d="M55 78 h32" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>`,
+            lightBulb: `<svg viewBox="0 0 160 120" class="w-36 h-28 mx-auto">
+                <rect x="10" y="10" width="140" height="100" rx="18" fill="#fbbf24"/>
+                <circle cx="80" cy="52" r="28" fill="#fef08a" stroke="#f59e0b" stroke-width="3"/>
+                <path d="M68 74 h24 l-4 18 h-16 z" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                <rect x="73" y="92" width="14" height="6" rx="3" fill="#334155"/>
+                <path d="M74 72 v-18 l6 -8 l6 8 v18" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
+                <line x1="80" y1="14" x2="80" y2="20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <line x1="44" y1="52" x2="36" y2="52" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+                <line x1="116" y1="52" x2="124" y2="52" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+            </svg>`,
+            writingPaper: `<svg viewBox="0 0 160 120" class="w-36 h-28 mx-auto">
+                <rect x="10" y="10" width="140" height="100" rx="18" fill="#38bdf8"/>
+                <polygon points="36,78 92,32 128,58 72,102" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+                <line x1="56" y1="68" x2="94" y2="39" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="65" y1="75" x2="103" y2="46" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="74" y1="82" x2="112" y2="53" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="88" y1="28" x2="132" y2="60" stroke="#d97706" stroke-width="8" stroke-linecap="round"/>
+            </svg>`,
+            waterWheel: `<svg viewBox="0 0 160 120" class="w-36 h-28 mx-auto">
+                <rect x="10" y="10" width="140" height="100" rx="18" fill="#dcfce7"/>
+                <path d="M10 88 Q 45 80, 80 88 T 150 88 L 150 110 L 10 110 Z" fill="#0ea5e9"/>
+                <circle cx="80" cy="60" r="32" fill="none" stroke="#78350f" stroke-width="6"/>
+                <circle cx="80" cy="60" r="20" fill="none" stroke="#92400e" stroke-width="3"/>
+                <line x1="80" y1="24" x2="80" y2="96" stroke="#78350f" stroke-width="4"/>
+                <line x1="44" y1="60" x2="116" y2="60" stroke="#78350f" stroke-width="4"/>
+                <line x1="55" y1="35" x2="105" y2="85" stroke="#78350f" stroke-width="4"/>
+                <line x1="105" y1="35" x2="55" y2="85" stroke="#78350f" stroke-width="4"/>
+                <circle cx="80" cy="60" r="6" fill="#451a03"/>
+            </svg>`,
+            charcoalDraw: `<svg viewBox="0 0 180 120" class="w-40 h-28 mx-auto">
+                <rect x="6" y="6" width="168" height="108" rx="16" fill="#f5f5f4" stroke="#d6d3d1" stroke-width="3"/>
+                <path d="M28 86 Q 48 60, 74 82 T 110 78" fill="none" stroke="#44403c" stroke-width="5" stroke-linecap="round"/>
+                <rect x="82" y="42" width="46" height="14" rx="5" transform="rotate(-30 82 42)" fill="#1c1917"/>
+                <circle cx="75" cy="86" r="4" fill="#44403c"/>
+                <circle cx="62" cy="92" r="3" fill="#57534e"/>
+                <text x="90" y="106" text-anchor="middle" fill="#44403c" font-size="13" font-weight="800">Vẽ bằng than củi</text>
+            </svg>`,
+            pencilDraw: `<svg viewBox="0 0 180 120" class="w-40 h-28 mx-auto">
+                <rect x="6" y="6" width="168" height="108" rx="16" fill="#fdf2f8" stroke="#fbcfe8" stroke-width="3"/>
+                <polygon points="24,84 118,66 138,88 38,94" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                <path d="M52 80 C 65 68, 82 90, 96 76" fill="none" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+                <g transform="translate(88, 52) rotate(-35)">
+                    <rect x="0" y="0" width="58" height="10" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+                    <polygon points="0,0 -12,5 0,10" fill="#fde68a"/>
+                    <polygon points="-7,3 -12,5 -7,7" fill="#1e293b"/>
+                    <rect x="58" y="0" width="8" height="10" rx="2" fill="#f472b6"/>
+                </g>
+                <text x="90" y="108" text-anchor="middle" fill="#be185d" font-size="13" font-weight="800">Vẽ bằng bút chì</text>
+            </svg>`,
+            steamEngine: `<svg viewBox="0 0 140 110" class="w-32 h-24 mx-auto">
+                <rect x="8" y="8" width="124" height="94" rx="14" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="92" cy="58" r="26" fill="none" stroke="#475569" stroke-width="5"/>
+                <line x1="92" y1="32" x2="92" y2="84" stroke="#475569" stroke-width="3"/>
+                <line x1="66" y1="58" x2="118" y2="58" stroke="#475569" stroke-width="3"/>
+                <rect x="26" y="42" width="26" height="42" rx="4" fill="#64748b" stroke="#334155" stroke-width="2"/>
+                <line x1="39" y1="24" x2="92" y2="58" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+                <line x1="39" y1="24" x2="39" y2="42" stroke="#334155" stroke-width="4"/>
+            </svg>`,
+            vintagePhone: `<svg viewBox="0 0 140 110" class="w-32 h-24 mx-auto">
+                <rect x="8" y="8" width="124" height="94" rx="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <rect x="50" y="78" width="40" height="12" rx="4" fill="#1e293b"/>
+                <rect x="65" y="34" width="10" height="44" fill="#334155"/>
+                <circle cx="70" cy="28" r="10" fill="#0f172a"/>
+                <path d="M50 48 L36 68 L48 68 Z" fill="#1e293b"/>
+                <path d="M42 68 Q 36 82, 65 76" fill="none" stroke="#475569" stroke-width="3"/>
+            </svg>`,
+            motorCar: `<svg viewBox="0 0 140 110" class="w-32 h-24 mx-auto">
+                <rect x="8" y="8" width="124" height="94" rx="14" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                <circle cx="96" cy="66" r="22" fill="none" stroke="#1e293b" stroke-width="4"/>
+                <circle cx="96" cy="66" r="4" fill="#1e293b"/>
+                <circle cx="36" cy="72" r="15" fill="none" stroke="#1e293b" stroke-width="3.5"/>
+                <path d="M36 72 L68 58 L102 58" fill="none" stroke="#334155" stroke-width="4"/>
+                <path d="M68 58 L64 40 L84 40" fill="none" stroke="#b45309" stroke-width="4" stroke-linecap="round"/>
+            </svg>`,
+            eniacComputer: `<svg viewBox="0 0 220 120" class="w-48 h-28 mx-auto">
+                <rect x="6" y="6" width="208" height="108" rx="14" fill="#1e293b"/>
+                <rect x="20" y="20" width="38" height="80" rx="3" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                <rect x="64" y="20" width="38" height="80" rx="3" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                <rect x="108" y="20" width="38" height="80" rx="3" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                <rect x="152" y="20" width="48" height="80" rx="3" fill="#475569" stroke="#94a3b8" stroke-width="2"/>
+                <!-- Đèn báo nhấp nháy -->
+                <circle cx="30" cy="32" r="3" fill="#22c55e"/><circle cx="42" cy="32" r="3" fill="#eab308"/>
+                <circle cx="74" cy="32" r="3" fill="#ef4444"/><circle cx="86" cy="32" r="3" fill="#22c55e"/>
+                <circle cx="118" cy="32" r="3" fill="#38bdf8"/><circle cx="130" cy="32" r="3" fill="#eab308"/>
+                <line x1="26" y1="50" x2="52" y2="50" stroke="#94a3b8" stroke-width="3"/>
+                <line x1="70" y1="50" x2="96" y2="50" stroke="#94a3b8" stroke-width="3"/>
+                <line x1="114" y1="50" x2="140" y2="50" stroke="#94a3b8" stroke-width="3"/>
+                <text x="110" y="92" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="900">MÁY TÍNH ENIAC (1946)</text>
+            </svg>`
+        };
+
+        /**************************************************************
+         * 4. CẤU TRÚC DỮ LIỆU 4 CHẶNG & CÁC BƯỚC NHỎ (STEP-BY-STEP)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+            // Chặng 1
+            goalsChecked: [false, false, false, false],
+            comicAnswered: false,
+            introQuizDone: false,
+            // Chặng 2
+            role1aPart1: { a: null, b: null },
+            role1aPart2: { c: null, d: null },
+            techCompareDone: false,
+            wattTab: 0,
+            edisonTab: 0,
+            bellTab: 0,
+            benzTab: 0,
+            traitsSelected: {},
+            // Chặng 3
+            selectedInventor: null,
+            matchedPairs: {}, // { watt: '2', benz: '4', bell: '3', edison: '1' }
+            selectedTimelineYear: '1784',
+            timelineFilled: {}, // { '1784': 'Động cơ hơi nước', ... }
+            quiz3Done: false,
+            quiz4Done: false,
+            quiz5Done: false,
+            // Chặng 4
+            mindmapTopic: 'bulb',
+            mindmapActiveSlot: null,
+            mindmapFilled: { bulb: {}, phone: {}, car: {} },
+            eniacQuizDone: false,
+            myPromises: {}
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-800 border-amber-300',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học',
+                        subtitle: 'Em hãy bấm vào từng mục tiêu để sẵn sàng bước vào bài học nhé!',
+                        voiceText: 'Chào mừng em đến với Bài 2: Nhà sáng chế. Học xong bài này, em sẽ: Nêu được vai trò của sáng chế trong đời sống và sự phát triển của công nghệ. Tóm tắt được thông tin về một số nhà sáng chế nổi bật trong lịch sử loài người. Nêu được lịch sử sáng chế ra sản phẩm công nghệ tiêu biểu. Nêu được một số đức tính cần có để trở thành nhà sáng chế.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Câu chuyện ở sân trường',
+                        subtitle: 'Cùng lắng nghe cuộc trò chuyện của hai bạn nhỏ và giúp bạn trả lời nhé!',
+                        voiceText: 'Bạn nam hỏi: Bạn có biết bóng đèn điện là sáng chế của ai không? Em hãy chọn đáp án đúng bên dưới để giúp bạn nữ trả lời nhé!',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Câu đố mở màn',
+                        subtitle: 'Trả lời câu hỏi nhỏ để mở khóa Chặng Khám Phá!',
+                        voiceText: 'Đố em: Những người tìm tòi, nghiên cứu và tạo ra các sản phẩm công nghệ mới đầu tiên phục vụ cuộc sống được gọi là gì?',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-500 to-blue-600',
+                badgeBg: 'bg-sky-100 text-sky-800 border-sky-300',
+                steps: [
+                    {
+                        title: '1a. Vai trò của sáng chế trong đời sống (Phần 1)',
+                        subtitle: 'Quan sát Hình 1a, 1b và chọn đúng vai trò của từng sáng chế trong đời sống.',
+                        voiceText: 'Phần 1: Vai trò của sáng chế trong đời sống. Em hãy quan sát Cách treo cuộn giấy vệ sinh với đầu cuộn giấy ở phía trên và Bóng đèn điện, sau đó chọn vai trò đúng của từng sáng chế nhé.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '1a. Vai trò của sáng chế trong đời sống (Phần 2)',
+                        subtitle: 'Tiếp tục quan sát Hình 1c, 1d và khám phá vai trò của Giấy viết và Guồng nước.',
+                        voiceText: 'Tiếp theo, em hãy quan sát Hình 1c Giấy viết và Hình 1d Guồng nước và chọn vai trò phù hợp trong đời sống.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '1b. Vai trò của sáng chế trong sự phát triển công nghệ',
+                        subtitle: 'Quan sát Hình 2 và cho biết sáng chế đã làm công nghệ thay đổi và phát triển như thế nào.',
+                        voiceText: 'Quan sát Hình 2: Từ vẽ bằng than củi đến vẽ bằng bút chì. Sáng chế góp phần tạo ra sản phẩm mới, cải tiến sản phẩm, thúc đẩy sự phát triển của công nghệ, giúp đời sống con người tiện nghi và văn minh hơn.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '2. Nhà sáng chế tiêu biểu (1/4): Giêm Oát (James Watt)',
+                        subtitle: 'Bấm vào từng mốc năm để khám phá lịch sử sáng chế Động cơ hơi nước.',
+                        voiceText: 'Giêm Oát sinh năm 1736, mất năm 1819, là một nhà sáng chế, một kĩ sư người Xcốt-len. Năm 1784, Giêm Oát được cấp bằng sáng chế cho động cơ hơi nước của mình, mở ra thời đại máy hơi nước và cuộc cách mạng công nghiệp của thế kỉ 19.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '2. Nhà sáng chế tiêu biểu (2/4): Tô-mát Ê-đi-xơn (Thomas Edison)',
+                        subtitle: 'Bấm vào từng mốc thời gian để tìm hiểu về sự ra đời của Bóng đèn sợi đốt.',
+                        voiceText: 'Tô-mát Ê-đi-xơn sinh năm 1847, mất năm 1931, là nhà phát minh, nhà sáng chế nổi tiếng người Mỹ. Sau rất nhiều lần thất bại, ông đã chế tạo thành công chiếc bóng đèn sợi đốt và nhận được bằng sáng chế vào năm 1879.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '2. Nhà sáng chế tiêu biểu (3/4): A-lếch-xan-đơ Gra-ham Beo',
+                        subtitle: 'Tìm hiểu lịch sử sáng chế ra chiếc Điện thoại đầu tiên.',
+                        voiceText: 'A-lếch-xan-đơ Gra-ham Beo sinh năm 1847, mất năm 1922, là một nhà sáng chế người Xcốt-len. Năm 1876, ông được cấp bằng sáng chế cho chiếc điện thoại của mình, giúp con người dễ dàng liên lạc từ khoảng cách xa.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '2. Nhà sáng chế tiêu biểu (4/4): Các Ben (Karl Benz)',
+                        subtitle: 'Khám phá câu chuyện sáng chế ra chiếc Ô tô chạy bằng xăng.',
+                        voiceText: 'Các Ben sinh năm 1844, mất năm 1929, là một kĩ sư cơ khí người Đức. Đầu năm 1886, chiếc ô tô của Các Ben đã hoàn thiện và được cấp bằng sáng chế, giúp cho việc di chuyển của con người ngày càng thuận tiện hơn.',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '3. Đức tính cần có của nhà sáng chế',
+                        subtitle: 'Lựa chọn những thẻ mô tả đức tính CẦN CÓ để trở thành nhà sáng chế (chú ý có 1 thẻ không phù hợp!).',
+                        voiceText: 'Em hãy bấm chọn những thẻ mô tả đức tính cần có để trở thành nhà sáng chế. Nhà sáng chế thường có những đức tính như: ham tìm tòi, học hỏi, tò mò khoa học, chịu khó quan sát, có sự kiên trì, nhẫn nại, không ngại khó khăn, vất vả, không sợ thất bại.',
+                        render: renderStep2_8
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-500 to-teal-600',
+                badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                steps: [
+                    {
+                        title: 'Bài tập 1: Ghép tên nhà sáng chế và sáng chế của họ (Hình 3)',
+                        subtitle: 'Bấm chọn 1 Nhà sáng chế ở hàng trên, rồi bấm vào Sáng chế tương ứng ở hàng dưới.',
+                        voiceText: 'Bài tập 1: Quan sát Hình 3, em hãy ghép tên nhà sáng chế và sáng chế của họ cho phù hợp nhé.',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Bài tập 2: Hoàn thành trục thời gian sáng chế (Trang 12)',
+                        subtitle: 'Lựa chọn sáng chế tương ứng với từng mốc năm cấp bằng sáng chế trên trục thời gian.',
+                        voiceText: 'Bài tập 2: Lựa chọn sáng chế để điền vào ô trống tương ứng với thời gian cấp bằng sáng chế: năm 1784, năm 1876, năm 1879 và năm 1886.',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Bài tập 3: Câu hỏi củng cố số 1',
+                        subtitle: 'Chọn một đáp án đúng nhất.',
+                        voiceText: 'Câu hỏi củng cố 1: Sáng chế nào của Giêm Oát đã mở ra thời đại máy hơi nước và tạo ra cuộc cách mạng công nghiệp thế kỉ 19?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Bài tập 4: Câu hỏi củng cố số 2',
+                        subtitle: 'Chọn một đáp án đúng nhất.',
+                        voiceText: 'Câu hỏi củng cố 2: Trước khi chế tạo thành công bóng đèn sợi đốt vào năm 1879, Tô-mát Ê-đi-xơn đã trải qua rất nhiều lần thất bại. Câu chuyện của ông thể hiện rõ nhất đức tính nào?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Bài tập 5: Câu hỏi củng cố số 3',
+                        subtitle: 'Chọn một đáp án đúng nhất.',
+                        voiceText: 'Câu hỏi củng cố 3: Việc cải tiến từ máy truyền tin điện báo thành chiếc điện thoại truyền được tiếng nói của A-lếch-xan-đơ Gra-ham Beo cho thấy vai trò gì của sáng chế?',
+                        render: renderStep3_5
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-500 to-indigo-600',
+                badgeBg: 'bg-purple-100 text-purple-800 border-purple-300',
+                steps: [
+                    {
+                        title: 'Hoạt động 1: Lập sơ đồ tư duy về một sáng chế (Trang 12)',
+                        subtitle: 'Bấm vào từng ô dấu hỏi (???) trên sơ đồ tư duy để chọn nội dung thích hợp.',
+                        voiceText: 'Tìm hiểu và lập sơ đồ tư duy để mô tả những hiểu biết của em về một trong những sáng chế theo 5 nhánh: Nhà sáng chế, Năm sáng chế, Vai trò, Ưu điểm và Nhược điểm.',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Hoạt động 2: Khám phá Chiếc máy tính điện tử đầu tiên (ENIAC)',
+                        subtitle: 'Đọc thông tin mở rộng ở trang 13 và trả lời câu đố thú vị!',
+                        voiceText: 'Chiếc máy tính điện tử đầu tiên mang tên ENIAC, được nghiên cứu từ năm 1943 tại Hoa Kỳ bởi nhà vật lí Giôn Mau-li và kĩ sư Prết-pơ Éc-cơ. Năm 1946, ENIAC hoàn thành và có thể thực hiện được 5 000 phép cộng trong mỗi giây, được xem là ông tổ của máy tính hiện đại.',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Hoạt động 3: Em tập làm Nhà sáng chế & Tổng kết bài học',
+                        subtitle: 'Chọn những đức tính em sẽ rèn luyện để chia sẻ cùng người thân và nhận Huy hiệu!',
+                        voiceText: 'Chúc mừng em đã hoàn thành xuất sắc Bài 2: Nhà sáng chế! Em hãy chọn những đức tính tốt mà em muốn rèn luyện hằng ngày và chia sẻ cùng người thân nhé!',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 5. HÀM TIỆN ÍCH CẬP NHẬT ĐIỂM SAO & THÔNG BÁO PHẢN HỒI
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                el.textContent = state.stars;
+                el.parentElement.classList.add('scale-110');
+                setTimeout(() => el.parentElement.classList.remove('scale-110'), 300);
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-300', 'text-emerald-900', 'bg-rose-50', 'border-rose-300', 'text-rose-900');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-50', 'border-emerald-300', 'text-emerald-900');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-xl shrink-0">✓</span>
+                        <span class="font-extrabold text-base sm:text-lg">${message}</span>
+                    </div>
+                    <span class="text-xs sm:text-sm font-black bg-amber-200 text-amber-900 px-3 py-1 rounded-full shrink-0">+1 Sao thưởng ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-900');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-full bg-rose-500 text-white flex items-center justify-center font-black text-xl shrink-0">!</span>
+                        <span class="font-extrabold text-base sm:text-lg">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 6. RENDER GIAO DIỆN TỪNG BƯỚC CỦA CHẶNG 1: KHỞI ĐỘNG
+         **************************************************************/
+        function renderStep1_1(container) {
+            const goals = [
+                { icon: '💡', text: 'Nêu được vai trò của sáng chế trong đời sống và sự phát triển của công nghệ.' },
+                { icon: '👨‍🔬', text: 'Tóm tắt được thông tin về một số nhà sáng chế nổi bật trong lịch sử loài người.' },
+                { icon: '⏳', text: 'Nêu được lịch sử sáng chế ra sản phẩm công nghệ tiêu biểu.' },
+                { icon: '🌟', text: 'Nêu được một số đức tính cần có để trở thành nhà sáng chế.' }
+            ];
+            const allChecked = state.goalsChecked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-4 flex items-center gap-3">
+                        <span class="text-3xl">🎯</span>
+                        <p class="text-base sm:text-lg font-extrabold text-sky-900">
+                            Học xong bài này, em sẽ nắm vững 4 mục tiêu dưới đây. Hãy bấm vào từng thẻ để bật đèn sẵn sàng nhé!
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        ${goals.map((g, i) => {
+                            const checked = state.goalsChecked[i];
+                            return `
+                                <button onclick="toggleGoal(${i})"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 transition-all flex items-start gap-3.5 ${
+                                        checked
+                                            ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-950'
+                                            : 'bg-white hover:bg-amber-50/60 border-2 border-slate-200 text-slate-800'
+                                    }">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
+                                        checked ? 'bg-emerald-500 text-white' : 'bg-amber-100'
+                                    }">
+                                        ${checked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-black uppercase tracking-wider ${checked ? 'text-emerald-600' : 'text-slate-400'}">
+                                            Mục tiêu ${i + 1} ${checked ? '• Đã sẵn sàng!' : '• Bấm để chọn'}
+                                        </div>
+                                        <div class="text-base sm:text-lg font-extrabold leading-snug mt-0.5">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allChecked) {
+                showFeedback(true, 'Tuyệt vời! Em đã sẵn sàng chinh phục cả 4 mục tiêu của bài học!');
+            }
+        }
+
+        function toggleGoal(idx) {
+            state.goalsChecked[idx] = true;
+            playSound('pop');
+            rewardStar('goal_' + idx, 1);
+            if (state.goalsChecked.every(Boolean)) {
+                playSound('correct');
+            }
+            renderApp();
+        }
+
+        function renderStep1_2(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-5">
+                    <!-- Khung hội thoại 2 bạn học sinh -->
+                    <div class="bg-gradient-to-b from-sky-50 to-amber-50 border-2 border-sky-200 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-around gap-6">
+                        <!-- Bạn Nam -->
+                        <div class="flex flex-col items-center max-w-xs text-center">
+                            <div class="bg-white border-2 border-sky-300 rounded-2xl p-3.5 shadow-sm mb-3 relative">
+                                <p class="text-base sm:text-lg font-extrabold text-slate-800">
+                                    "Bạn có biết <span class="text-amber-600">bóng đèn điện</span> là sáng chế của ai không?"
+                                </p>
+                            </div>
+                            <div class="w-20 h-20 rounded-full bg-sky-200 border-4 border-white shadow flex items-center justify-center text-4xl">
+                                👦🏻
+                            </div>
+                            <span class="text-sm font-black text-sky-800 mt-1">Bạn Minh</span>
+                        </div>
+
+                        <!-- Bóng đèn ở giữa -->
+                        <div class="animate-float flex flex-col items-center">
+                            <div class="w-24 h-24 rounded-full bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-5xl glow-yellow">
+                                💡
+                            </div>
+                        </div>
+
+                        <!-- Bạn Nữ -->
+                        <div class="flex flex-col items-center max-w-xs text-center">
+                            <div class="bg-white border-2 ${state.comicAnswered ? 'border-emerald-400 bg-emerald-50' : 'border-dashed border-amber-400'} rounded-2xl p-3.5 shadow-sm mb-3">
+                                <p class="text-base sm:text-lg font-extrabold ${state.comicAnswered ? 'text-emerald-900' : 'text-amber-700'}">
+                                    ${state.comicAnswered
+                                        ? '"Bóng đèn điện là một sáng chế nổi tiếng của <b>Tô-mát Ê-đi-xơn</b> bạn ạ!"'
+                                        : 'Em hãy chọn câu trả lời đúng bên dưới để giúp bạn Lan trả lời nhé!'}
+                                </p>
+                            </div>
+                            <div class="w-20 h-20 rounded-full bg-pink-200 border-4 border-white shadow flex items-center justify-center text-4xl">
+                                👧🏻
+                            </div>
+                            <span class="text-sm font-black text-pink-800 mt-1">Bạn Lan</span>
+                        </div>
+                    </div>
+
+                    <!-- 3 đáp án chọn -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button onclick="answerComic(true)"
+                            class="btn-kid p-4 rounded-2xl border-2 font-extrabold text-lg flex items-center justify-center gap-2 ${
+                                state.comicAnswered
+                                    ? 'bg-emerald-500 text-white border-emerald-600'
+                                    : 'bg-white hover:bg-amber-50 text-slate-800 border-slate-300'
+                            }">
+                            <span>A. Tô-mát Ê-đi-xơn</span>
+                        </button>
+                        <button onclick="answerComic(false)"
+                            class="btn-kid p-4 rounded-2xl border-2 bg-white hover:bg-amber-50 text-slate-800 border-slate-300 font-extrabold text-lg">
+                            <span>B. Giêm Oát</span>
+                        </button>
+                        <button onclick="answerComic(false)"
+                            class="btn-kid p-4 rounded-2xl border-2 bg-white hover:bg-amber-50 text-slate-800 border-slate-300 font-extrabold text-lg">
+                            <span>C. Các Ben</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            if (state.comicAnswered) {
+                showFeedback(true, 'Chính xác! Bóng đèn điện là sáng chế nổi tiếng của Tô-mát Ê-đi-xơn.');
+            }
+        }
+
+        function answerComic(isCorrect) {
+            if (isCorrect) {
+                state.comicAnswered = true;
+                playSound('correct');
+                rewardStar('comic_step', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng rồi! Em hãy nhớ lại xem ai là người chế tạo bóng đèn sợi đốt nhé!');
+            }
+        }
+
+        function renderStep1_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-3xl mx-auto w-full flex flex-col gap-5 text-center">
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-6">
+                        <div class="text-4xl mb-2">🔍💡🚗☎️</div>
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-800 leading-snug">
+                            Những người tìm tòi, nghiên cứu để tạo ra các sản phẩm mới đầu tiên phục vụ đời sống con người (như bóng đèn điện, điện thoại, động cơ hơi nước, ô tô) được gọi là gì?
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <button onclick="answerIntroQuiz(false)"
+                            class="btn-kid p-4 rounded-2xl border-2 border-slate-300 bg-white hover:bg-sky-50 text-lg font-extrabold text-slate-700">
+                            A. Người tiêu dùng
+                        </button>
+                        <button onclick="answerIntroQuiz(true)"
+                            class="btn-kid p-4 rounded-2xl border-2 text-lg font-black ${
+                                state.introQuizDone
+                                    ? 'bg-emerald-500 text-white border-emerald-600'
+                                    : 'border-slate-300 bg-white hover:bg-sky-50 text-slate-800'
+                            }">
+                            B. Nhà sáng chế
+                        </button>
+                        <button onclick="answerIntroQuiz(false)"
+                            class="btn-kid p-4 rounded-2xl border-2 border-slate-300 bg-white hover:bg-sky-50 text-lg font-extrabold text-slate-700">
+                            C. Nhà sưu tầm
+                        </button>
+                    </div>
+                </div>
+            `;
+            if (state.introQuizDone) {
+                showFeedback(true, 'Hoàn toàn chính xác! Họ chính là những Nhà sáng chế tài ba. Hãy bấm "Tiếp theo" để sang Chặng Khám Phá nhé!');
+            }
+        }
+
+        function answerIntroQuiz(isCorrect) {
+            if (isCorrect) {
+                state.introQuizDone = true;
+                playSound('correct');
+                rewardStar('intro_quiz', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Thử lại nhé! Gợi ý nằm ngay ở tên Bài 2 của chúng mình đấy!');
+            }
+        }
+
+        /**************************************************************
+         * 7. RENDER GIAO DIỆN TỪNG BƯỚC CỦA CHẶNG 2: KHÁM PHÁ
+         **************************************************************/
+        function renderStep2_1(container) {
+            const doneA = state.role1aPart1.a === true;
+            const doneB = state.role1aPart1.b === true;
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Hình 1a -->
+                    <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-3xl p-4 flex flex-col justify-between gap-3">
+                        <div>
+                            ${SVGS.toiletPaper}
+                            <h3 class="text-center font-black text-lg text-slate-800 mt-2">
+                                a) Cách treo cuộn giấy vệ sinh với đầu cuộn giấy ở phía trên
+                            </h3>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <p class="text-sm font-extrabold text-emerald-800">Chọn vai trò đúng trong đời sống:</p>
+                            <button onclick="selectRole1a('a', true)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 font-bold text-base ${
+                                    doneA ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white border-slate-200 text-slate-800'
+                                }">
+                                ✓ Giúp kéo và lấy giấy dễ dàng, tiện lợi, hợp vệ sinh.
+                            </button>
+                            <button onclick="selectRole1a('a', false)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 bg-white border-slate-200 text-slate-700 font-bold text-base">
+                                ✗ Dùng để chiếu sáng đường phố vào ban đêm.
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hình 1b -->
+                    <div class="bg-amber-50/70 border-2 border-amber-200 rounded-3xl p-4 flex flex-col justify-between gap-3">
+                        <div>
+                            ${SVGS.lightBulb}
+                            <h3 class="text-center font-black text-lg text-slate-800 mt-2">
+                                b) Bóng đèn điện
+                            </h3>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <p class="text-sm font-extrabold text-amber-800">Chọn vai trò đúng trong đời sống:</p>
+                            <button onclick="selectRole1a('b', false)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 bg-white border-slate-200 text-slate-700 font-bold text-base">
+                                ✗ Dùng để đưa nước từ dưới sông lên ruộng cao.
+                            </button>
+                            <button onclick="selectRole1a('b', true)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 font-bold text-base ${
+                                    doneB ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white border-slate-200 text-slate-800'
+                                }">
+                                ✓ Cung cấp ánh sáng giúp con người học tập, làm việc, sinh hoạt thuận tiện vào buổi tối.
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (doneA && doneB) {
+                showFeedback(true, 'Giỏi lắm! Em đã hiểu rõ vai trò của cách treo cuộn giấy vệ sinh và bóng đèn điện trong đời sống!');
+            }
+        }
+
+        function selectRole1a(item, isCorrect) {
+            if (isCorrect) {
+                if (item === 'a' || item === 'b') state.role1aPart1[item] = true;
+                if (item === 'c' || item === 'd') state.role1aPart2[item] = true;
+                playSound('correct');
+                rewardStar('role1a_' + item, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa phù hợp với công dụng của sản phẩm này rồi, em chọn lại nhé!');
+            }
+        }
+
+        function renderStep2_2(container) {
+            const doneC = state.role1aPart2.c === true;
+            const doneD = state.role1aPart2.d === true;
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Hình 1c -->
+                    <div class="bg-sky-50/70 border-2 border-sky-200 rounded-3xl p-4 flex flex-col justify-between gap-3">
+                        <div>
+                            ${SVGS.writingPaper}
+                            <h3 class="text-center font-black text-lg text-slate-800 mt-2">
+                                c) Giấy viết
+                            </h3>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <p class="text-sm font-extrabold text-sky-800">Chọn vai trò đúng trong đời sống:</p>
+                            <button onclick="selectRole1a('c', true)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 font-bold text-base ${
+                                    doneC ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white border-slate-200 text-slate-800'
+                                }">
+                                ✓ Giúp ghi chép thông tin, in sách vở, lưu giữ và truyền đạt tri thức của loài người.
+                            </button>
+                            <button onclick="selectRole1a('c', false)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 bg-white border-slate-200 text-slate-700 font-bold text-base">
+                                ✗ Giúp vận chuyển hàng hóa nặng qua sông.
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hình 1d -->
+                    <div class="bg-teal-50/70 border-2 border-teal-200 rounded-3xl p-4 flex flex-col justify-between gap-3">
+                        <div>
+                            ${SVGS.waterWheel}
+                            <h3 class="text-center font-black text-lg text-slate-800 mt-2">
+                                d) Guồng nước
+                            </h3>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <p class="text-sm font-extrabold text-teal-800">Chọn vai trò đúng trong đời sống:</p>
+                            <button onclick="selectRole1a('d', false)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 bg-white border-slate-200 text-slate-700 font-bold text-base">
+                                ✗ Dùng để liên lạc nói chuyện từ khoảng cách xa.
+                            </button>
+                            <button onclick="selectRole1a('d', true)"
+                                class="btn-kid text-left p-3 rounded-xl border-2 font-bold text-base ${
+                                    doneD ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white border-slate-200 text-slate-800'
+                                }">
+                                ✓ Tự động đưa nước từ sông suối lên cao để tưới tiêu ruộng đồng và sinh hoạt, đỡ tốn sức người.
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (doneC && doneD) {
+                showFeedback(true, 'Xuất sắc! Cả 4 sáng chế trong Hình 1 đều rất gần gũi và hữu ích đối với đời sống con người!');
+            }
+        }
+
+        function renderStep2_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-4">
+                    <!-- Sơ đồ Hình 2 -->
+                    <div class="bg-white border-2 border-sky-200 rounded-3xl p-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                        <div class="text-center">
+                            ${SVGS.charcoalDraw}
+                            <p class="text-sm font-bold text-slate-600 mt-1">Dễ bẩn tay, nét vẽ thô, nhanh mòn gãy</p>
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <div class="bg-sky-100 border-2 border-sky-400 text-sky-900 font-black px-4 py-3 rounded-2xl text-base shadow-sm">
+                                Sáng chế góp phần tạo ra sản phẩm mới ➡️
+                            </div>
+                            <button onclick="unlockTechNote()"
+                                class="btn-kid mt-3 px-4 py-2 rounded-xl font-extrabold text-sm ${
+                                    state.techCompareDone
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-amber-400 hover:bg-amber-500 text-slate-900'
+                                }">
+                                ${state.techCompareDone ? '✓ Đã khám phá sự thay đổi' : '👆 Bấm để rút ra kết luận'}
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            ${SVGS.pencilDraw}
+                            <p class="text-sm font-bold text-pink-700 mt-1">Sạch sẽ, nét thanh rõ đẹp, tiện lợi khi viết vẽ</p>
+                        </div>
+                    </div>
+
+                    <!-- Hộp ghi nhớ chuẩn SGK trang 10 -->
+                    <div class="rounded-3xl p-4 sm:p-5 border-3 transition-all ${
+                        state.techCompareDone
+                            ? 'bg-sky-100 border-2 border-sky-400 opacity-100'
+                            : 'bg-slate-100 border-2 border-dashed border-slate-300 opacity-80'
+                    }">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center text-2xl shrink-0">
+                                🤖
+                            </div>
+                            <div>
+                                <div class="text-xs font-black uppercase text-sky-700 tracking-wider">Ghi nhớ trọng tâm (Trang 10)</div>
+                                <p class="text-base sm:text-xl font-black text-slate-800 leading-relaxed mt-0.5">
+                                    "Sáng chế góp phần tạo ra sản phẩm mới, cải tiến sản phẩm, thúc đẩy sự phát triển của công nghệ, giúp đời sống con người tiện nghi và văn minh hơn."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (state.techCompareDone) {
+                showFeedback(true, 'Em đã nắm vững vai trò của sáng chế đối với đời sống và sự phát triển công nghệ!');
+            }
+        }
+
+        function unlockTechNote() {
+            state.techCompareDone = true;
+            playSound('correct');
+            rewardStar('tech_compare', 1);
+            renderApp();
+        }
+
+        // Hàm chung hiển thị Hồ sơ 4 Nhà sáng chế tiêu biểu (Bước 2.4 -> 2.7)
+        function renderInventorProfile(container, data, stateKey) {
+            const activeIdx = state[stateKey];
+            const milestone = data.milestones[activeIdx];
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-4">
+                    <!-- Thẻ thông tin chung -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center bg-gradient-to-r ${data.bgGrad} p-4 sm:p-5 rounded-3xl border-2 ${data.borderCol}">
+                        <div class="flex flex-col items-center text-center">
+                            <div class="w-24 h-24 rounded-3xl bg-white border-4 ${data.borderCol} shadow flex items-center justify-center text-5xl">
+                                ${data.avatar}
+                            </div>
+                            <h3 class="text-xl font-black text-slate-900 mt-2">${data.name}</h3>
+                            <span class="text-sm font-extrabold text-slate-600">${data.years} • ${data.country}</span>
+                        </div>
+                        <div class="md:col-span-2 flex flex-col gap-2">
+                            <div class="bg-white/90 rounded-2xl p-3.5 border border-white">
+                                <span class="text-xs font-black uppercase text-sky-700">Sáng chế tiêu biểu:</span>
+                                <div class="text-lg sm:text-xl font-black text-slate-900">${data.invention}</div>
+                                <p class="text-base font-bold text-slate-700 mt-1">${data.impact}</p>
+                            </div>
+                            <div class="text-sm font-extrabold text-slate-700">
+                                👇 Bấm vào từng mốc thời gian bên dưới để theo dõi hành trình sáng chế:
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các nút mốc thời gian -->
+                    <div class="grid grid-cols-3 gap-3">
+                        ${data.milestones.map((m, idx) => `
+                            <button onclick="selectInventorMilestone('${stateKey}', ${idx})"
+                                class="btn-kid p-3 rounded-2xl border-2 font-black text-base sm:text-lg transition-all ${
+                                    activeIdx === idx
+                                        ? 'bg-sky-600 text-white border-sky-700'
+                                        : 'bg-white hover:bg-sky-50 text-slate-700 border-slate-300'
+                                }">
+                                📅 ${m.year}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- Chi tiết mốc thời gian đang chọn -->
+                    <div class="bg-white border-2 border-sky-300 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
+                        <div class="shrink-0">${data.svg}</div>
+                        <div class="flex-1">
+                            <div class="inline-block bg-amber-100 text-amber-900 font-black px-3 py-1 rounded-full text-sm mb-1">
+                                Mốc lịch sử: ${milestone.year}
+                            </div>
+                            <p class="text-lg sm:text-xl font-extrabold text-slate-800 leading-relaxed">
+                                ${milestone.desc}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectInventorMilestone(stateKey, idx) {
+            state[stateKey] = idx;
+            playSound('pop');
+            rewardStar(stateKey + '_' + idx, 1);
+            renderApp();
+        }
+
+        function renderStep2_4(container) {
+            renderInventorProfile(container, {
+                name: '1. Giêm Oát (James Watt)',
+                years: '1736 – 1819',
+                country: 'Kĩ sư người Xcốt-len (Scotland)',
+                avatar: '👨‍🔧',
+                invention: 'Động cơ hơi nước (Cấp bằng sáng chế năm 1784)',
+                impact: 'Được sử dụng rộng rãi, mở ra thời đại máy hơi nước và tạo ra cuộc cách mạng công nghiệp của thế kỉ XIX.',
+                bgGrad: 'from-sky-50 to-blue-100',
+                borderCol: 'border-sky-300',
+                svg: SVGS.steamEngine,
+                milestones: [
+                    { year: 'Năm 1763', desc: 'Ông bắt đầu thí nghiệm với mô hình động cơ hơi nước dạng sơ khai.' },
+                    { year: 'Năm 1765', desc: 'Ý tưởng về động cơ hơi nước mới ra đời, giúp tiết kiệm nhiên liệu và làm tăng hiệu suất làm việc của động cơ.' },
+                    { year: 'Năm 1784 ⭐', desc: 'Giêm Oát chính thức được cấp bằng sáng chế cho động cơ hơi nước của mình.' }
+                ]
+            }, 'wattTab');
+        }
+
+        function renderStep2_5(container) {
+            renderInventorProfile(container, {
+                name: '2. Tô-mát Ê-đi-xơn (Thomas Edison)',
+                years: '1847 – 1931',
+                country: 'Nhà sáng chế nổi tiếng người Mỹ',
+                avatar: '💡',
+                invention: 'Bóng đèn sợi đốt (Cấp bằng sáng chế năm 1879)',
+                impact: 'Giúp con người có thể làm việc và sinh hoạt thuận tiện hơn vào buổi tối, thắp sáng đường phố và nhà máy.',
+                bgGrad: 'from-amber-50 to-yellow-100',
+                borderCol: 'border-amber-300',
+                svg: SVGS.lightBulb,
+                milestones: [
+                    { year: 'Tháng 3/1878', desc: 'Tô-mát Ê-đi-xơn bắt đầu nghiên cứu về chiếc bóng đèn sợi đốt.' },
+                    { year: 'Kiên trì thử nghiệm', desc: 'Dù trải qua rất nhiều lần thất bại, ông vẫn kiên trì tìm tòi chất liệu làm dây tóc bóng đèn bền bỉ.' },
+                    { year: 'Năm 1879 ⭐', desc: 'Ông chế tạo thành công chiếc bóng đèn sợi đốt và nhận được bằng sáng chế vào năm 1879.' }
+                ]
+            }, 'edisonTab');
+        }
+
+        function renderStep2_6(container) {
+            renderInventorProfile(container, {
+                name: '3. A-lếch-xan-đơ Gra-ham Beo',
+                years: '1847 – 1922',
+                country: 'Nhà sáng chế người Xcốt-len',
+                avatar: '☎️',
+                invention: 'Điện thoại (Cấp bằng sáng chế năm 1876)',
+                impact: 'Giúp thay đổi phương thức liên lạc của con người, giúp con người dễ dàng liên lạc với nhau từ những khoảng cách xa.',
+                bgGrad: 'from-purple-50 to-fuchsia-100',
+                borderCol: 'border-purple-300',
+                svg: SVGS.vintagePhone,
+                milestones: [
+                    { year: 'Năm 1874', desc: 'Ông chế tạo được một chiếc máy có thể truyền vài tin điện báo qua một đường dây.' },
+                    { year: 'Năm 1875', desc: 'Ông nghiên cứu và cải tiến chiếc máy này để truyền tiếng nói của con người qua đường dây.' },
+                    { year: 'Năm 1876 ⭐', desc: 'Ông chính thức được cấp bằng sáng chế cho chiếc điện thoại của mình.' }
+                ]
+            }, 'bellTab');
+        }
+
+        function renderStep2_7(container) {
+            renderInventorProfile(container, {
+                name: '4. Các Ben (Karl Benz)',
+                years: '1844 – 1929',
+                country: 'Kĩ sư cơ khí người Đức',
+                avatar: '🚗',
+                invention: 'Ô tô (Cấp bằng sáng chế năm 1886)',
+                impact: 'Mở đầu cho thời kì chế tạo các mẫu ô tô mới, giúp cho việc di chuyển của con người ngày càng trở nên thuận tiện hơn.',
+                bgGrad: 'from-emerald-50 to-teal-100',
+                borderCol: 'border-emerald-300',
+                svg: SVGS.motorCar,
+                milestones: [
+                    { year: 'Những năm 1870', desc: 'Các Ben đã thiết kế được động cơ chạy bằng xăng – bộ phận quan trọng cho chiếc ô tô sau này.' },
+                    { year: 'Đầu năm 1886 ⭐', desc: 'Chiếc ô tô của Các Ben đã hoàn thiện và được cấp bằng sáng chế.' },
+                    { year: 'Ý nghĩa lịch sử', desc: 'Mở đầu kỉ nguyên chế tạo ô tô hiện đại phục vụ giao thông đi lại của nhân loại.' }
+                ]
+            }, 'benzTab');
+        }
+
+        // Bước 2.8: Đức tính cần có của nhà sáng chế (Trang 13)
+        const TRAIT_LIST = [
+            { id: 'kien_tri', text: 'Kiên trì', good: true },
+            { id: 'to_mo', text: 'Tò mò khoa học', good: true },
+            { id: 'quan_sat', text: 'Chịu khó quan sát', good: true },
+            { id: 'cham_chi', text: 'Chăm chỉ', good: true },
+            { id: 'dam_me', text: 'Đam mê', good: true },
+            { id: 'khong_ngai', text: 'Không ngại thất bại', good: true },
+            { id: 'nong_voi', text: 'Nóng vội', good: false },
+            { id: 'thong_minh', text: 'Thông minh', good: true },
+            { id: 'sang_tao', text: 'Sáng tạo', good: true },
+            { id: 'nghi_luc', text: 'Nghị lực', good: true },
+            { id: 'ham_hoc', text: 'Ham học hỏi', good: true }
+        ];
+
+        function renderStep2_8(container) {
+            const selectedCount = Object.keys(state.traitsSelected).filter(k => state.traitsSelected[k]).length;
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-4">
+                    <div class="flex items-center justify-between bg-amber-50 border-2 border-amber-200 px-4 py-2.5 rounded-2xl">
+                        <span class="font-extrabold text-slate-800 text-base">
+                            🌟 Đã tìm được: <b class="text-emerald-700">${selectedCount} / 10</b> đức tính cần có
+                        </span>
+                        <button onclick="selectAllGoodTraits()" class="text-xs sm:text-sm font-black text-sky-700 underline">
+                            Gợi ý nhanh
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        ${TRAIT_LIST.map(t => {
+                            const isPicked = state.traitsSelected[t.id];
+                            return `
+                                <button onclick="clickTraitCard('${t.id}', ${t.good})"
+                                    class="btn-kid p-3.5 rounded-2xl border-2 font-black text-base sm:text-lg flex items-center justify-between gap-2 ${
+                                        isPicked
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-white hover:bg-sky-50 text-slate-800 border-slate-300'
+                                    }">
+                                    <span>${t.text}</span>
+                                    <span>${isPicked ? '✓' : '+'}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Hộp ghi nhớ trang 13 -->
+                    <div class="bg-sky-100 border-2 border-sky-400 rounded-2xl p-4 flex items-start gap-3">
+                        <span class="text-2xl">📘</span>
+                        <p class="text-base sm:text-lg font-extrabold text-slate-800 leading-snug">
+                            <b>Ghi nhớ:</b> Nhà sáng chế thường có những đức tính như: ham tìm tòi, học hỏi, tò mò khoa học, chịu khó quan sát, có sự kiên trì, nhẫn nại, không ngại khó khăn, vất vả, không sợ thất bại,...
+                        </p>
+                    </div>
+                </div>
+            `;
+            if (selectedCount === 10) {
+                showFeedback(true, 'Tuyệt vời! Em đã chọn đúng cả 10 đức tính tốt và loại bỏ thẻ "Nóng vội"!');
+            }
+        }
+
+        function clickTraitCard(id, isGood) {
+            if (isGood) {
+                state.traitsSelected[id] = true;
+                playSound('pop');
+                rewardStar('trait_' + id, 1);
+                const count = Object.keys(state.traitsSelected).filter(k => state.traitsSelected[k]).length;
+                if (count === 10) playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Ôi! "Nóng vội" KHÔNG phải là đức tính của nhà sáng chế đâu nhé, vì nghiên cứu cần rất nhiều sự kiên trì!');
+            }
+        }
+
+        function selectAllGoodTraits() {
+            TRAIT_LIST.forEach(t => {
+                if (t.good) state.traitsSelected[t.id] = true;
+            });
+            playSound('correct');
+            rewardStar('trait_all', 2);
+            renderApp();
+        }
+
+        /**************************************************************
+         * 8. RENDER GIAO DIỆN TỪNG BƯỚC CỦA CHẶNG 3: LUYỆN TẬP
+         **************************************************************/
+        const MATCH_INVENTORS = [
+            { id: 'watt', label: 'a) Giêm Oát (1736 – 1819)', target: '2', icon: '👨‍🔧' },
+            { id: 'benz', label: 'b) Các Ben (1844 – 1929)', target: '4', icon: '🚗' },
+            { id: 'bell', label: 'c) A-lếch-xan-đơ Gra-ham Beo (1847 – 1922)', target: '3', icon: '☎️' },
+            { id: 'edison', label: 'd) Tô-mát Ê-đi-xơn (1847 – 1931)', target: '1', icon: '💡' }
+        ];
+
+        const MATCH_PRODUCTS = [
+            { id: '1', label: '1) Bóng đèn sợi đốt được cấp bằng sáng chế năm 1879', ownerName: 'Tô-mát Ê-đi-xơn' },
+            { id: '2', label: '2) Động cơ hơi nước được cấp bằng sáng chế năm 1784', ownerName: 'Giêm Oát' },
+            { id: '3', label: '3) Điện thoại được cấp bằng sáng chế năm 1876', ownerName: 'A-lếch-xan-đơ Gra-ham Beo' },
+            { id: '4', label: '4) Ô tô được cấp bằng sáng chế năm 1886', ownerName: 'Các Ben' }
+        ];
+
+        function renderStep3_1(container) {
+            const matchedCount = Object.keys(state.matchedPairs).length;
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-4">
+                    <div class="text-sm sm:text-base font-extrabold text-sky-900 bg-sky-50 border-2 border-sky-200 px-4 py-2 rounded-2xl text-center">
+                        👉 Bước 1: Bấm chọn một <b>Nhà sáng chế</b> ở hàng trên • Bước 2: Bấm chọn <b>Sáng chế</b> tương ứng ở hàng dưới (${matchedCount}/4 cặp)
+                    </div>
+
+                    <!-- Hàng trên: 4 nhà sáng chế -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        ${MATCH_INVENTORS.map(inv => {
+                            const isDone = Boolean(state.matchedPairs[inv.id]);
+                            const isSelected = state.selectedInventor === inv.id;
+                            return `
+                                <button onclick="pickInventorForMatch('${inv.id}')"
+                                    ${isDone ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-2 text-left flex flex-col justify-between gap-2 ${
+                                        isDone
+                                            ? 'bg-emerald-100 border-emerald-400 text-emerald-900'
+                                            : isSelected
+                                            ? 'bg-amber-200 border-amber-500 text-slate-900 ring-4 ring-amber-300'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300 text-slate-800'
+                                    }">
+                                    <div class="text-3xl">${inv.icon}</div>
+                                    <div class="font-black text-base leading-snug">${inv.label}</div>
+                                    <div class="text-xs font-extrabold ${isDone ? 'text-emerald-700' : 'text-sky-600'}">
+                                        ${isDone ? '✓ Đã ghép nối đúng' : isSelected ? '● Đang chọn...' : 'Bấm để chọn'}
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Hàng dưới: 4 sáng chế -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        ${MATCH_PRODUCTS.map(prod => {
+                            const matchedInv = Object.keys(state.matchedPairs).find(k => state.matchedPairs[k] === prod.id);
+                            return `
+                                <button onclick="pickProductForMatch('${prod.id}')"
+                                    ${matchedInv ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-2 text-left flex flex-col justify-between gap-2 ${
+                                        matchedInv
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : 'bg-slate-50 hover:bg-amber-50 border-slate-300 text-slate-800'
+                                    }">
+                                    <div class="font-extrabold text-base leading-snug">${prod.label}</div>
+                                    <div class="text-xs font-black px-2.5 py-1 rounded-lg ${
+                                        matchedInv ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-600'
+                                    }">
+                                        ${matchedInv ? '✓ Ghép với: ' + prod.ownerName : '❓ Ghép vào đây'}
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            if (matchedCount === 4) {
+                showFeedback(true, 'Hoàn hảo! Em đã ghép nối chính xác cả 4 nhà sáng chế với 4 sản phẩm của họ (Hình 3)!');
+            }
+        }
+
+        function pickInventorForMatch(invId) {
+            playSound('click');
+            state.selectedInventor = invId;
+            hideFeedback();
+            renderApp();
+        }
+
+        function pickProductForMatch(prodId) {
+            if (!state.selectedInventor) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy bấm chọn một Nhà sáng chế ở hàng trên trước nhé!');
+                return;
+            }
+            const invObj = MATCH_INVENTORS.find(i => i.id === state.selectedInventor);
+            if (invObj && invObj.target === prodId) {
+                state.matchedPairs[invObj.id] = prodId;
+                state.selectedInventor = null;
+                playSound('correct');
+                rewardStar('match_' + invObj.id, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng cặp rồi! Em hãy kiểm tra lại năm cấp bằng sáng chế và tên nhà sáng chế nhé.');
+            }
+        }
+
+        // Bước 3.2: Trục thời gian cấp bằng sáng chế (Trang 12)
+        const TIMELINE_DATA = [
+            { year: '1784', ans: 'Động cơ hơi nước', author: 'Giêm Oát', color: 'border-sky-400 bg-sky-50' },
+            { year: '1876', ans: 'Điện thoại', author: 'A-lếch-xan-đơ Gra-ham Beo', color: 'border-pink-400 bg-pink-50' },
+            { year: '1879', ans: 'Bóng đèn sợi đốt', author: 'Tô-mát Ê-đi-xơn', color: 'border-emerald-400 bg-emerald-50' },
+            { year: '1886', ans: 'Ô tô', author: 'Các Ben', color: 'border-indigo-400 bg-indigo-50' }
+        ];
+
+        function renderStep3_2(container) {
+            const filledCount = Object.keys(state.timelineFilled).length;
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-5">
+                    <div class="text-center text-base font-extrabold text-slate-700">
+                        Bấm chọn một ô <b>???</b> trên trục thời gian, sau đó chọn tên sáng chế tương ứng ở phía dưới:
+                    </div>
+
+                    <!-- Trục thời gian 4 mốc -->
+                    <div class="relative grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+                        ${TIMELINE_DATA.map(item => {
+                            const val = state.timelineFilled[item.year];
+                            const isActive = state.selectedTimelineYear === item.year && !val;
+                            return `
+                                <button onclick="selectTimelineSlot('${item.year}')"
+                                    class="btn-kid p-4 rounded-3xl border-3 flex flex-col items-center justify-center gap-2 ${
+                                        val
+                                            ? 'bg-emerald-500 text-white border-emerald-600'
+                                            : isActive
+                                            ? 'bg-amber-100 border-2 border-amber-500 ring-4 ring-amber-200 text-slate-900'
+                                            : 'bg-white border-2 border-slate-300 text-slate-800'
+                                    }">
+                                    <span class="text-2xl font-black">${item.year}</span>
+                                    <div class="w-full py-2 px-3 rounded-xl font-black text-base ${
+                                        val ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600'
+                                    }">
+                                        ${val ? '✓ ' + val : '??? (Đang chọn)'}
+                                    </div>
+                                    <span class="text-xs font-bold opacity-85">${val ? item.author : 'Bấm để điền'}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- 4 thẻ lựa chọn -->
+                    <div class="bg-slate-100 p-4 rounded-3xl border-2 border-slate-200">
+                        <div class="text-sm font-black text-slate-600 mb-2.5 text-center">
+                            Chọn sáng chế điền vào mốc năm <span class="text-sky-700 font-black">${state.selectedTimelineYear}</span>:
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            ${['Bóng đèn sợi đốt', 'Động cơ hơi nước', 'Điện thoại', 'Ô tô'].map(choice => `
+                                <button onclick="fillTimelineAnswer('${choice}')"
+                                    class="btn-kid bg-white hover:bg-sky-50 border-2 border-sky-300 text-slate-800 font-black py-3 px-4 rounded-2xl text-base sm:text-lg">
+                                    ${choice}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (filledCount === 4) {
+                showFeedback(true, 'Xuất sắc! Em đã hoàn thiện chính xác trục thời gian lịch sử các sáng chế: 1784 → 1876 → 1879 → 1886!');
+            }
+        }
+
+        function selectTimelineSlot(year) {
+            playSound('click');
+            state.selectedTimelineYear = year;
+            renderApp();
+        }
+
+        function fillTimelineAnswer(choice) {
+            const targetObj = TIMELINE_DATA.find(d => d.year === state.selectedTimelineYear);
+            if (!targetObj) return;
+            if (targetObj.ans === choice) {
+                state.timelineFilled[targetObj.year] = choice;
+                playSound('correct');
+                rewardStar('timeline_' + targetObj.year, 1);
+                // Chuyển tự động sang mốc chưa điền tiếp theo
+                const nextEmpty = TIMELINE_DATA.find(d => !state.timelineFilled[d.year]);
+                if (nextEmpty) state.selectedTimelineYear = nextEmpty.year;
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Năm ${state.selectedTimelineYear} chưa phải là năm cấp bằng sáng chế của "${choice}". Em thử lại nhé!`);
+            }
+        }
+
+        // Bước 3.3, 3.4, 3.5: Các câu hỏi trắc nghiệm củng cố từng màn hình
+        function renderSingleQuiz(container, stateFlag, question, icon, options) {
+            const isDone = state[stateFlag];
+            container.innerHTML = `
+                <div class="step-enter max-w-3xl mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border-2 border-sky-200 rounded-3xl p-5 flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-white border-2 border-sky-300 flex items-center justify-center text-4xl shrink-0">
+                            ${icon}
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 leading-snug">
+                            ${question}
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                        ${options.map(opt => `
+                            <button onclick="answerConsolidationQuiz('${stateFlag}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 rounded-2xl border-2 font-extrabold text-base sm:text-lg flex items-center justify-between ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-500 text-white border-emerald-600'
+                                        : 'bg-white hover:bg-sky-50 text-slate-800 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span>${isDone && opt.correct ? '✓ Đúng' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function answerConsolidationQuiz(stateFlag, isCorrect, explain) {
+            if (isCorrect) {
+                state[stateFlag] = true;
+                playSound('correct');
+                rewardStar('quiz_' + stateFlag, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        function renderStep3_3(container) {
+            renderSingleQuiz(
+                container,
+                'quiz3Done',
+                'Sáng chế nào của Giêm Oát (năm 1784) đã mở ra thời đại máy hơi nước và tạo ra một cuộc cách mạng công nghiệp của thế kỉ XIX?',
+                '🚂',
+                [
+                    { text: 'A. Động cơ chạy bằng xăng', correct: false, explain: 'Động cơ chạy bằng xăng là thiết kế của kĩ sư người Đức Các Ben. Em chọn lại nhé!' },
+                    { text: 'B. Động cơ hơi nước', correct: true, explain: 'Chính xác! Động cơ hơi nước của Giêm Oát (1784) đã mở ra cuộc cách mạng công nghiệp thế kỉ XIX.' },
+                    { text: 'C. Máy truyền tin điện báo', correct: false, explain: 'Máy truyền tin điện báo gắn liền với nghiên cứu của A-lếch-xan-đơ Gra-ham Beo. Thử lại nhé!' }
+                ]
+            );
+        }
+
+        function renderStep3_4(container) {
+            renderSingleQuiz(
+                container,
+                'quiz4Done',
+                'Trước khi chế tạo thành công bóng đèn sợi đốt vào năm 1879, Tô-mát Ê-đi-xơn đã trải qua rất nhiều lần thất bại nhưng vẫn không bỏ cuộc. Điều đó thể hiện rõ nhất đức tính nào?',
+                '💡',
+                [
+                    { text: 'A. Kiên trì, nhẫn nại, không sợ thất bại', correct: true, explain: 'Đúng rồi! Chính sự kiên trì, không ngại thất bại đã giúp Ê-đi-xơn thắp sáng thế giới.' },
+                    { text: 'B. Nóng vội muốn có kết quả ngay', correct: false, explain: 'Nếu nóng vội bỏ cuộc thì ông đã không thể chế tạo thành công bóng đèn sợi đốt!' },
+                    { text: 'C. Chỉ làm việc khi thấy dễ dàng', correct: false, explain: 'Nhà sáng chế luôn sẵn sàng vượt qua khó khăn, vất vả. Em chọn lại nhé!' }
+                ]
+            );
+        }
+
+        function renderStep3_5(container) {
+            renderSingleQuiz(
+                container,
+                'quiz5Done',
+                'Việc cải tiến từ vẽ bằng than củi sang vẽ bằng bút chì, hay từ máy điện báo sang điện thoại truyền tiếng nói cho thấy vai trò gì của sáng chế?',
+                '🚀',
+                [
+                    { text: 'A. Làm cho sản phẩm khó sử dụng hơn trước', correct: false, explain: 'Sáng chế luôn hướng tới giúp con người sử dụng thuận tiện, văn minh hơn.' },
+                    { text: 'B. Góp phần tạo ra sản phẩm mới, cải tiến sản phẩm, thúc đẩy công nghệ phát triển', correct: true, explain: 'Chính xác 100%! Sáng chế thúc đẩy công nghệ phát triển, giúp đời sống tiện nghi và văn minh hơn.' },
+                    { text: 'C. Chỉ có tác dụng trang trí trong viện bảo tàng', correct: false, explain: 'Các sáng chế đều phục vụ thiết thực cho đời sống và sản xuất của con người!' }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 9. RENDER GIAO DIỆN TỪNG BƯỚC CỦA CHẶNG 4: VẬN DỤNG
+         **************************************************************/
+        const MINDMAP_DATA = {
+            bulb: {
+                name: 'BÓNG ĐÈN SỢI ĐỐT',
+                icon: '💡',
+                branches: [
+                    { id: '1', title: '1. NHÀ SÁNG CHẾ', ans: 'Tô-mát Ê-đi-xơn', options: ['Tô-mát Ê-đi-xơn', 'Giêm Oát', 'Các Ben'] },
+                    { id: '2', title: '2. NĂM SÁNG CHẾ', ans: 'Năm 1879', options: ['Năm 1784', 'Năm 1879', 'Năm 1886'] },
+                    { id: '3', title: '3. VAI TRÒ', ans: 'Chiếu sáng buổi tối cho nhà ở, đường phố, nhà máy', options: ['Chiếu sáng buổi tối cho nhà ở, đường phố, nhà máy', 'Truyền giọng nói đi xa', 'Đưa nước lên đồng ruộng'] },
+                    { id: '4', title: '4. ƯU ĐIỂM', ans: 'Ánh sáng liên tục, thuận tiện và an toàn hơn đèn dầu', options: ['Ánh sáng liên tục, thuận tiện và an toàn hơn đèn dầu', 'Không cần dùng điện năng', 'Không bao giờ bị nóng'] },
+                    { id: '5', title: '5. NHƯỢC ĐIỂM', ans: 'Tỏa nhiều nhiệt, tốn điện hơn đèn LED ngày nay', options: ['Tỏa nhiều nhiệt, tốn điện hơn đèn LED ngày nay', 'Chỉ phát sáng được ban ngày', 'Nặng hàng chục tấn'] }
+                ]
+            },
+            phone: {
+                name: 'ĐIỆN THOẠI',
+                icon: '☎️',
+                branches: [
+                    { id: '1', title: '1. NHÀ SÁNG CHẾ', ans: 'A-lếch-xan-đơ Gra-ham Beo', options: ['A-lếch-xan-đơ Gra-ham Beo', 'Giêm Oát', 'Các Ben'] },
+                    { id: '2', title: '2. NĂM SÁNG CHẾ', ans: 'Năm 1876', options: ['Năm 1876', 'Năm 1784', 'Năm 1946'] },
+                    { id: '3', title: '3. VAI TRÒ', ans: 'Giúp con người liên lạc bằng giọng nói từ khoảng cách xa', options: ['Giúp con người liên lạc bằng giọng nói từ khoảng cách xa', 'Dùng để thắp sáng đường phố', 'Dùng để cày ruộng'] },
+                    { id: '4', title: '4. ƯU ĐIỂM', ans: 'Truyền tin nhanh chóng, nghe trực tiếp tiếng nói người thân', options: ['Truyền tin nhanh chóng, nghe trực tiếp tiếng nói người thân', 'Không cần đường dây hay sóng', 'Tự động nấu chín thức ăn'] },
+                    { id: '5', title: '5. NHƯỢC ĐIỂM', ans: 'Điện thoại đầu tiên phải nối dây cố định, chưa mang đi xa được', options: ['Điện thoại đầu tiên phải nối dây cố định, chưa mang đi xa được', 'Chỉ gọi được vào ban đêm', 'Phát ra nhiều khói bụi'] }
+                ]
+            }
+        };
+
+        function renderStep4_1(container) {
+            const topicKey = state.mindmapTopic;
+            const topic = MINDMAP_DATA[topicKey];
+            const filledMap = state.mindmapFilled[topicKey];
+            const filledCount = Object.keys(filledMap).length;
+            const activeBranch = topic.branches.find(b => b.id === state.mindmapActiveSlot) || topic.branches.find(b => !filledMap[b.id]) || topic.branches[0];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-3.5">
+                    <!-- Thanh chọn chủ đề sơ đồ tư duy -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 bg-purple-50 border-2 border-purple-200 px-4 py-2 rounded-2xl">
+                        <span class="font-extrabold text-purple-900 text-sm sm:text-base">
+                            🧠 Chọn sáng chế để lập sơ đồ tư duy (${filledCount}/5 nhánh):
+                        </span>
+                        <div class="flex gap-2">
+                            <button onclick="switchMindmapTopic('bulb')"
+                                class="px-3 py-1 rounded-xl font-black text-sm ${topicKey === 'bulb' ? 'bg-purple-600 text-white' : 'bg-white text-purple-700 border border-purple-300'}">
+                                💡 Bóng đèn sợi đốt
+                            </button>
+                            <button onclick="switchMindmapTopic('phone')"
+                                class="px-3 py-1 rounded-xl font-black text-sm ${topicKey === 'phone' ? 'bg-purple-600 text-white' : 'bg-white text-purple-700 border border-purple-300'}">
+                                ☎️ Điện thoại
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sơ đồ tư duy 5 nhánh mô phỏng trang 12 SGK -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center bg-gradient-to-br from-purple-50 via-white to-amber-50 p-4 rounded-3xl border-2 border-purple-200">
+                        <!-- Cột trái: Nhánh 1 & 2 -->
+                        <div class="flex flex-col gap-3">
+                            ${[topic.branches[0], topic.branches[1]].map(b => renderMindmapNode(b, filledMap[b.id], activeBranch.id === b.id)).join('')}
+                        </div>
+
+                        <!-- Trung tâm: Hình sáng chế + Nhánh 3 ở dưới -->
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-36 h-36 rounded-full bg-white border-4 border-amber-400 shadow-md flex flex-col items-center justify-center p-3 text-center">
+                                <span class="text-4xl">${topic.icon}</span>
+                                <span class="text-sm font-black text-slate-800 mt-1 leading-tight">${topic.name}</span>
+                            </div>
+                            <div class="w-full">
+                                ${renderMindmapNode(topic.branches[2], filledMap[topic.branches[2].id], activeBranch.id === topic.branches[2].id)}
+                            </div>
+                        </div>
+
+                        <!-- Cột phải: Nhánh 4 & 5 -->
+                        <div class="flex flex-col gap-3">
+                            ${[topic.branches[3], topic.branches[4]].map(b => renderMindmapNode(b, filledMap[b.id], activeBranch.id === b.id)).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Khung chọn đáp án cho nhánh đang mở -->
+                    <div class="bg-slate-100 border-2 border-slate-200 rounded-2xl p-3.5">
+                        <div class="text-sm font-black text-purple-800 mb-2">
+                            👉 Chọn thông tin đúng cho nhánh <span class="underline">${activeBranch.title}</span>:
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            ${activeBranch.options.map(opt => `
+                                <button onclick="answerMindmapBranch('${activeBranch.id}', '${opt}')"
+                                    class="btn-kid bg-white hover:bg-purple-50 border-2 border-purple-300 text-slate-800 font-extrabold p-2.5 rounded-xl text-sm sm:text-base text-left">
+                                    • ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (filledCount === 5) {
+                showFeedback(true, `Tuyệt vời! Em đã hoàn thành sơ đồ tư duy 5 nhánh về ${topic.name}!`);
+            }
+        }
+
+        function renderMindmapNode(branch, filledValue, isCurrent) {
+            return `
+                <button onclick="selectMindmapSlot('${branch.id}')"
+                    class="btn-kid w-full p-3 rounded-2xl border-2 text-left transition-all ${
+                        filledValue
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
+                            : isCurrent
+                            ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-300 text-slate-900'
+                            : 'bg-white border-slate-300 text-slate-700'
+                    }">
+                    <div class="text-xs font-black uppercase tracking-wider ${filledValue ? 'text-emerald-700' : 'text-purple-700'}">
+                        ${branch.title}
+                    </div>
+                    <div class="text-sm sm:text-base font-extrabold mt-0.5 leading-snug">
+                        ${filledValue ? '✓ ' + filledValue : '??? (Bấm để chọn)'}
+                    </div>
+                </button>
+            `;
+        }
+
+        function switchMindmapTopic(topicKey) {
+            playSound('click');
+            state.mindmapTopic = topicKey;
+            state.mindmapActiveSlot = '1';
+            hideFeedback();
+            renderApp();
+        }
+
+        function selectMindmapSlot(slotId) {
+            playSound('click');
+            state.mindmapActiveSlot = slotId;
+            renderApp();
+        }
+
+        function answerMindmapBranch(branchId, chosenText) {
+            const topic = MINDMAP_DATA[state.mindmapTopic];
+            const branch = topic.branches.find(b => b.id === branchId);
+            if (!branch) return;
+
+            if (branch.ans === chosenText) {
+                state.mindmapFilled[state.mindmapTopic][branchId] = chosenText;
+                playSound('correct');
+                rewardStar(`mindmap_${state.mindmapTopic}_${branchId}`, 1);
+                const nextEmpty = topic.branches.find(b => !state.mindmapFilled[state.mindmapTopic][b.id]);
+                if (nextEmpty) state.mindmapActiveSlot = nextEmpty.id;
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa chính xác cho nhánh "${branch.title}" rồi. Em chọn phương án khác nhé!`);
+            }
+        }
+
+        // Bước 4.2: Máy tính điện tử đầu tiên ENIAC (Trang 13)
+        function renderStep4_2(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-5xl mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-2 border-sky-300 rounded-3xl p-5 grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
+                        <div class="flex flex-col items-center text-center">
+                            ${SVGS.eniacComputer}
+                            <span class="text-xs font-black text-slate-500 mt-1">Hình 4. Máy tính ENIAC (1946)</span>
+                        </div>
+                        <div class="md:col-span-2 flex flex-col gap-2">
+                            <h3 class="text-lg sm:text-xl font-black text-sky-900 uppercase">
+                                🖥️ Chiếc máy tính điện tử đầu tiên – ENIAC
+                            </h3>
+                            <p class="text-base font-bold text-slate-700 leading-relaxed">
+                                • <b>ENIAC</b> (tên đầy đủ là <i>"Máy tính và tích hợp số điện tử"</i>) là máy tính có thể lập trình đầu tiên được chế tạo tại <b>Hoa Kỳ</b>.
+                            </p>
+                            <p class="text-base font-bold text-slate-700 leading-relaxed">
+                                • Nhà vật lí người Mỹ <b>Giôn Mau-li (John Mauchly)</b>, kĩ sư <b>Prết-pơ Éc-cơ (Presper Eckert)</b> và các đồng nghiệp tại trường Đại học Pen-si-vây-ni-a bắt đầu nghiên cứu dự án này từ năm <b>1943</b>.
+                            </p>
+                            <p class="text-base font-bold text-slate-700 leading-relaxed">
+                                • Năm <b>1946</b>, ENIAC được hoàn thành. Nó có kích thước rất lớn, thực hiện được <b class="text-rose-600">5 000 phép cộng trong mỗi giây</b> và được xem là <b>ông tổ của máy tính hiện đại</b>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Câu hỏi nhỏ kiểm tra đọc hiểu ENIAC -->
+                    <div class="bg-white border-2 border-amber-300 rounded-2xl p-4">
+                        <p class="font-black text-base sm:text-lg text-slate-800 mb-3">
+                            ❓ Đố em: Chiếc máy tính điện tử đầu tiên ENIAC (hoàn thành năm 1946) có thể thực hiện được bao nhiêu phép cộng trong mỗi giây?
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button onclick="answerEniacQuiz(false)"
+                                class="btn-kid p-3 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-base">
+                                A. 50 phép cộng / giây
+                            </button>
+                            <button onclick="answerEniacQuiz(true)"
+                                class="btn-kid p-3 rounded-xl border-2 font-black text-base ${
+                                    state.eniacQuizDone ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-300 bg-white text-slate-800'
+                                }">
+                                B. 5 000 phép cộng / giây
+                            </button>
+                            <button onclick="answerEniacQuiz(false)"
+                                class="btn-kid p-3 rounded-xl border-2 border-slate-300 bg-white font-extrabold text-base">
+                                C. 500 phép cộng / giây
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (state.eniacQuizDone) {
+                showFeedback(true, 'Chính xác! ENIAC thực hiện được 5 000 phép cộng mỗi giây và là ông tổ của máy tính hiện đại!');
+            }
+        }
+
+        function answerEniacQuiz(isCorrect) {
+            if (isCorrect) {
+                state.eniacQuizDone = true;
+                playSound('correct');
+                rewardStar('eniac_quiz', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy nhìn dòng chữ màu đỏ trong phần thông tin ENIAC ở trên nhé!');
+            }
+        }
+
+        // Bước 4.3: Em tập làm Nhà sáng chế tương lai & Tổng kết toàn bài
+        function renderStep4_3(container) {
+            const promises = [
+                'Chăm chỉ học tập và ham học hỏi mỗi ngày',
+                'Chịu khó quan sát thế giới xung quanh',
+                'Kiên trì, không nản lòng khi gặp bài toán khó',
+                'Chia sẻ câu chuyện về các nhà sáng chế với ông bà, bố mẹ'
+            ];
+            container.innerHTML = `
+                <div class="step-enter max-w-4xl mx-auto w-full flex flex-col gap-4 text-center">
+                    <div class="bg-gradient-to-r from-amber-100 via-yellow-50 to-emerald-100 border-3 border-amber-300 rounded-3xl p-5 flex flex-col items-center">
+                        <div class="text-5xl mb-1">🏆🌟🎓</div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900">
+                            Chứng Nhận: Nhà Sáng Chế Nhí Tài Ba!
+                        </h2>
+                        <p class="text-base sm:text-lg font-extrabold text-slate-700 mt-1">
+                            Em đã tích lũy được <span class="text-amber-600 font-black text-2xl">${state.stars} ⭐</span> trong Bài 2: Nhà sáng chế!
+                        </p>
+                    </div>
+
+                    <div class="bg-white border-2 border-sky-200 rounded-3xl p-4 text-left">
+                        <div class="text-base font-black text-sky-900 mb-2.5">
+                            💌 Em hãy tích chọn những điều em sẽ thực hiện và chia sẻ cùng người thân nhé:
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${promises.map((p, i) => {
+                                const active = state.myPromises[i];
+                                return `
+                                    <button onclick="togglePromise(${i})"
+                                        class="btn-kid p-3 rounded-2xl border-2 text-left font-extrabold text-sm sm:text-base flex items-center gap-2.5 ${
+                                            active
+                                                ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
+                                                : 'bg-slate-50 border-slate-200 text-slate-700'
+                                        }">
+                                        <span class="w-7 h-7 rounded-lg flex items-center justify-center font-black ${
+                                            active ? 'bg-emerald-500 text-white' : 'bg-white border border-slate-300'
+                                        }">${active ? '✓' : ''}</span>
+                                        <span>${p}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button onclick="celebrateFinish()"
+                            class="btn-kid bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black px-6 py-3 rounded-2xl text-lg">
+                            🎉 Bắn pháo hoa chúc mừng!
+                        </button>
+                        <button onclick="goToStage(0, 0)"
+                            class="btn-kid bg-sky-100 hover:bg-sky-200 text-sky-900 font-black px-5 py-3 rounded-2xl text-base">
+                            🔄 Ôn lại từ Chặng 1
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePromise(idx) {
+            state.myPromises[idx] = !state.myPromises[idx];
+            playSound('pop');
+            rewardStar('promise_' + idx, 1);
+            renderApp();
+        }
+
+        function celebrateFinish() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng em đã nắm vững toàn bộ kiến thức Bài 2: Nhà sáng chế!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinish();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render thanh Chặng trên Desktop & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-3.5 py-1.5 rounded-xl font-black text-sm sm:text-base transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-600 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-lg text-xs font-black uppercase border ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="text-lg sm:text-2xl font-black text-slate-900 mt-1 leading-tight">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="text-sm sm:text-base font-bold text-slate-600">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-3.5 rounded-full transition-all ${
+                            active ? 'w-9 bg-sky-600' : 'w-3.5 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        // Khởi chạy ứng dụng khi tải xong trang
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,3025 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 7: Lắp Ráp Mô Hình Xe Điện Chạy Bằng Pin - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Quicksand:wght@700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 55%, #fefce8 100%);
+            color: #0f172a;
+        }
+        /* Hệ thống cỡ chữ tối ưu trình chiếu Tivi lớp học để học sinh bàn cuối nhìn rõ */
+        body.tv-normal {
+            --title-size: clamp(1.42rem, 2.15vw, 2.02rem);
+            --subtitle-size: clamp(1.04rem, 1.38vw, 1.3rem);
+            --card-title: clamp(1.18rem, 1.65vw, 1.55rem);
+            --body-size: clamp(1.06rem, 1.45vw, 1.38rem);
+            --option-size: clamp(1.08rem, 1.5vw, 1.4rem);
+            --badge-size: clamp(0.9rem, 1.1vw, 1.06rem);
+        }
+        body.tv-large {
+            --title-size: clamp(1.6rem, 2.4vw, 2.28rem);
+            --subtitle-size: clamp(1.14rem, 1.56vw, 1.46rem);
+            --card-title: clamp(1.3rem, 1.85vw, 1.75rem);
+            --body-size: clamp(1.18rem, 1.62vw, 1.54rem);
+            --option-size: clamp(1.2rem, 1.66vw, 1.58rem);
+            --badge-size: clamp(0.96rem, 1.2vw, 1.16rem);
+        }
+        body.tv-xlarge {
+            --title-size: clamp(1.76rem, 2.68vw, 2.52rem);
+            --subtitle-size: clamp(1.24rem, 1.72vw, 1.6rem);
+            --card-title: clamp(1.42rem, 2.05vw, 1.92rem);
+            --body-size: clamp(1.28rem, 1.8vw, 1.68rem);
+            --option-size: clamp(1.3rem, 1.85vw, 1.72rem);
+            --badge-size: clamp(1.04rem, 1.28vw, 1.24rem);
+        }
+        .tv-title { font-size: var(--title-size); line-height: 1.22; font-weight: 900; }
+        .tv-subtitle { font-size: var(--subtitle-size); line-height: 1.34; font-weight: 800; }
+        .tv-card-title { font-size: var(--card-title); line-height: 1.28; font-weight: 900; }
+        .tv-body { font-size: var(--body-size); line-height: 1.38; font-weight: 800; }
+        .tv-option { font-size: var(--option-size); line-height: 1.35; font-weight: 800; }
+        .tv-badge { font-size: var(--badge-size); line-height: 1.2; font-weight: 900; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(15, 23, 42, 0.22);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.1), 0 8px 14px -6px rgba(15, 23, 42, 0.06);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.98) translateY(4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* Không dùng bất kỳ animation rotate/translate nào làm lệch bánh xe hoặc chi tiết kĩ thuật */
+    </style>
+</head>
+<body class="tv-large flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- MODAL NẠP ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN CHO GIÁO VIÊN) -->
+    <div id="sgk-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-4 border-sky-500 rounded-3xl max-w-4xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto custom-scroll">
+            <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📷</span>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900">Nạp ảnh trang sách giáo khoa gốc (Trang 32 – 37)</h3>
+                        <p class="text-base font-bold text-slate-600">Ứng dụng đã có sẵn hình vẽ kĩ thuật chuẩn xác. Nếu muốn hiển thị ảnh chụp trực tiếp từ SGK, thầy/cô có thể chọn 4 ảnh trang sách dưới đây:</p>
+                    </div>
+                </div>
+                <button onclick="closeSgkModal()" class="btn-kid bg-rose-100 hover:bg-rose-200 text-rose-900 font-black px-4 py-2 rounded-2xl text-lg">✕ Đóng</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 1. Ảnh Trang 32 (Hình 1a, 1b, 1c, 1d, 1e)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(1, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-1" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 2. Ảnh Trang 33–34 (Bảng chi tiết & Hình 2)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(2, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-2" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 3. Ảnh Trang 35–36 (Hình 3, Hình 4, Hình 5, Hình 6)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(3, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-3" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 4. Ảnh Trang 37 (Hình 7 & Hình 8)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(4, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-4" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5">
+                <span class="text-base font-extrabold text-amber-950">💡 Mẹo: Bạn cũng có thể chọn cả 4 file ảnh cùng lúc ở ô dưới đây:</span>
+                <label class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl cursor-pointer">
+                    📂 Chọn nhanh 4 ảnh
+                    <input type="file" accept="image/*" multiple onchange="loadMultipleSgkPages(this)" class="hidden"/>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-300 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-700 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-xs font-black uppercase tracking-wider leading-none">Bài</span>
+                <span class="text-2xl sm:text-3xl font-black leading-none">7</span>
+            </div>
+            <div>
+                <div class="text-xs sm:text-sm font-black text-sky-700 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-lg sm:text-2xl xl:text-3xl font-black text-slate-900 tracking-tight leading-tight">Lắp ráp mô hình xe điện chạy bằng pin</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn -->
+        <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-300" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Ảnh SGK, Chỉnh cỡ chữ Tivi, Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Nút nạp ảnh SGK gốc -->
+            <button onclick="openSgkModal()" title="Nạp ảnh chụp trang sách giáo khoa gốc"
+                class="btn-kid flex items-center gap-1.5 bg-sky-100 hover:bg-sky-200 border-2 border-sky-400 text-sky-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>📷 Ảnh SGK</span>
+            </button>
+
+            <!-- Nút chỉnh cỡ chữ Tivi cho học sinh bàn cuối -->
+            <button onclick="cycleFontSize()" title="Thay đổi cỡ chữ cho màn hình Tivi"
+                class="btn-kid flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-400 text-violet-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>🔍 Cỡ chữ:</span>
+                <span id="font-size-label" class="bg-violet-600 text-white px-2 py-0.5 rounded-lg">To (TV)</span>
+            </button>
+
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-7 h-7 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-xl sm:text-2xl font-black text-amber-900">0</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden md:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-600 hover:bg-sky-700 text-white p-2.5 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="xl:hidden bg-white/90 border-b-2 border-sky-200 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - RỘNG RÃI, CHỮ TO RÕ CHO TIVI) -->
+    <main class="flex-1 w-full max-w-[1620px] mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-sky-300 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3 bg-gradient-to-r from-sky-100/90 via-emerald-50 to-amber-100/80 border-b-2 border-sky-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-4 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-300 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-800 font-black px-5 sm:px-7 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-sm sm:text-base font-black text-slate-700">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-black px-6 sm:px-9 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI 7: LẮP RÁP MÔ HÌNH XE ĐIỆN CHẠY BẰNG PIN -->
+    <script>
+        /**************************************************************
+         * 1. CHẾ ĐỘ CỠ CHỮ TIVI & HỆ THỐNG ÂM THANH KĨ THUẬT SINH ĐỘNG
+         **************************************************************/
+        const fontModes = [
+            { cls: 'tv-normal', label: 'Chuẩn TV' },
+            { cls: 'tv-large', label: 'To (TV)' },
+            { cls: 'tv-xlarge', label: 'Siêu to' }
+        ];
+        let currentFontModeIdx = 1; // Mặc định chọn "To (TV)" cho học sinh bàn cuối nhìn rõ
+
+        function cycleFontSize() {
+            playSound('click');
+            document.body.classList.remove(fontModes[currentFontModeIdx].cls);
+            currentFontModeIdx = (currentFontModeIdx + 1) % fontModes.length;
+            document.body.classList.add(fontModes[currentFontModeIdx].cls);
+            document.getElementById('font-size-label').textContent = fontModes[currentFontModeIdx].label;
+        }
+
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(580, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.065);
+                    gain.gain.setValueAtTime(0.16, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(460, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'wrench') {
+                    // Tiếng vặn ốc vít / cờ-lê lách cách cơ khí
+                    [620, 780, 960].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.055);
+                        gain.gain.setValueAtTime(0.12, now + i * 0.055);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.05);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.055);
+                        osc.stop(now + i * 0.055 + 0.055);
+                    });
+                } else if (type === 'motor') {
+                    // Tiếng động cơ điện 1 chiều quay vù vù khi đóng công tắc
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(280, now + 0.25);
+                    osc.frequency.setValueAtTime(280, now + 0.55);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.66);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.24, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.26);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 230];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.13, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.04;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 1B. HỆ THỐNG NẠP & CẮT ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN)
+         **************************************************************/
+        const sgkPages = { 1: null, 2: null, 3: null, 4: null };
+
+        function openSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function loadSgkPage(pageIndex, inputEl) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                sgkPages[pageIndex] = evt.target.result;
+                const st = document.getElementById('status-page-' + pageIndex);
+                if (st) {
+                    st.textContent = '✓ Đã nạp ảnh gốc từ máy (' + file.name + ')';
+                    st.className = 'text-sm font-black text-sky-700';
+                }
+                playSound('correct');
+                renderApp();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadMultipleSgkPages(inputEl) {
+            if (!inputEl.files || !inputEl.files.length) return;
+            const files = Array.from(inputEl.files).slice(0, 4);
+            files.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const pIdx = idx + 1;
+                    sgkPages[pIdx] = evt.target.result;
+                    const st = document.getElementById('status-page-' + pIdx);
+                    if (st) {
+                        st.textContent = '✓ Đã nạp ảnh gốc (' + file.name + ')';
+                        st.className = 'text-sm font-black text-sky-700';
+                    }
+                    if (idx === files.length - 1) {
+                        playSound('correct');
+                        renderApp();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Hiển thị vùng cắt (crop) từ ảnh trang sách gốc nếu giáo viên đã nạp, ngược lại hiển thị SVG kĩ thuật chuẩn SGK
+        function renderSgkCropOrSVG(pageNo, cropBox, fallbackSvgHtml, captionText = '') {
+            const pageUrl = sgkPages[pageNo];
+            if (pageUrl && cropBox) {
+                // cropBox: { x, y, w, h } tính theo phần trăm (0..100) của trang ảnh
+                const bgWidth = (100 / cropBox.w) * 100;
+                const bgPosX = cropBox.w >= 100 ? 0 : (cropBox.x / (100 - cropBox.w)) * 100;
+                const bgPosY = cropBox.h >= 100 ? 0 : (cropBox.y / (100 - cropBox.h)) * 100;
+                const aspect = (cropBox.w / cropBox.h).toFixed(2);
+                return `
+                    <div class="w-full flex flex-col items-center">
+                        <div class="w-full max-w-[520px] rounded-2xl border-2 border-slate-300 shadow-inner bg-white overflow-hidden"
+                             style="aspect-ratio: ${aspect}; background-image: url('${pageUrl}'); background-size: ${bgWidth}% auto; background-position: ${bgPosX}% ${bgPosY}%; background-repeat: no-repeat;">
+                        </div>
+                        ${captionText ? `<div class="text-sm font-black text-slate-600 mt-1">${captionText}</div>` : ''}
+                    </div>
+                `;
+            }
+            return fallbackSvgHtml;
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#10b981', '#0284c7', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 320,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 11 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG (21 BƯỚC TÁCH NHỎ)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động (3 bước)
+            goalsUnlocked: [false, false, false, false, false, false], // 2 mục tiêu + 4 yêu cầu
+            riddleSolved: false,
+            modelOverviewDone: false,
+
+            // Chặng 2: Khám phá (9 bước tách biệt)
+            mainPartsSeen: { b: true, c: false, d: false, e: false },
+            selectedMainPart: 'b',
+            tableGroup1QuizDone: false,
+            tableGroup2QuizDone: false,
+            tableGroup3QuizDone: false,
+            step1FrameBuilt: false,
+            step2aMotorMounted: false,
+            step2bTapeDone: false,
+            step2bWireRedDone: false,
+            step2bWireBlackDone: false,
+            step3DriveMounted: false,
+            step3WheelsMounted: false,
+            step4CheckedJoints: false,
+            step4BatteryInserted: false,
+            step4SwitchClosed: false,
+
+            // Chặng 3: Luyện tập (6 câu hỏi trắc nghiệm có phương án nhiễu hợp lí)
+            prac1Done: false,
+            prac2Done: false,
+            prac3Done: false,
+            prac4Done: false,
+            prac5Done: false,
+            prac6Done: false,
+
+            // Chặng 4: Vận dụng (3 bước)
+            evalCriteria: { c1: null, c2: null, c3: null, c4: null },
+            customCarStyle: 'racer', // 'racer', 'truck', 'bus'
+            customFlagColor: '#ef4444',
+            customCarRunning: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-900 border-amber-400',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học & Yêu cầu sản phẩm (Trang 32)',
+                        subtitle: 'Bấm vào từng thẻ dưới đây để mở khóa 2 mục tiêu bài học và 4 yêu cầu sản phẩm!',
+                        voiceText: 'Chào mừng các em đến với Bài 7: Lắp ráp mô hình xe điện chạy bằng pin. Học xong bài này, em sẽ: Một, kể tên, nhận biết được các chi tiết của bộ lắp ghép mô hình xe điện chạy bằng pin. Hai, lắp ráp, vận hành được mô hình xe điện chạy bằng pin. Yêu cầu sản phẩm gồm: Đúng và đủ chi tiết; đúng hình dạng, gọn gàng; mối ghép chắc chắn; xe chạy được khi đóng công tắc.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Câu đố khởi động (Trang 32)',
+                        subtitle: 'Cùng giải câu đố thú vị của hai bạn học sinh bên chiếc xe mô hình trong lớp học!',
+                        voiceText: 'Bạn nam đố bạn nữ: Xe gì mà có động cơ, muốn đi lại chẳng bao giờ cần xăng? Em hãy chọn đáp án đúng cho câu đố này nhé!',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Quan sát mô hình xe điện chạy bằng pin (Hình 1a – Trang 32)',
+                        subtitle: 'Quan sát mô hình xe điện hoàn chỉnh và trả lời câu hỏi về nguồn năng lượng giúp xe di chuyển.',
+                        voiceText: 'Quan sát Hình 1a: Mô hình xe điện chạy bằng pin. Theo em, nhờ đâu mà khi đóng công tắc, chiếc xe mô hình này có thể tự di chuyển tiến về phía trước?',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-600 to-blue-700',
+                badgeBg: 'bg-sky-100 text-sky-900 border-sky-400',
+                steps: [
+                    {
+                        title: '1. Tìm hiểu sản phẩm mẫu – 4 bộ phận chính (Hình 1 – Trang 32)',
+                        subtitle: 'Bấm vào cả 4 bộ phận (b, c, d, e) để tìm hiểu cấu tạo của mô hình xe điện chạy bằng pin.',
+                        voiceText: 'Mục 1: Tìm hiểu sản phẩm mẫu. Mô hình xe điện chạy bằng pin gồm 4 bộ phận chính: b là Khung xe; c là Trục và bánh xe; d là Động cơ và hệ truyền động; e là Nguồn điện.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '2. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 6 – Trang 33)',
+                        subtitle: 'Quan sát tên gọi, hình minh họa và số lượng của 6 chi tiết đầu tiên rồi trả lời câu hỏi.',
+                        voiceText: 'Mục 2: Chi tiết, vật liệu và dụng cụ. Nhóm 1 gồm: 1 tấm lớn, 2 thanh chữ U dài, 4 thanh thẳng 3 lỗ, 2 trục thẳng dài, 4 bánh xe, và 1 tấm 2 lỗ.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '2. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 7 đến 12 – Trang 33, 34)',
+                        subtitle: 'Quan sát các chi tiết thuộc phần động cơ, hệ truyền động và nguồn điện (STT 7 đến 12).',
+                        voiceText: 'Nhóm 2 gồm: 1 động cơ, 1 bánh đai, 1 đai truyền, 1 puli, 1 giá 2 pin tiểu 1,5 Vôn, và 2 viên pin tiểu 1,5 Vôn cỡ AA.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '2. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 3 (STT 13 đến 19 – Trang 34)',
+                        subtitle: 'Quan sát các chi tiết ghép nối và dụng cụ lắp ráp (STT 13 đến 19) và giải bài toán số lượng.',
+                        voiceText: 'Nhóm 3 gồm: 10 đai ốc, 8 vít ngắn, 2 vít dài, 10 vòng hãm, 1 tua-vít, 1 cờ-lê, và 1 cuộn băng dính 2 mặt.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '3. Thực hành: Bước 1 – Lắp khung xe (Hình 2 – Trang 34)',
+                        subtitle: 'Dùng hai thanh chữ U dài, bốn thanh thẳng 3 lỗ lắp vào tấm lớn như Hình 2.',
+                        voiceText: 'Mục 3: Thực hành lắp ráp mô hình. Bước 1: Lắp khung xe. Dùng hai thanh chữ U dài, bốn thanh thẳng 3 lỗ lắp vào tấm lớn bằng 8 vít ngắn và 8 đai ốc như Hình 2.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '3. Thực hành: Bước 2 (Phần 1) – Lắp động cơ vào khung xe (Hình 3 – Trang 35)',
+                        subtitle: 'Dùng tấm 2 lỗ, 2 vít dài và 2 đai ốc để cố định động cơ vào khung xe như Hình 3.',
+                        voiceText: 'Bước 2, phần 1: Dùng tấm 2 lỗ để cố định động cơ vào khung xe bằng 2 vít dài và 2 đai ốc như Hình 3.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '3. Thực hành: Bước 2 (Phần 2) – Lắp giá pin và nối dây điện (Hình 4 – Trang 35)',
+                        subtitle: 'Cố định giá 2 pin tiểu bằng băng dính 2 mặt và nối đúng màu dây điện vào 2 cực của động cơ.',
+                        voiceText: 'Bước 2, phần 2: Dùng băng dính 2 mặt để cố định giá 2 pin tiểu vào khung xe và nối 2 đầu dây điện của giá 2 pin tiểu với 2 cực của động cơ như Hình 4. Lưu ý: Nối dây điện màu đỏ vào cực dương, nối dây điện màu đen vào cực âm của động cơ.',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '3. Thực hành: Bước 3 – Lắp hệ truyền động vào trục và bánh xe (Hình 5 – Trang 36)',
+                        subtitle: 'Lắp hệ truyền động vào trục bánh xe và động cơ; lắp bánh xe vào trục và cài vòng hãm.',
+                        voiceText: 'Bước 3: Lắp hệ truyền động vào trục và bánh xe. Lắp hệ truyền động gồm puli, bánh đai, đai truyền vào trục bánh xe và động cơ; lắp bánh xe vào trục bánh xe và dùng 10 vòng hãm cố định như Hình 5.',
+                        render: renderStep2_8
+                    },
+                    {
+                        title: '3. Thực hành: Bước 4 – Kiểm tra hoạt động của mô hình (Hình 6 – Trang 36)',
+                        subtitle: 'Kiểm tra mối ghép, mở công tắc khi lắp 2 pin tiểu đúng cực, rồi đóng công tắc để chạy thử!',
+                        voiceText: 'Bước 4: Kiểm tra hoạt động của mô hình. Kiểm tra các mối ghép. Lắp 2 pin tiểu 1,5 Vôn vào giá pin và đóng công tắc để chạy thử mô hình xe điện như Hình 6. Lưu ý: Khi lắp pin phải mở công tắc và lắp đúng cực. Điều chỉnh lại sản phẩm nếu cần.',
+                        render: renderStep2_9
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-600 to-teal-700',
+                badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+                steps: [
+                    {
+                        title: 'Câu hỏi 1/6 – Phân biệt các chi tiết trong từng bộ phận chính',
+                        subtitle: 'Vận dụng kiến thức Mục 1 (Hình 1 – Trang 32) và Bảng chi tiết (Trang 33).',
+                        voiceText: 'Câu hỏi 1: Trong mô hình xe điện chạy bằng pin, bộ phận Động cơ và hệ truyền động ở Hình 1d bao gồm đầy đủ những chi tiết nào dưới đây?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi 2/6 – Số lượng chi tiết ghép nối và hãm trục',
+                        subtitle: 'Vận dụng bảng chi tiết, vật liệu và dụng cụ (Trang 34 SGK).',
+                        voiceText: 'Câu hỏi 2: Để lắp ráp hoàn chỉnh một mô hình xe điện chạy bằng pin theo đúng bảng gợi ý ở trang 34, em cần chuẩn bị số lượng vít ngắn, vít dài, đai ốc và vòng hãm lần lượt là bao nhiêu?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi 3/6 – Kĩ thuật sử dụng vít ngắn và vít dài khi lắp ráp',
+                        subtitle: 'Giải thích lí do sử dụng chi tiết ghép nối khác nhau ở Bước 1 (Hình 2) và Bước 2 (Hình 3).',
+                        voiceText: 'Câu hỏi 3: Vì sao ở Bước 1 khi lắp các thanh thẳng 3 lỗ và thanh chữ U dài vào tấm lớn ta dùng 8 vít ngắn, nhưng ở Bước 2 khi dùng tấm 2 lỗ cố định động cơ vào khung xe lại phải dùng 2 vít dài?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi 4/6 – Quy tắc nối dây điện và lắp pin an toàn',
+                        subtitle: 'Vận dụng hai lưu ý quan trọng ở Bước 2 (Trang 35) và Bước 4 (Trang 36).',
+                        voiceText: 'Câu hỏi 4: Khi nối dây điện từ giá pin vào động cơ và khi lắp pin vào giá pin, thao tác nào dưới đây là ĐÚNG quy tắc kĩ thuật và an toàn?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Câu hỏi 5/6 – Quy trình 4 bước thực hành lắp ráp mô hình',
+                        subtitle: 'Nắm vững trình tự hợp lí khi lắp ráp mô hình xe điện chạy bằng pin (Trang 34–36).',
+                        voiceText: 'Câu hỏi 5: Thứ tự thực hiện nào dưới đây là ĐÚNG khi lắp ráp mô hình xe điện chạy bằng pin?',
+                        render: renderStep3_5
+                    },
+                    {
+                        title: 'Câu hỏi 6/6 – Xử lí tình huống khi kiểm tra và điều chỉnh mô hình',
+                        subtitle: 'Vận dụng kiến thức Bước 4: Kiểm tra hoạt động và điều chỉnh lại sản phẩm (Trang 36).',
+                        voiceText: 'Câu hỏi 6: Sau khi lắp xong mô hình và đóng công tắc, bạn Minh nghe thấy tiếng trục động cơ quay vù vù nhưng chiếc xe vẫn đứng yên tại chỗ không lăn bánh. Nguyên nhân hợp lí nhất của hiện tượng này là gì?',
+                        render: renderStep3_6
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-600 to-indigo-700',
+                badgeBg: 'bg-purple-100 text-purple-900 border-purple-400',
+                steps: [
+                    {
+                        title: '4. Giới thiệu, đánh giá và hoàn thiện sản phẩm (Hình 7 – Trang 37)',
+                        subtitle: 'Cùng bạn đánh giá sản phẩm mô hình xe điện theo 4 tiêu chí trong Phiếu đánh giá sản phẩm.',
+                        voiceText: 'Mục 4: Giới thiệu, đánh giá và hoàn thiện sản phẩm. Em hãy cùng bạn đánh giá sản phẩm theo 4 tiêu chí: Một, đúng và đủ chi tiết. Hai, đúng hình dạng, gọn gàng. Ba, mối ghép chắc chắn. Bốn, xe chạy được khi đóng công tắc.',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Xưởng sáng tạo: Thiết kế mô hình xe điện em thích (Hình 8 – Trang 37)',
+                        subtitle: 'Từ mô hình xe điện vừa lắp, hãy thiết kế và lắp thêm các chi tiết để tạo ra mẫu xe em thích rồi chạy thử!',
+                        voiceText: 'Từ mô hình xe điện chạy bằng pin vừa lắp, em hãy thiết kế và lắp thêm các chi tiết trang trí như thân xe, cờ đua để tạo ra mô hình xe điện mà em thích rồi bấm Đóng công tắc để chạy thử nhé!',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Tổng kết bài học & Trao Huy hiệu Kĩ Sư Lắp Ráp Nhí Tài Ba',
+                        subtitle: 'Cùng nhìn lại toàn bộ kiến thức Bài 7 và nhận huy hiệu khen thưởng!',
+                        voiceText: 'Chúc mừng các em đã hoàn thành xuất sắc Bài 7: Lắp ráp mô hình xe điện chạy bằng pin! Các em đã nắm vững tên gọi 19 chi tiết, dụng cụ và quy trình 4 bước lắp ráp, vận hành xe điện chạy bằng pin.',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 4. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI (CHỮ TO RÕ)
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-950', 'bg-rose-100', 'border-rose-500', 'text-rose-950');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shrink-0">✓</span>
+                        <span class="tv-body text-emerald-950">${message}</span>
+                    </div>
+                    <span class="tv-badge bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full shrink-0 border-2 border-amber-500">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-black text-2xl shrink-0">!</span>
+                        <span class="tv-body text-rose-950">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 5. THƯ VIỆN HÌNH VẼ KĨ THUẬT CHÍNH XÁC 100% THEO BỘ LẮP GHÉP LỚP 5
+         *    (Tuyệt đối không dùng CSS rotate làm lệch bánh xe)
+         **************************************************************/
+        // Vẽ 1 bánh xe chuẩn bộ lắp ghép lớp 5 (Lốp đen có 16 gai cao su, vành trắng 4 lỗ tròn, tâm xanh dương)
+        function drawKitWheel(cx, cy, r = 34) {
+            let teeth = '';
+            for (let i = 0; i < 16; i++) {
+                const angle = (i * 22.5 * Math.PI) / 180;
+                const x1 = cx + Math.cos(angle) * (r - 2);
+                const y1 = cy + Math.sin(angle) * (r - 2);
+                const x2 = cx + Math.cos(angle) * (r + 3.5);
+                const y2 = cy + Math.sin(angle) * (r + 3.5);
+                teeth += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#0f172a" stroke-width="5.5" stroke-linecap="butt"/>`;
+            }
+            const rimR = r * 0.58;
+            return `
+                <g>
+                    ${teeth}
+                    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/>
+                    <circle cx="${cx}" cy="${cy}" r="${r * 0.78}" fill="none" stroke="#334155" stroke-width="1.5"/>
+                    <circle cx="${cx}" cy="${cy}" r="${rimR}" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2.5"/>
+                    <circle cx="${cx - rimR * 0.48}" cy="${cy}" r="${rimR * 0.16}" fill="#cbd5e1"/>
+                    <circle cx="${cx + rimR * 0.48}" cy="${cy}" r="${rimR * 0.16}" fill="#cbd5e1"/>
+                    <circle cx="${cx}" cy="${cy - rimR * 0.48}" r="${rimR * 0.16}" fill="#cbd5e1"/>
+                    <circle cx="${cx}" cy="${cy + rimR * 0.48}" r="${rimR * 0.16}" fill="#cbd5e1"/>
+                    <!-- Vòng hãm màu xanh dương ở tâm bánh xe -->
+                    <circle cx="${cx}" cy="${cy}" r="${r * 0.24}" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+                    <circle cx="${cx}" cy="${cy}" r="${r * 0.09}" fill="#94a3b8"/>
+                </g>
+            `;
+        }
+
+        // Hình 1a & Hình 7: Mô hình xe điện chạy bằng pin hoàn chỉnh (Góc nhìn 3D giống hệt Hình 1a và Hình 7 trong SGK)
+        function getElectricCarSVG(isSwitchClosed = false) {
+            let sideHoles = '';
+            for (let i = 0; i < 9; i++) {
+                const hx = 102 + i * 24;
+                const hy = 98 - i * 3.2;
+                sideHoles += `<ellipse cx="${hx}" cy="${hy.toFixed(1)}" rx="3.2" ry="4.8" fill="#064e3b" stroke="#34d399" stroke-width="1"/>`;
+            }
+            return `
+                <svg viewBox="0 0 440 245" class="w-full max-w-[430px] h-auto mx-auto">
+                    <!-- Bóng đổ mặt bàn màu vàng nhạt giống Hình 7 SGK -->
+                    <ellipse cx="220" cy="202" rx="175" ry="30" fill="#fef08a" opacity="0.75"/>
+
+                    <!-- 2 Bánh xe phía xa (bên trái của xe) -->
+                    ${drawKitWheel(118, 148, 32)}
+                    ${drawKitWheel(302, 122, 31)}
+
+                    <!-- 2 Thanh thẳng 3 lỗ màu đỏ phía xa -->
+                    <path d="M112,92 L118,148" stroke="#dc2626" stroke-width="13" stroke-linecap="round"/>
+                    <path d="M294,68 L302,122" stroke="#dc2626" stroke-width="13" stroke-linecap="round"/>
+
+                    <!-- Động cơ & Tấm 2 lỗ màu đỏ ở dưới gầm xe -->
+                    <rect x="195" y="102" width="54" height="30" rx="6" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <path d="M204,96 L242,96 L246,134 L200,134 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+
+                    <!-- 2 Trục thẳng dài bằng thép nối bánh xa và bánh gần -->
+                    <line x1="118" y1="148" x2="156" y2="182" stroke="#94a3b8" stroke-width="6.5" stroke-linecap="round"/>
+                    <line x1="302" y1="122" x2="342" y2="154" stroke="#94a3b8" stroke-width="6.5" stroke-linecap="round"/>
+
+                    <!-- 2 Thanh chữ U dài màu vàng bắt ngang dưới tấm lớn -->
+                    <polygon points="105,96 158,124 170,120 116,92" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <polygon points="276,72 332,98 342,94 286,68" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+
+                    <!-- 2 Thanh thẳng 3 lỗ màu đỏ phía gần -->
+                    <path d="M150,116 L156,182" stroke="#ef4444" stroke-width="14" stroke-linecap="round"/>
+                    <path d="M150,116 L156,182" stroke="#991b1b" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.25"/>
+                    <circle cx="151" cy="124" r="3.5" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+                    <circle cx="153" cy="150" r="3" fill="#fee2e2"/>
+
+                    <path d="M324,90 L342,154" stroke="#ef4444" stroke-width="14" stroke-linecap="round"/>
+                    <circle cx="326" cy="98" r="3.5" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+                    <circle cx="334" cy="124" r="3" fill="#fee2e2"/>
+
+                    <!-- Bánh đai màu đỏ & Đai truyền màu vàng nâu -->
+                    <g>
+                        <ellipse cx="212" cy="162" rx="22" ry="25" fill="#dc2626" stroke="#7f1d1d" stroke-width="3"/>
+                        <ellipse cx="212" cy="162" rx="14" ry="16" fill="#b91c1c"/>
+                        <circle cx="212" cy="162" r="5" fill="#2563eb"/>
+                        <!-- Đai truyền nối từ Bánh đai lên Puli động cơ -->
+                        <line x1="196" y1="146" x2="236" y2="115" stroke="#ca8a04" stroke-width="3.5"/>
+                        <line x1="228" y1="174" x2="252" y2="122" stroke="#ca8a04" stroke-width="3.5"/>
+                    </g>
+
+                    <!-- Tấm lớn màu xanh lá cây (Khung xe 3D có gờ 2 bên) -->
+                    <!-- Gờ bên trái (phía xa) -->
+                    <polygon points="72,68 282,40 282,58 72,86" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                    <!-- Mặt phẳng giữa tấm lớn -->
+                    <polygon points="72,86 282,58 342,84 132,114" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <!-- Giá 2 pin tiểu màu đen + 2 viên pin xanh dương lắp trên mặt tấm lớn -->
+                    <polygon points="105,66 242,46 276,62 138,84" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/>
+                    <!-- 2 Viên pin tiểu 1,5V màu xanh dương - bạc nằm trong giá pin -->
+                    <polygon points="122,63 226,48 236,53 132,69" fill="#3b82f6" stroke="#dbeafe" stroke-width="1.5"/>
+                    <polygon points="134,70 238,54 248,60 144,76" fill="#2563eb" stroke="#dbeafe" stroke-width="1.5"/>
+                    <!-- Cần gạt công tắc kim loại ở đầu giá pin -->
+                    <line x1="108" y1="68" x2="${isSwitchClosed ? '98' : '82'}" y2="${isSwitchClosed ? '52' : '46'}" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Dây điện đỏ và đen từ giá pin luồn xuống động cơ -->
+                    <path d="M262,64 Q276,82 238,112" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M254,66 Q266,86 228,114" fill="none" stroke="#0f172a" stroke-width="3"/>
+
+                    <!-- Gờ dựng đứng phía gần của Tấm lớn (có hàng lỗ) -->
+                    <polygon points="84,92 318,60 318,82 84,114" fill="#059669" stroke="#064e3b" stroke-width="2.5"/>
+                    ${sideHoles}
+
+                    <!-- 2 Bánh xe phía gần -->
+                    ${drawKitWheel(252, 180, 36)}
+                    ${drawKitWheel(352, 148, 33)}
+
+                    <!-- Trạng thái hoạt động (Hiển thị rõ ràng, chuẩn sư phạm, không làm bay bánh xe) -->
+                    ${isSwitchClosed ? `
+                        <g>
+                            <rect x="85" y="8" width="270" height="30" rx="15" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+                            <text x="220" y="28" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="900">
+                                ⚡ MẠCH ĐIỆN KÍN: ĐỘNG CƠ & BÁNH XE QUAY
+                            </text>
+                        </g>
+                    ` : ''}
+                </svg>
+            `;
+        }
+
+        // Hình vẽ riêng cho 4 bộ phận chính ở Hình 1b, 1c, 1d, 1e (Trang 32)
+        function getMainPartIllustrationSVG(partKey) {
+            if (partKey === 'b') {
+                // Hình 1b: Khung xe (Tấm lớn xanh lá + 2 thanh chữ U vàng + 4 thanh thẳng 3 lỗ đỏ)
+                return `
+                    <svg viewBox="0 0 320 200" class="w-full max-w-[300px] h-auto mx-auto">
+                        <!-- 4 Thanh thẳng 3 lỗ đỏ hướng xuống -->
+                        <rect x="68" y="88" width="14" height="65" rx="7" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                        <rect x="128" y="108" width="14" height="65" rx="7" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                        <rect x="205" y="65" width="14" height="65" rx="7" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                        <rect x="262" y="84" width="14" height="65" rx="7" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                        <!-- 2 Thanh chữ U dài vàng -->
+                        <polygon points="62,88 145,115 154,108 72,82" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        <polygon points="198,64 278,90 286,84 206,58" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        <!-- Tấm lớn xanh lá có lưới lỗ tròn -->
+                        <polygon points="35,68 215,32 295,62 115,98" fill="#10b981" stroke="#047857" stroke-width="3"/>
+                        <polygon points="35,68 115,98 115,112 35,82" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                        <polygon points="115,98 295,62 295,76 115,112" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                        <!-- Hàng lỗ trên mặt tấm lớn -->
+                        <circle cx="95" cy="72" r="3.5" fill="#d1fae5"/><circle cx="125" cy="66" r="3.5" fill="#d1fae5"/>
+                        <circle cx="155" cy="60" r="3.5" fill="#d1fae5"/><circle cx="185" cy="54" r="3.5" fill="#d1fae5"/>
+                        <circle cx="215" cy="48" r="3.5" fill="#d1fae5"/><circle cx="135" cy="80" r="3.5" fill="#d1fae5"/>
+                        <circle cx="165" cy="74" r="3.5" fill="#d1fae5"/><circle cx="195" cy="68" r="3.5" fill="#d1fae5"/>
+                    </svg>
+                `;
+            } else if (partKey === 'c') {
+                // Hình 1c: Trục và bánh xe (2 trục thép dài + 4 bánh xe lắp 2 đầu)
+                return `
+                    <svg viewBox="0 0 320 200" class="w-full max-w-[300px] h-auto mx-auto">
+                        <!-- Bộ trục & 2 bánh xe phía trên -->
+                        <line x1="78" y1="62" x2="252" y2="78" stroke="#94a3b8" stroke-width="7" stroke-linecap="round"/>
+                        ${drawKitWheel(82, 62, 28)}
+                        ${drawKitWheel(248, 78, 28)}
+                        <!-- Bộ trục & 2 bánh xe phía dưới -->
+                        <line x1="62" y1="138" x2="238" y2="154" stroke="#94a3b8" stroke-width="7" stroke-linecap="round"/>
+                        ${drawKitWheel(66, 138, 30)}
+                        ${drawKitWheel(234, 154, 30)}
+                    </svg>
+                `;
+            } else if (partKey === 'd') {
+                // Hình 1d: Động cơ và hệ truyền động (Động cơ + Puli trắng + Bánh đai đỏ + Đai truyền vàng nâu)
+                return `
+                    <svg viewBox="0 0 320 200" class="w-full max-w-[300px] h-auto mx-auto">
+                        <!-- Động cơ điện hình trụ màu bạc -->
+                        <rect x="35" y="45" width="92" height="54" rx="8" fill="#94a3b8" stroke="#475569" stroke-width="3"/>
+                        <rect x="26" y="54" width="12" height="36" rx="3" fill="#334155"/>
+                        <line x1="127" y1="72" x2="155" y2="72" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+                        <!-- Puli nhỏ màu trắng -->
+                        <circle cx="172" cy="96" r="13" fill="#f8fafc" stroke="#94a3b8" stroke-width="2.5"/>
+                        <circle cx="172" cy="96" r="4" fill="#64748b"/>
+                        <!-- Bánh đai màu đỏ có 3 khe thoáng -->
+                        <circle cx="242" cy="68" r="36" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
+                        <circle cx="242" cy="68" r="22" fill="#b91c1c"/>
+                        <path d="M232,52 A16,16 0 0,1 254,54" stroke="#fef2f2" stroke-width="6" fill="none" stroke-linecap="round"/>
+                        <path d="M258,72 A16,16 0 0,1 242,86" stroke="#fef2f2" stroke-width="6" fill="none" stroke-linecap="round"/>
+                        <path d="M226,76 A16,16 0 0,1 228,58" stroke="#fef2f2" stroke-width="6" fill="none" stroke-linecap="round"/>
+                        <circle cx="242" cy="68" r="6" fill="#fef2f2"/>
+                        <!-- Đai truyền màu vàng nâu ở dưới -->
+                        <ellipse cx="168" cy="152" rx="52" ry="26" fill="none" stroke="#b45309" stroke-width="6"/>
+                        <ellipse cx="168" cy="152" rx="52" ry="26" fill="none" stroke="#eab308" stroke-width="3"/>
+                    </svg>
+                `;
+            } else {
+                // Hình 1e: Nguồn điện (Giá 2 pin tiểu có dây đỏ/đen + 2 viên pin tiểu 1,5V màu xanh)
+                return `
+                    <svg viewBox="0 0 320 200" class="w-full max-w-[300px] h-auto mx-auto">
+                        <!-- Dây điện đỏ và đen uốn cong bên trái như Hình 1e -->
+                        <path d="M135,148 C55,165 42,65 98,35" fill="none" stroke="#ef4444" stroke-width="3.5"/>
+                        <path d="M148,148 C68,175 58,85 112,48" fill="none" stroke="#1e293b" stroke-width="3.5"/>
+                        <!-- Giá 2 pin tiểu màu đen -->
+                        <rect x="122" y="45" width="68" height="108" rx="6" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+                        <line x1="156" y1="48" x2="156" y2="148" stroke="#475569" stroke-width="2"/>
+                        <!-- Cần gạt công tắc kim loại -->
+                        <line x1="175" y1="45" x2="205" y2="42" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+                        <!-- Lò xo trong giá pin -->
+                        <path d="M132,142 L146,142 M134,137 L144,137 M166,55 L180,55" stroke="#cbd5e1" stroke-width="2.5"/>
+                        <!-- 2 Viên pin tiểu 1,5 V (AA) màu xanh dương đứng bên phải -->
+                        <rect x="218" y="65" width="26" height="86" rx="4" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+                        <rect x="218" y="65" width="26" height="18" rx="2" fill="#93c5fd"/>
+                        <rect x="226" y="59" width="10" height="6" rx="1" fill="#fbbf24"/>
+                        <text x="231" y="115" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="900">1,5V</text>
+
+                        <rect x="256" y="65" width="26" height="86" rx="4" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+                        <rect x="256" y="65" width="26" height="18" rx="2" fill="#93c5fd"/>
+                        <rect x="264" y="59" width="10" height="6" rx="1" fill="#fbbf24"/>
+                        <text x="269" y="115" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="900">1,5V</text>
+                    </svg>
+                `;
+            }
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC)
+         **************************************************************/
+        // Bước 1/3: Mở khóa 2 Mục tiêu bài học & 4 Yêu cầu sản phẩm (Trang 32)
+        function renderStep1_1(container) {
+            const goals = [
+                {
+                    type: 'Mục tiêu 1',
+                    icon: '🔍',
+                    text: 'Kể tên, nhận biết được các chi tiết của bộ lắp ghép mô hình xe điện chạy bằng pin.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 2',
+                    icon: '🛠️',
+                    text: 'Lắp ráp, vận hành được mô hình xe điện chạy bằng pin.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm 1',
+                    icon: '✅',
+                    text: 'Đúng và đủ chi tiết.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm 2',
+                    icon: '📐',
+                    text: 'Đúng hình dạng, gọn gàng.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm 3',
+                    icon: '🔩',
+                    text: 'Mối ghép chắc chắn.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm 4',
+                    icon: '⚡',
+                    text: 'Xe chạy được khi đóng công tắc.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                }
+            ];
+
+            const allUnlocked = state.goalsUnlocked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">🎯</span>
+                            <span class="tv-body text-sky-950">
+                                <b>Học xong bài này, em sẽ đạt 2 mục tiêu và 4 yêu cầu sản phẩm (Trang 32):</b> Bấm vào từng thẻ để mở khóa!
+                            </span>
+                        </div>
+                        <button onclick="unlockAllGoals7()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl text-base shrink-0">
+                            🔓 Mở nhanh tất cả
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        ${goals.map((g, idx) => {
+                            const unlocked = state.goalsUnlocked[idx];
+                            return `
+                                <button onclick="unlockGoal7(${idx})"
+                                    class="btn-kid text-left p-4 rounded-3xl border-4 flex items-center gap-4 transition-all ${
+                                        unlocked
+                                            ? 'bg-emerald-50 border-emerald-500 shadow-sm'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300'
+                                    }">
+                                    <div class="w-14 h-14 rounded-2xl ${ unlocked ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700' } flex items-center justify-center text-3xl shrink-0 font-black">
+                                        ${unlocked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="tv-badge px-3 py-0.5 rounded-full ${g.badgeColor}">${g.type}</span>
+                                            <span class="tv-badge ${unlocked ? 'text-emerald-700' : 'text-amber-700'}">
+                                                ${unlocked ? 'Đã mở khóa ⭐' : '👆 Bấm để mở'}
+                                            </span>
+                                        </div>
+                                        <div class="tv-body text-slate-900">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allUnlocked) {
+                showFeedback(true, 'Tuyệt vời! Em đã nắm rõ 2 mục tiêu bài học và 4 yêu cầu sản phẩm của mô hình xe điện chạy bằng pin!');
+            }
+        }
+
+        function unlockAllGoals7() {
+            state.goalsUnlocked = [true, true, true, true, true, true];
+            playSound('correct');
+            rewardStar('b7_goal_all', 2);
+            renderApp();
+        }
+
+        function unlockGoal7(idx) {
+            state.goalsUnlocked[idx] = true;
+            playSound('wrench');
+            rewardStar('b7_goal_' + idx, 1);
+            if (state.goalsUnlocked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Giải câu đố khởi động (Trang 32)
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    text: 'A. Xe điện (hoặc mô hình xe điện chạy bằng pin).',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Xe điện có động cơ điện và sử dụng năng lượng từ pin hoặc ắc quy nên đi lại không cần đổ xăng!'
+                },
+                {
+                    text: 'B. Xe gắn máy sử dụng động cơ đốt trong chạy bằng xăng không chì.',
+                    correct: false,
+                    explain: 'Chưa đúng! Câu đố nêu rõ "Muốn đi lại chẳng bao giờ cần xăng".'
+                },
+                {
+                    text: 'C. Xe đạp thể thao di chuyển hoàn toàn bằng sức người đạp vào bàn đạp.',
+                    correct: false,
+                    explain: 'Chưa đúng! Xe đạp thông thường không có động cơ, còn câu đố nêu rõ "Xe gì mà có động cơ".'
+                },
+                {
+                    text: 'D. Xe ô tô tải hạng nặng sử dụng nhiên liệu dầu đi-ê-den.',
+                    correct: false,
+                    explain: 'Chưa đúng! Trong bài học này, hai bạn nhỏ đang đố nhau về chiếc xe có động cơ điện chạy bằng năng lượng pin.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Tranh tình huống & câu đố (Trang 32) -->
+                    <div class="lg:col-span-6 bg-gradient-to-br from-emerald-50 via-sky-50 to-amber-50 border-4 border-sky-300 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="bg-white border-3 border-amber-400 rounded-2xl p-4 shadow-sm">
+                            <div class="tv-badge text-amber-800 uppercase mb-1">👦🏻 Bạn nam chỉ vào mô hình trên bàn và đố bạn nữ:</div>
+                            <p class="tv-card-title text-slate-900 italic leading-relaxed">
+                                “Xe gì mà có động cơ<br>
+                                Muốn đi lại chẳng bao giờ cần xăng?”
+                            </p>
+                        </div>
+
+                        <div class="bg-white/90 rounded-2xl border-2 border-emerald-300 p-2">
+                            ${getElectricCarSVG(state.riddleSolved)}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Câu hỏi lựa chọn -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Em hãy giúp bạn nữ giải câu đố trên nhé! Đó là loại xe gì?
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerRiddle7(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.riddleSolved && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.riddleSolved) {
+                showFeedback(true, 'Xuất sắc! Đó chính là Xe điện chạy bằng pin – sản phẩm mà lớp mình sẽ tìm hiểu và lắp ráp hôm nay!');
+            }
+        }
+
+        function answerRiddle7(isCorrect, explain) {
+            if (isCorrect) {
+                state.riddleSolved = true;
+                playSound('motor');
+                rewardStar('riddle_7', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Quan sát tổng quan mô hình mẫu (Hình 1a)
+        function renderStep1_3(container) {
+            const options = [
+                {
+                    text: 'A. Khi đóng công tắc, nguồn điện từ 2 viên pin cung cấp dòng điện làm động cơ quay, qua hệ truyền động (puli, đai truyền, bánh đai) làm trục và bánh xe quay.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Dòng điện từ pin làm quay động cơ, sau đó hệ truyền động truyền chuyển động quay xuống trục bánh xe giúp xe tiến về phía trước.'
+                },
+                {
+                    text: 'B. Chiếc xe chỉ di chuyển được khi có người dùng tay đẩy liên tục từ phía sau giống như xe đồ chơi không có động cơ.',
+                    correct: false,
+                    explain: 'Chưa đúng! Mô hình có nguồn điện (pin), động cơ điện và hệ truyền động nên tự chạy được khi đóng công tắc.'
+                },
+                {
+                    text: 'C. Hai viên pin tiểu trực tiếp lăn dưới mặt đất thay cho 4 bánh xe để đưa khung xe di chuyển.',
+                    correct: false,
+                    explain: 'Chưa đúng! Pin tiểu được đặt cố định trong giá pin trên khung xe để cung cấp điện cho động cơ.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-3xl p-4 flex flex-wrap items-center justify-around gap-3 text-center">
+                        <div class="bg-white px-4 py-2.5 rounded-2xl border-2 border-blue-400 tv-body">🔋 <b>Nguồn điện (Pin 1,5V)</b></div>
+                        <span class="text-3xl font-black text-sky-600">➔</span>
+                        <div class="bg-white px-4 py-2.5 rounded-2xl border-2 border-red-400 tv-body">⚙️ <b>Động cơ điện quay</b></div>
+                        <span class="text-3xl font-black text-sky-600">➔</span>
+                        <div class="bg-white px-4 py-2.5 rounded-2xl border-2 border-amber-400 tv-body">⭕ <b>Puli – Đai truyền – Bánh đai</b></div>
+                        <span class="text-3xl font-black text-sky-600">➔</span>
+                        <div class="bg-white px-4 py-2.5 rounded-2xl border-2 border-emerald-500 tv-body">🛞 <b>Trục & Bánh xe lăn</b></div>
+                    </div>
+
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Quan sát Hình 1a và sơ đồ trên, em hãy cho biết mô hình xe điện chạy bằng pin hoạt động theo nguyên lí nào?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerOverview7(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.modelOverviewDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.modelOverviewDone) {
+                showFeedback(true, 'Giỏi lắm! Bây giờ chúng ta hãy sang Chặng 2: Khám phá để tìm hiểu từng bộ phận, chi tiết và 4 bước lắp ráp nhé!');
+            }
+        }
+
+        function answerOverview7(isCorrect, explain) {
+            if (isCorrect) {
+                state.modelOverviewDone = true;
+                playSound('correct');
+                rewardStar('overview_7', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 2: KHÁM PHÁ (9 BƯỚC TÁCH NHỎ TỪNG MỤC SGK)
+         **************************************************************/
+        // Bước 1/9: 1. Tìm hiểu sản phẩm mẫu - 4 bộ phận chính (Hình 1b, 1c, 1d, 1e - Trang 32)
+        const MAIN_PARTS_DATA = {
+            b: {
+                code: 'Hình 1b',
+                name: 'b) Khung xe',
+                icon: '🟩',
+                crop: { x: 52, y: 56, w: 16, h: 14 },
+                details: 'Gồm tấm lớn (màu xanh lá), 2 thanh chữ U dài (màu vàng) và 4 thanh thẳng 3 lỗ (màu đỏ) ghép với nhau bằng vít ngắn và đai ốc.',
+                role: 'Là bộ khung nâng đỡ toàn bộ các bộ phận khác của xe như giá pin, động cơ và kết nối với hai trục bánh xe.'
+            },
+            c: {
+                code: 'Hình 1c',
+                name: 'c) Trục và bánh xe',
+                icon: '🛞',
+                crop: { x: 68, y: 56, w: 16, h: 14 },
+                details: 'Gồm 2 trục thẳng dài bằng kim loại, 4 bánh xe và các vòng hãm.',
+                role: 'Giúp nâng đỡ khung xe và lăn trên mặt đường để đưa mô hình xe điện di chuyển êm ái.'
+            },
+            d: {
+                code: 'Hình 1d',
+                name: 'd) Động cơ và hệ truyền động',
+                icon: '⚙️',
+                crop: { x: 52, y: 71, w: 16, h: 15 },
+                details: 'Gồm động cơ điện (có gắn puli nhỏ màu trắng), bánh đai (màu đỏ) và đai truyền (dây đai màu vàng).',
+                role: 'Biến năng lượng điện thành chuyển động quay của trục động cơ và truyền lực quay xuống trục bánh xe.'
+            },
+            e: {
+                code: 'Hình 1e',
+                name: 'e) Nguồn điện',
+                icon: '🔋',
+                crop: { x: 68, y: 71, w: 16, h: 15 },
+                details: 'Gồm giá 2 pin tiểu x 1,5 V (có sẵn công tắc và 2 dây dẫn điện đỏ, đen) cùng 2 viên pin tiểu 1,5 V (AA).',
+                role: 'Cung cấp năng lượng điện một chiều cho động cơ hoạt động khi người dùng đóng công tắc.'
+            }
+        };
+
+        function renderStep2_1(container) {
+            const cur = MAIN_PARTS_DATA[state.selectedMainPart];
+            const allSeen = Object.values(state.mainPartsSeen).every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3 text-center tv-body text-sky-950">
+                        🔍 <b>Mục 1 – Tìm hiểu sản phẩm mẫu (Hình 1 – Trang 32):</b> Bấm vào cả 4 thẻ bộ phận (b, c, d, e) để khám phá cấu tạo mô hình xe điện:
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        ${Object.keys(MAIN_PARTS_DATA).map(key => {
+                            const item = MAIN_PARTS_DATA[key];
+                            const active = state.selectedMainPart === key;
+                            const seen = state.mainPartsSeen[key];
+                            return `
+                                <button onclick="selectMainPart7('${key}')"
+                                    class="btn-kid p-4 rounded-3xl border-4 flex flex-col items-center gap-2 text-center ${
+                                        active
+                                            ? 'bg-sky-100 border-sky-600 ring-4 ring-sky-300'
+                                            : seen
+                                            ? 'bg-emerald-50 border-emerald-500'
+                                            : 'bg-white border-slate-300'
+                                    }">
+                                    <div class="text-5xl">${item.icon}</div>
+                                    <div class="tv-card-title text-slate-900">${item.name}</div>
+                                    <span class="tv-badge ${seen ? 'text-emerald-700' : 'text-slate-500'}">
+                                        ${seen ? '✓ Đã xem' : 'Bấm để xem'}
+                                    </span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-sky-500 rounded-3xl p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <div class="lg:col-span-5 bg-sky-50 border-2 border-sky-200 rounded-2xl p-3 flex flex-col items-center text-center">
+                            <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">${cur.code} (Trang 32)</span>
+                            ${renderSgkCropOrSVG(1, cur.crop, getMainPartIllustrationSVG(state.selectedMainPart))}
+                            <h3 class="tv-card-title text-slate-900 mt-1">${cur.name}</h3>
+                        </div>
+                        <div class="lg:col-span-7 flex flex-col gap-3">
+                            <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4">
+                                <div class="tv-badge uppercase text-sky-800">🔩 Các chi tiết cấu thành:</div>
+                                <p class="tv-body text-slate-900 mt-1">${cur.details}</p>
+                            </div>
+                            <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4">
+                                <div class="tv-badge uppercase text-emerald-800">⚡ Vai trò trong mô hình:</div>
+                                <p class="tv-body text-emerald-950 mt-1">${cur.role}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allSeen) {
+                rewardStar('step2_1_parts', 1);
+                showFeedback(true, 'Tuyệt vời! Em đã nắm vững 4 bộ phận chính của mô hình xe điện chạy bằng pin: Khung xe, Trục và bánh xe, Động cơ và hệ truyền động, Nguồn điện!');
+            }
+        }
+
+        function selectMainPart7(key) {
+            playSound('pop');
+            state.selectedMainPart = key;
+            state.mainPartsSeen[key] = true;
+            renderApp();
+        }
+
+        // Bước 2/9: Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 6 – Trang 33)
+        // Vẽ chuẩn xác từng chi tiết theo đúng cột "Hình minh họa" trang 33 SGK
+        const TABLE_GROUP_1 = [
+            {
+                stt: 1,
+                name: 'Tấm lớn',
+                qty: 1,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <polygon points="10,12 108,12 122,58 24,58" fill="#10b981" stroke="#047857" stroke-width="2"/>
+                    <polygon points="10,12 108,12 105,6 7,6" fill="#047857"/>
+                    <polygon points="24,58 122,58 125,65 21,65" fill="#059669"/>
+                    ${[0,1,2,3,4,5,6,7].map(c => [0,1,2].map(r => `<circle cx="${24 + c*11 + r*3}" cy="${22 + r*12}" r="2.1" fill="#ecfdf5"/>`).join('')).join('')}
+                `
+            },
+            {
+                stt: 2,
+                name: 'Thanh chữ U dài',
+                qty: 2,
+                color: 'bg-yellow-100 border-yellow-400',
+                svg: `
+                    <rect x="14" y="24" width="102" height="22" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <line x1="14" y1="27" x2="116" y2="27" stroke="#fef08a" stroke-width="2"/>
+                    <line x1="14" y1="43" x2="116" y2="43" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3,4,5].map(i => `<circle cx="${25 + i*16}" cy="35" r="3.2" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>`).join('')}
+                `
+            },
+            {
+                stt: 3,
+                name: 'Thanh thẳng 3 lỗ',
+                qty: 4,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <rect x="28" y="23" width="74" height="24" rx="12" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+                    <circle cx="43" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                    <circle cx="65" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                    <circle cx="87" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                `
+            },
+            {
+                stt: 4,
+                name: 'Trục thẳng dài',
+                qty: 2,
+                color: 'bg-slate-100 border-slate-400',
+                svg: `
+                    <rect x="6" y="31" width="118" height="8" rx="3" fill="#64748b" stroke="#334155" stroke-width="1.5"/>
+                    <line x1="8" y1="33.5" x2="122" y2="33.5" stroke="#e2e8f0" stroke-width="2"/>
+                `
+            },
+            {
+                stt: 5,
+                name: 'Bánh xe',
+                qty: 4,
+                color: 'bg-sky-100 border-sky-400',
+                svg: drawKitWheel(65, 35, 24)
+            },
+            {
+                stt: 6,
+                name: 'Tấm 2 lỗ',
+                qty: 1,
+                color: 'bg-red-100 border-red-400',
+                svg: `
+                    <!-- Hình dáng chữ Omega ôm thân động cơ và 2 tai bắt vít giống hệt STT 6 trang 33 -->
+                    <path d="M22,48 L40,48 L40,22 C40,14 90,14 90,22 L90,48 L108,48 L108,58 L82,58 L82,30 L48,30 L48,58 L22,58 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="38" y="16" width="54" height="28" rx="4" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <circle cx="30" cy="53" r="3.2" fill="#ffffff"/>
+                    <circle cx="100" cy="53" r="3.2" fill="#ffffff"/>
+                `
+            }
+        ];
+
+        function renderStep2_2(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        ${TABLE_GROUP_1.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-3 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-28 h-16 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-lg ${item.color} border-2">
+                                    Số lượng: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Câu hỏi kiểm tra nhanh Nhóm 1 -->
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh Bảng chi tiết (STT 1 – 6): Để lắp 1 khung xe và bộ bánh xe, em cần lấy bao nhiêu <span class="text-rose-600">Thanh thẳng 3 lỗ</span> và bao nhiêu <span class="text-sky-700">Bánh xe</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroupQuiz7('tableGroup1QuizDone', false, 'Chưa đúng! Em hãy nhìn cột Số lượng ở STT 3 (Thanh thẳng 3 lỗ) và STT 5 (Bánh xe) nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                A. 2 thanh thẳng 3 lỗ và 2 bánh xe
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup1QuizDone', true, 'Chính xác! Cần đúng 4 thanh thẳng 3 lỗ (STT 3) và 4 bánh xe (STT 5).')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup1QuizDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup1QuizDone ? '✓ ' : ''}B. 4 thanh thẳng 3 lỗ và 4 bánh xe
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup1QuizDone', false, 'Chưa đúng! Chỉ có 2 thanh chữ U dài và 1 tấm 2 lỗ thôi nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. 1 thanh thẳng 3 lỗ và 4 bánh xe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup1QuizDone) {
+                showFeedback(true, 'Chính xác! Em đã nhớ rất rõ số lượng các chi tiết khung và bánh xe (STT 1 đến 6)!');
+            }
+        }
+
+        // Bước 3/9: Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 7 đến 12 – Trang 33, 34)
+        const TABLE_GROUP_2 = [
+            {
+                stt: 7,
+                name: 'Động cơ',
+                qty: 1,
+                color: 'bg-slate-100 border-slate-400',
+                svg: `
+                    <!-- Động cơ điện 1 chiều vỏ thép xám bạc, đuôi nhựa đen và trục thép nhô ra -->
+                    <rect x="26" y="16" width="62" height="38" rx="6" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <rect x="34" y="22" width="46" height="26" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+                    <rect x="20" y="21" width="7" height="28" rx="2" fill="#334155"/>
+                    <rect x="88" y="26" width="6" height="18" rx="2" fill="#64748b"/>
+                    <line x1="94" y1="35" x2="114" y2="35" stroke="#475569" stroke-width="4.5" stroke-linecap="round"/>
+                `
+            },
+            {
+                stt: 8,
+                name: 'Bánh đai',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <!-- Bánh đai màu đỏ có 3 khe thoáng cong và lỗ trục ở giữa đúng như STT 8 -->
+                    <circle cx="65" cy="35" r="25" fill="#dc2626" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="65" cy="35" r="16" fill="#b91c1c"/>
+                    <path d="M57,23 A12,12 0 0,1 74,24" stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                    <path d="M77,38 A12,12 0 0,1 65,48" stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                    <path d="M53,42 A12,12 0 0,1 54,28" stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="65" cy="35" r="4" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 9,
+                name: 'Đai truyền',
+                qty: 1,
+                color: 'bg-amber-100 border-amber-400',
+                svg: `
+                    <ellipse cx="65" cy="35" rx="42" ry="18" fill="none" stroke="#92400e" stroke-width="5"/>
+                    <ellipse cx="65" cy="35" rx="42" ry="18" fill="none" stroke="#d97706" stroke-width="2.5"/>
+                `
+            },
+            {
+                stt: 10,
+                name: 'Puli',
+                qty: 1,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <!-- Puli trắng có rãnh ở giữa đúng như STT 10 trang 33 -->
+                    <ellipse cx="59" cy="35" rx="11" ry="16" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="59" y="22" width="10" height="26" fill="#cbd5e1"/>
+                    <ellipse cx="69" cy="35" rx="11" ry="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+                    <circle cx="69" cy="35" r="3.5" fill="#64748b"/>
+                `
+            },
+            {
+                stt: 11,
+                name: 'Giá 2 pin tiểu x 1,5 V',
+                qty: 1,
+                color: 'bg-indigo-100 border-indigo-400',
+                svg: `
+                    <path d="M50,58 C24,64 20,24 44,10" fill="none" stroke="#ef4444" stroke-width="2"/>
+                    <path d="M56,58 C30,68 28,32 48,16" fill="none" stroke="#1e293b" stroke-width="2"/>
+                    <rect x="52" y="10" width="34" height="52" rx="3" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="69" y1="12" x2="69" y2="60" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="78" y1="10" x2="96" y2="9" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round"/>
+                `
+            },
+            {
+                stt: 12,
+                name: 'Pin tiểu 1,5 V (AA)',
+                qty: 2,
+                color: 'bg-blue-100 border-blue-400',
+                svg: `
+                    <rect x="24" y="23" width="76" height="24" rx="4" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+                    <rect x="82" y="23" width="18" height="24" rx="2" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+                    <rect x="100" y="29" width="5" height="12" rx="1" fill="#fbbf24"/>
+                    <text x="54" y="39" font-size="11" font-weight="900" fill="#ffffff" text-anchor="middle">1,5V AA</text>
+                `
+            }
+        ];
+
+        function renderStep2_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        ${TABLE_GROUP_2.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-3 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-28 h-16 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-lg ${item.color} border-2">
+                                    Số lượng: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Câu hỏi kiểm tra nhanh Nhóm 2 -->
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh (STT 7 – 12): Bộ phận nguồn điện cần mấy <span class="text-indigo-700">Giá pin</span> và mấy viên <span class="text-blue-700">Pin tiểu 1,5 V (AA)</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroupQuiz7('tableGroup2QuizDone', true, 'Hoàn toàn chính xác! Cần 1 Giá 2 pin tiểu x 1,5 V (STT 11) và 2 viên Pin tiểu 1,5 V AA (STT 12).')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup2QuizDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup2QuizDone ? '✓ ' : ''}A. 1 Giá 2 pin tiểu và 2 viên Pin tiểu 1,5 V (AA)
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup2QuizDone', false, 'Chưa đúng! Em hãy quan sát STT 11 và STT 12 trong bảng nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                B. 2 Giá pin tiểu và 4 viên Pin tiểu 1,5 V (AA)
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup2QuizDone', false, 'Chưa đúng! Giá pin chứa 2 viên pin tiểu 1,5 V chứ không phải 1 viên.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. 1 Giá pin tiểu và 1 viên Pin tiểu 1,5 V (AA)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup2QuizDone) {
+                showFeedback(true, 'Xuất sắc! Em đã nắm rõ số lượng Động cơ, Bánh đai, Đai truyền, Puli và Nguồn điện (STT 7 đến 12)!');
+            }
+        }
+
+        // Bước 4/9: Bảng chi tiết, vật liệu và dụng cụ – Nhóm 3 (STT 13 đến 19 – Trang 34)
+        const TABLE_GROUP_3 = [
+            {
+                stt: 13,
+                name: 'Đai ốc',
+                qty: 10,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <!-- Đai ốc lục giác 3D bằng kim loại có ren giữa đúng như STT 13 trang 34 -->
+                    <polygon points="65,14 85,24 85,46 65,56 45,46 45,24" fill="#cbd5e1" stroke="#475569" stroke-width="2.5"/>
+                    <polygon points="65,18 81,26 81,44 65,52 49,44 49,26" fill="#94a3b8"/>
+                    <circle cx="65" cy="35" r="8.5" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+                `
+            },
+            {
+                stt: 14,
+                name: 'Vít ngắn',
+                qty: 8,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <!-- Vít ngắn mũ tròn có rãnh và thân ren ngắn đúng như STT 14 trang 34 -->
+                    <path d="M46,23 C38,23 38,47 46,47 Z" fill="#64748b" stroke="#334155" stroke-width="2"/>
+                    <rect x="46" y="29" width="32" height="12" rx="2" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                    ${[52,58,64,70,74].map(x => `<line x1="${x}" y1="29" x2="${x}" y2="41" stroke="#334155" stroke-width="1.5"/>`).join('')}
+                `
+            },
+            {
+                stt: 15,
+                name: 'Vít dài',
+                qty: 2,
+                color: 'bg-amber-100 border-amber-400',
+                svg: `
+                    <!-- Vít dài thân dài gấp đôi vít ngắn, ánh kim xanh bạc đúng như STT 15 trang 34 -->
+                    <path d="M24,23 C16,23 16,47 24,47 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="2"/>
+                    <rect x="24" y="29" width="84" height="12" rx="2" fill="#60a5fa" stroke="#1d4ed8" stroke-width="2"/>
+                    ${[32,40,48,56,64,72,80,88,96,102].map(x => `<line x1="${x}" y1="29" x2="${x}" y2="41" stroke="#1e3a8a" stroke-width="1.4"/>`).join('')}
+                `
+            },
+            {
+                stt: 16,
+                name: 'Vòng hãm',
+                qty: 10,
+                color: 'bg-blue-100 border-blue-400',
+                svg: `
+                    <circle cx="65" cy="35" r="15" fill="#2563eb" stroke="#1e40af" stroke-width="2.5"/>
+                    <circle cx="65" cy="35" r="4.5" fill="#ffffff" stroke="#1e3a8a" stroke-width="1.5"/>
+                `
+            },
+            {
+                stt: 17,
+                name: 'Tua-vít',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <rect x="10" y="25" width="54" height="20" rx="7" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <line x1="20" y1="31" x2="54" y2="31" stroke="#fca5a5" stroke-width="2"/>
+                    <line x1="64" y1="35" x2="114" y2="35" stroke="#64748b" stroke-width="4.5"/>
+                    <polygon points="110,32 120,33.5 120,36.5 110,38" fill="#334155"/>
+                `
+            },
+            {
+                stt: 18,
+                name: 'Cờ-lê',
+                qty: 1,
+                color: 'bg-slate-100 border-slate-400',
+                svg: `
+                    <!-- Cờ-lê kim loại dập phẳng đặc trưng của bộ lắp ghép lớp 5 đúng như STT 18 trang 34 -->
+                    <path d="M18,22 A13,13 0 1,0 18,48 L28,42 L98,42 L106,52 C116,48 118,26 104,24 L30,24 Z" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <circle cx="22" cy="35" r="5.5" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+                    <polygon points="100,32 108,32 110,44 102,44" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 19,
+                name: 'Băng dính 2 mặt',
+                qty: 1,
+                color: 'bg-orange-100 border-orange-400',
+                svg: `
+                    <!-- Cuộn băng dính 2 mặt vỏ trắng lõi giấy nâu đúng như STT 19 trang 34 -->
+                    <ellipse cx="65" cy="38" rx="38" ry="18" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="38" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="27" ry="12" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+                    <ellipse cx="65" cy="35" rx="25" ry="9" fill="#ffffff"/>
+                `
+            }
+        ];
+
+        function renderStep2_4(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        ${TABLE_GROUP_3.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-2.5 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-24 h-14 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-base sm:text-lg ${item.color} border-2">
+                                    SL: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Câu hỏi khám phá mối liên hệ Vít & Đai ốc -->
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Khám phá thú vị (STT 13, 14, 15): Vì sao trong bảng cần chuẩn bị đúng <span class="text-sky-700">10 Đai ốc</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroupQuiz7('tableGroup3QuizDone', false, 'Chưa đúng! Vòng hãm được lắp trực tiếp vào trục bánh xe, không vặn vào đai ốc.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                A. Vì dùng để vặn vào 10 chiếc vòng hãm màu xanh.
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup3QuizDone', true, 'Rất thông minh! 8 vít ngắn (lắp khung xe) + 2 vít dài (lắp tấm 2 lỗ giữ động cơ) = 10 chiếc vít, vừa khít với 10 đai ốc!')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup3QuizDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup3QuizDone ? '✓ ' : ''}B. Vì cần vặn vừa khít với 8 vít ngắn (lắp khung xe) cộng với 2 vít dài (cố định động cơ): 8 + 2 = 10.
+                            </button>
+                            <button onclick="answerGroupQuiz7('tableGroup3QuizDone', false, 'Chưa đúng! Băng dính 2 mặt dùng để dán giá pin chứ không dùng đai ốc.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. Vì mỗi bánh xe cần dùng 5 đai ốc để giữ chặt.
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup3QuizDone) {
+                showFeedback(true, 'Tuyệt vời! Em đã nắm vững toàn bộ 19 chi tiết, vật liệu và dụng cụ trong bảng trang 33–34!');
+            }
+        }
+
+        function answerGroupQuiz7(flag, isRight, explain) {
+            if (isRight) {
+                state[flag] = true;
+                playSound('correct');
+                rewardStar('quiz7_' + flag, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 5/9: 3. Thực hành Bước 1 – Lắp khung xe (Hình 2a & Hình 2b – Trang 34)
+        function renderStep2_5(container) {
+            const built = state.step1FrameBuilt;
+
+            // Vẽ chính xác Hình 2a (các chi tiết xếp rời) và Hình 2b (khung xe đã lắp) như Trang 34 SGK
+            const hinh2Svg = !built ? `
+                <svg viewBox="0 0 400 220" class="w-full max-w-[400px] h-auto">
+                    <text x="22" y="22" fill="#0284c7" font-size="15" font-weight="900">a)</text>
+                    <!-- Tấm lớn xanh lá có lưới 11x5 lỗ tròn -->
+                    <rect x="35" y="18" width="115" height="175" rx="4" fill="#10b981" stroke="#047857" stroke-width="3"/>
+                    <rect x="35" y="18" width="12" height="175" fill="#059669"/>
+                    <rect x="138" y="18" width="12" height="175" fill="#059669"/>
+                    ${[0,1,2,3,4].map(c => [0,1,2,3,4,5,6,7,8].map(r => `<circle cx="${57 + c*18}" cy="${32 + r*18}" r="3" fill="#ecfdf5"/>`).join('')).join('')}
+
+                    <!-- 2 Thanh chữ U dài màu vàng (6 lỗ) -->
+                    <rect x="172" y="28" width="22" height="118" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="202" y="28" width="22" height="118" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2,3,4,5].map(r => `
+                        <circle cx="183" cy="${40 + r*19}" r="3" fill="#ffffff"/>
+                        <circle cx="213" cy="${40 + r*19}" r="3" fill="#ffffff"/>
+                    `).join('')}
+
+                    <!-- 4 Thanh thẳng 3 lỗ màu đỏ xếp ngang -->
+                    ${[0,1,2,3].map(r => `
+                        <rect x="246" y="${30 + r*28}" width="78" height="20" rx="10" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+                        <circle cx="262" cy="${40 + r*28}" r="3.2" fill="#ffffff"/>
+                        <circle cx="285" cy="${40 + r*28}" r="3.2" fill="#ffffff"/>
+                        <circle cx="308" cy="${40 + r*28}" r="3.2" fill="#ffffff"/>
+                    `).join('')}
+
+                    <!-- 8 Vít ngắn & 8 Đai ốc xếp thành 2 hàng ngang ở dưới đúng như Hình 2a -->
+                    ${[0,1,2,3,4,5,6,7].map(i => `
+                        <rect x="${170 + i*22}" y="162" width="6" height="14" rx="1" fill="#64748b"/>
+                        <rect x="${167 + i*22}" y="159" width="12" height="5" rx="2" fill="#475569"/>
+                        <circle cx="${173 + i*22}" cy="190" r="6.5" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                        <circle cx="${173 + i*22}" cy="190" r="2.5" fill="#ffffff"/>
+                    `).join('')}
+                </svg>
+            ` : `
+                <svg viewBox="0 0 400 220" class="w-full max-w-[400px] h-auto">
+                    <text x="22" y="24" fill="#0284c7" font-size="15" font-weight="900">b)</text>
+                    <!-- Tấm lớn nằm nghiêng 3D (nhìn từ mặt lắp thanh chữ U như Hình 2b) -->
+                    <polygon points="55,128 255,58 355,118 155,188" fill="#10b981" stroke="#047857" stroke-width="3"/>
+                    <polygon points="55,128 155,188 155,205 55,145" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                    <polygon points="155,188 355,118 355,135 155,205" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                    <!-- 2 Thanh chữ U dài vàng bắt ngang mặt tấm lớn -->
+                    <polygon points="88,112 184,168 198,162 102,106" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+                    <polygon points="212,68 308,124 322,118 226,62" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+                    <!-- 4 Thanh thẳng 3 lỗ đỏ dựng đứng ở 4 đầu thanh chữ U -->
+                    <rect x="86" y="54" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="94" cy="65" r="3" fill="#ffffff"/><circle cx="94" cy="85" r="3" fill="#ffffff"/>
+                    <rect x="176" y="108" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="184" cy="119" r="3" fill="#ffffff"/><circle cx="184" cy="139" r="3" fill="#ffffff"/>
+                    <rect x="210" y="12" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="218" cy="23" r="3" fill="#ffffff"/><circle cx="218" cy="43" r="3" fill="#ffffff"/>
+                    <rect x="300" y="66" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="308" cy="77" r="3" fill="#ffffff"/><circle cx="308" cy="97" r="3" fill="#ffffff"/>
+                    <!-- Các đai ốc bắt chặt trên thanh chữ U và thanh 3 lỗ -->
+                    <circle cx="94" cy="108" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="2"/>
+                    <circle cx="184" cy="162" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="2"/>
+                    <circle cx="218" cy="66" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="2"/>
+                    <circle cx="308" cy="120" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="2"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Minh họa Hình 2a -> Hình 2b -->
+                    <div class="lg:col-span-6 bg-slate-50 border-4 border-emerald-400 rounded-3xl p-5 flex flex-col items-center gap-3">
+                        <span class="tv-badge bg-emerald-700 text-white px-4 py-1 rounded-full">
+                            Hình 2 (Trang 34) – ${built ? 'Hình 2b: Khung xe đã lắp hoàn chỉnh' : 'Hình 2a: Các chi tiết chuẩn bị lắp khung xe'}
+                        </span>
+
+                        ${renderSgkCropOrSVG(2, built ? { x: 75, y: 66, w: 22, h: 28 } : { x: 53, y: 66, w: 23, h: 28 }, hinh2Svg)}
+                    </div>
+
+                    <!-- Cột phải: Hướng dẫn & Nút thao tác lắp khung xe -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="inline-block bg-sky-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 1: Lắp khung xe (Trang 34)
+                        </div>
+                        <p class="tv-card-title text-slate-900">
+                            – Dùng <b>hai thanh chữ U dài</b>, <b>bốn thanh thẳng 3 lỗ</b> lắp vào <b>tấm lớn</b> như Hình 2.
+                        </p>
+                        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 tv-body text-amber-950">
+                            🔧 <b>Dụng cụ & Chi tiết ghép:</b> Dùng <b>tua-vít</b> và <b>cờ-lê</b> vặn chặt <b>8 vít ngắn</b> cùng <b>8 đai ốc</b> để liên kết các thanh với tấm lớn.
+                        </div>
+
+                        <button onclick="assembleFrameStep1()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-3 ${
+                                built
+                                    ? 'bg-emerald-600 text-white border-4 border-emerald-800'
+                                    : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white'
+                            }">
+                            <span>${built ? '✓ Đã lắp xong Khung xe (Hình 2b)' : '🔩 Bấm để dùng Tua-vít & Cờ-lê lắp Khung xe'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (built) {
+                showFeedback(true, 'Hoàn thành Bước 1! Khung xe (Hình 2b) đã được lắp chắc chắn bằng 8 vít ngắn và 8 đai ốc.');
+            }
+        }
+
+        function assembleFrameStep1() {
+            state.step1FrameBuilt = true;
+            playSound('wrench');
+            setTimeout(() => playSound('correct'), 220);
+            rewardStar('step1_frame_7', 1);
+            renderApp();
+        }
+
+        // Bước 6/9: 3. Thực hành Bước 2 (Phần 1) – Lắp động cơ vào khung xe (Hình 3 – Trang 35)
+        function renderStep2_6(container) {
+            const mounted = state.step2aMotorMounted;
+
+            const hinh3Svg = !mounted ? `
+                <svg viewBox="0 0 380 210" class="w-full max-w-[380px] h-auto">
+                    <text x="18" y="24" fill="#0284c7" font-size="15" font-weight="900">a)</text>
+                    <!-- Động cơ điện hình trụ + trục thép -->
+                    <rect x="42" y="28" width="84" height="48" rx="6" fill="#94a3b8" stroke="#475569" stroke-width="2.5"/>
+                    <rect x="34" y="34" width="10" height="36" rx="2" fill="#cbd5e1"/>
+                    <line x1="126" y1="52" x2="152" y2="52" stroke="#475569" stroke-width="5.5" stroke-linecap="round"/>
+                    <!-- Tấm 2 lỗ màu đỏ chữ Omega giống Hình 3a -->
+                    <path d="M32,148 L56,148 L56,105 L124,105 L124,148 L148,148 L148,162 L114,162 L114,116 L66,116 L66,162 L32,162 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2.5"/>
+                    <rect x="54" y="102" width="72" height="48" rx="4" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <circle cx="44" cy="155" r="4" fill="#ffffff"/>
+                    <circle cx="136" cy="155" r="4" fill="#ffffff"/>
+                    <!-- 2 Vít dài đặt nghiêng & 2 Đai ốc lục giác -->
+                    <line x1="190" y1="88" x2="225" y2="34" stroke="#64748b" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="226" y1="88" x2="262" y2="34" stroke="#64748b" stroke-width="8" stroke-linecap="round"/>
+                    <polygon points="200,136 212,142 212,154 200,160 188,154 188,142" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                    <circle cx="200" cy="148" r="4" fill="#ffffff"/>
+                    <polygon points="242,136 254,142 254,154 242,160 230,154 230,142" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                    <circle cx="242" cy="148" r="4" fill="#ffffff"/>
+                </svg>
+            ` : `
+                <svg viewBox="0 0 380 210" class="w-full max-w-[380px] h-auto">
+                    <text x="82" y="24" fill="#0284c7" font-size="15" font-weight="900">b)</text>
+                    <!-- Khung tấm lớn nhìn thẳng từ dưới gầm xe như Hình 3b -->
+                    <rect x="118" y="16" width="144" height="178" rx="4" fill="#059669" stroke="#064e3b" stroke-width="3"/>
+                    ${[0,1,2,3,4].map(c => [0,1,2,3,4,5,6,7,8].map(r => `<circle cx="${134 + c*28}" cy="${28 + r*19}" r="3.2" fill="#064e3b"/>`).join('')).join('')}
+                    <!-- 2 Thanh chữ U vàng bắt ngang ở trên và dưới -->
+                    <rect x="112" y="42" width="156" height="18" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="112" y="132" width="156" height="18" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <!-- 4 Thanh thẳng 3 lỗ đỏ ở 4 góc -->
+                    <rect x="96" y="24" width="16" height="42" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="268" y="24" width="16" height="42" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="96" y="116" width="16" height="42" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="268" y="116" width="16" height="42" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <!-- Động cơ nằm ngang dưới thanh chữ U dưới, được ốp chặt bởi Tấm 2 lỗ đỏ -->
+                    <rect x="140" y="118" width="96" height="44" rx="6" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+                    <rect x="158" y="102" width="64" height="78" rx="5" fill="#dc2626" stroke="#991b1b" stroke-width="2.5"/>
+                    <!-- 2 Đầu vít dài ở tâm trên và dưới của Tấm 2 lỗ -->
+                    <circle cx="190" cy="112" r="6" fill="#e2e8f0" stroke="#334155" stroke-width="2"/>
+                    <circle cx="190" cy="168" r="6" fill="#e2e8f0" stroke="#334155" stroke-width="2"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-slate-50 border-4 border-rose-400 rounded-3xl p-5 flex flex-col items-center gap-3">
+                        <span class="tv-badge bg-rose-700 text-white px-4 py-1 rounded-full">
+                            Hình 3 (Trang 35) – ${mounted ? 'Hình 3b: Đã cố định động cơ vào khung xe' : 'Hình 3a: Chuẩn bị Động cơ, Tấm 2 lỗ, 2 Vít dài, 2 Đai ốc'}
+                        </span>
+
+                        ${renderSgkCropOrSVG(3, { x: 5, y: 12, w: 42, h: 31 }, hinh3Svg)}
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="inline-block bg-rose-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 2 (Phần 1): Lắp động cơ vào khung xe (Trang 35)
+                        </div>
+                        <p class="tv-card-title text-slate-900">
+                            – Dùng <b>tấm 2 lỗ</b> để cố định <b>động cơ</b> vào khung xe như Hình 3.
+                        </p>
+                        <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 tv-body text-rose-950">
+                            🔩 <b>Chi tiết sử dụng:</b> Đặt tấm 2 lỗ ôm lấy thân động cơ và dùng <b>2 vít dài</b> cùng <b>2 đai ốc</b> bắt chặt vào tấm lớn.
+                        </div>
+
+                        <button onclick="mountMotorStep2a()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-3 ${
+                                mounted
+                                    ? 'bg-emerald-600 text-white border-4 border-emerald-800'
+                                    : 'bg-gradient-to-r from-rose-600 to-orange-600 text-white'
+                            }">
+                            <span>${mounted ? '✓ Đã cố định Động cơ vào khung xe (Hình 3b)' : '⚙️ Bấm để lắp Tấm 2 lỗ & vặn 2 Vít dài giữ Động cơ'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (mounted) {
+                showFeedback(true, 'Tuyệt vời! Động cơ đã được cố định chắc chắn vào khung xe bằng tấm 2 lỗ, 2 vít dài và 2 đai ốc!');
+            }
+        }
+
+        function mountMotorStep2a() {
+            state.step2aMotorMounted = true;
+            playSound('wrench');
+            setTimeout(() => playSound('correct'), 220);
+            rewardStar('step2a_motor_7', 1);
+            renderApp();
+        }
+
+        // Bước 7/9: 3. Thực hành Bước 2 (Phần 2) – Lắp giá pin và nối dây điện (Hình 4 – Trang 35)
+        function renderStep2_7(container) {
+            const allDone = state.step2bTapeDone && state.step2bWireRedDone && state.step2bWireBlackDone;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-amber-50 border-3 border-amber-400 rounded-2xl p-3.5 flex items-center gap-3 tv-body text-amber-950">
+                        <span>⚠️</span>
+                        <span><b>Lưu ý quan trọng (Trang 35):</b> Nối <b>dây điện màu đỏ</b> vào <b>cực dương (+)</b>, nối <b>dây điện màu đen</b> vào <b>cực âm (–)</b> của động cơ.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <!-- Thao tác 1: Dán băng dính 2 mặt cố định giá pin -->
+                        <div class="bg-white border-4 ${state.step2bTapeDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-300'} rounded-3xl p-4 flex flex-col justify-between gap-3">
+                            <div>
+                                <span class="tv-badge bg-slate-800 text-white px-3 py-1 rounded-full">Thao tác 1/3 (Hình 4a)</span>
+                                <div class="text-5xl text-center my-3">🎗️🔋</div>
+                                <h4 class="tv-card-title text-slate-900">Cố định giá 2 pin tiểu vào khung xe</h4>
+                                <p class="tv-body text-slate-700 mt-1">Dùng <b>băng dính 2 mặt</b> dán cố định giá 2 pin tiểu lên mặt trên của tấm lớn.</p>
+                            </div>
+                            <button onclick="doStep2bAction('tape')"
+                                class="btn-kid py-3.5 px-4 rounded-2xl tv-option ${
+                                    state.step2bTapeDone ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-700 text-white'
+                                }">
+                                ${state.step2bTapeDone ? '✓ Đã dán cố định giá pin' : '👆 Bấm dán băng dính 2 mặt'}
+                            </button>
+                        </div>
+
+                        <!-- Thao tác 2: Nối dây điện màu đỏ -->
+                        <div class="bg-white border-4 ${state.step2bWireRedDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-300'} rounded-3xl p-4 flex flex-col justify-between gap-3">
+                            <div>
+                                <span class="tv-badge bg-rose-600 text-white px-3 py-1 rounded-full">Thao tác 2/3 (Hình 4b)</span>
+                                <div class="text-5xl text-center my-3">🔴➕⚙️</div>
+                                <h4 class="tv-card-title text-slate-900">Nối dây điện MÀU ĐỎ của giá pin</h4>
+                                <p class="tv-body text-slate-700 mt-1">Em hãy chọn đúng cực trên động cơ để nối <b>dây điện màu đỏ</b>:</p>
+                            </div>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button onclick="doStep2bAction('red_right')"
+                                    class="btn-kid py-3 px-4 rounded-2xl tv-option ${
+                                        state.step2bWireRedDone ? 'bg-emerald-600 text-white' : 'bg-rose-50 hover:bg-rose-100 text-rose-950 border-2 border-rose-400'
+                                    }">
+                                    ${state.step2bWireRedDone ? '✓ ' : ''}Nối dây ĐỎ vào Cực dương (+)
+                                </button>
+                                <button onclick="doStep2bAction('red_wrong')"
+                                    class="btn-kid py-3 px-4 rounded-2xl tv-option bg-slate-50 hover:bg-slate-100 text-slate-800 border-2 border-slate-300">
+                                    Nối dây ĐỎ vào Cực âm (–)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Thao tác 3: Nối dây điện màu đen -->
+                        <div class="bg-white border-4 ${state.step2bWireBlackDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-400'} rounded-3xl p-4 flex flex-col justify-between gap-3">
+                            <div>
+                                <span class="tv-badge bg-slate-900 text-white px-3 py-1 rounded-full">Thao tác 3/3 (Hình 4b)</span>
+                                <div class="text-5xl text-center my-3">⚫➖⚙️</div>
+                                <h4 class="tv-card-title text-slate-900">Nối dây điện MÀU ĐEN của giá pin</h4>
+                                <p class="tv-body text-slate-700 mt-1">Em hãy chọn đúng cực trên động cơ để nối <b>dây điện màu đen</b>:</p>
+                            </div>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button onclick="doStep2bAction('black_wrong')"
+                                    class="btn-kid py-3 px-4 rounded-2xl tv-option bg-slate-50 hover:bg-slate-100 text-slate-800 border-2 border-slate-300">
+                                    Nối dây ĐEN vào Cực dương (+)
+                                </button>
+                                <button onclick="doStep2bAction('black_right')"
+                                    class="btn-kid py-3 px-4 rounded-2xl tv-option ${
+                                        state.step2bWireBlackDone ? 'bg-emerald-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-950 border-2 border-slate-500'
+                                    }">
+                                    ${state.step2bWireBlackDone ? '✓ ' : ''}Nối dây ĐEN vào Cực âm (–)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Hoàn thành xuất sắc Bước 2 (Hình 4)! Giá pin đã cố định chắc chắn, dây đỏ nối vào cực dương (+), dây đen nối vào cực âm (–) của động cơ.');
+            }
+        }
+
+        function doStep2bAction(action) {
+            if (action === 'tape') {
+                state.step2bTapeDone = true;
+                playSound('pop');
+                rewardStar('s2b_tape', 1);
+            } else if (action === 'red_right') {
+                state.step2bWireRedDone = true;
+                playSound('wrench');
+                rewardStar('s2b_red', 1);
+            } else if (action === 'black_right') {
+                state.step2bWireBlackDone = true;
+                playSound('wrench');
+                rewardStar('s2b_black', 1);
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Nhầm cực rồi! Em hãy nhớ lưu ý ở trang 35: Nối dây điện màu đỏ vào cực dương (+), nối dây điện màu đen vào cực âm (–) của động cơ.');
+                return;
+            }
+            if (state.step2bTapeDone && state.step2bWireRedDone && state.step2bWireBlackDone) {
+                playSound('correct');
+            }
+            renderApp();
+        }
+
+        // Bước 8/9: 3. Thực hành Bước 3 – Lắp hệ truyền động vào trục và bánh xe (Hình 5 – Trang 36)
+        function renderStep2_8(container) {
+            const bothDone = state.step3DriveMounted && state.step3WheelsMounted;
+
+            // Vẽ chính xác Hình 5a, 5b, 5c như Trang 36 SGK
+            const hinh5Svg = `
+                <svg viewBox="0 0 420 225" class="w-full max-w-[420px] h-auto mx-auto">
+                    <!-- 5a: Bánh đai đỏ + Puli trắng + Đai truyền vàng nâu -->
+                    <text x="12" y="22" fill="#0284c7" font-size="14" font-weight="900">a)</text>
+                    <circle cx="58" cy="36" r="22" fill="#dc2626" stroke="#991b1b" stroke-width="2.5"/>
+                    <circle cx="58" cy="36" r="5" fill="#ffffff"/>
+                    <circle cx="82" cy="56" r="7" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="86" cy="86" rx="36" ry="18" fill="none" stroke="#b45309" stroke-width="4.5"/>
+
+                    <!-- 5b: 4 Bánh xe + 10 Vòng hãm xanh + 2 Trục thẳng dài -->
+                    <text x="12" y="130" fill="#0284c7" font-size="14" font-weight="900">b)</text>
+                    ${drawKitWheel(46, 142, 14)}
+                    ${drawKitWheel(80, 142, 14)}
+                    ${drawKitWheel(46, 174, 14)}
+                    ${drawKitWheel(80, 174, 14)}
+                    ${[0,1,2,3,4].map(r => `
+                        <circle cx="108" cy="${130 + r*12}" r="4" fill="#2563eb"/>
+                        <circle cx="122" cy="${130 + r*12}" r="4" fill="#2563eb"/>
+                    `).join('')}
+                    <line x1="32" y1="198" x2="128" y2="198" stroke="#64748b" stroke-width="4.5" stroke-linecap="round"/>
+                    <line x1="32" y1="210" x2="128" y2="210" stroke="#64748b" stroke-width="4.5" stroke-linecap="round"/>
+
+                    <!-- 5c: Mô hình nhìn từ mặt gầm đã lắp trục, bánh xe và đai truyền -->
+                    <text x="165" y="22" fill="#0284c7" font-size="14" font-weight="900">c)</text>
+                    <polygon points="215,62 355,68 335,192 195,182" fill="#10b981" stroke="#047857" stroke-width="3"/>
+                    <!-- 2 Trục thép dài -->
+                    <line x1="185" y1="78" x2="375" y2="92" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="170" y1="142" x2="360" y2="158" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Động cơ + Tấm 2 lỗ đỏ + Bánh đai đỏ + Đai truyền -->
+                    <rect x="232" y="132" width="58" height="44" rx="5" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <ellipse cx="305" cy="86" rx="16" ry="22" fill="#dc2626" stroke="#7f1d1d" stroke-width="2.5"/>
+                    <line x1="295" y1="86" x2="235" y2="145" stroke="#eab308" stroke-width="3.5"/>
+                    <line x1="312" y1="98" x2="245" y2="155" stroke="#eab308" stroke-width="3.5"/>
+                    <!-- 4 Bánh xe ở 4 đầu trục -->
+                    ${drawKitWheel(192, 78, 24)}
+                    ${drawKitWheel(368, 92, 24)}
+                    ${drawKitWheel(176, 142, 26)}
+                    ${drawKitWheel(352, 158, 26)}
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-slate-50 border-4 border-sky-400 rounded-3xl p-4 flex flex-col items-center">
+                        <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-2">
+                            Hình 5 (Trang 36) – Lắp hệ truyền động, trục và bánh xe
+                        </span>
+                        ${renderSgkCropOrSVG(3, { x: 54, y: 14, w: 38, h: 35 }, hinh5Svg)}
+                    </div>
+
+                    <div class="lg:col-span-6 flex flex-col gap-4">
+                        <!-- Ý 1 của Bước 3 -->
+                        <div class="bg-white border-4 ${state.step3DriveMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-amber-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-amber-800">Hình 5a & 5c • Công việc 1/2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                – Lắp <b>hệ truyền động</b> (bánh đai đỏ, puli trắng, đai truyền vàng) vào trục bánh xe và động cơ như Hình 5.
+                            </div>
+                            <button onclick="doStep3Assemble('drive')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3DriveMounted ? 'bg-emerald-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                }">
+                                ${state.step3DriveMounted ? '✓ Đã lắp Bánh đai vào trục và mắc Đai truyền vào Puli' : '⭕ Bấm để lắp Hệ truyền động (Hình 5a, 5c)'}
+                            </button>
+                        </div>
+
+                        <!-- Ý 2 của Bước 3 -->
+                        <div class="bg-white border-4 ${state.step3WheelsMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-sky-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-sky-800">Hình 5b & 5c • Công việc 2/2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                – Lắp <b>4 bánh xe</b> vào 2 trục bánh xe và dùng <b>10 vòng hãm</b> màu xanh giữ chặt bánh xe, bánh đai như Hình 5.
+                            </div>
+                            <button onclick="doStep3Assemble('wheels')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3WheelsMounted ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-700 text-white'
+                                }">
+                                ${state.step3WheelsMounted ? '✓ Đã lắp 4 Bánh xe và cài đủ 10 Vòng hãm' : '🛞 Bấm để lắp 4 Bánh xe và 10 Vòng hãm (Hình 5b, 5c)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (bothDone) {
+                showFeedback(true, 'Hoàn thành Bước 3 (Hình 5)! Hệ truyền động, 2 trục thẳng dài, 4 bánh xe và 10 vòng hãm đã được lắp đúng vị trí!');
+            }
+        }
+
+        function doStep3Assemble(part) {
+            playSound('wrench');
+            if (part === 'drive') {
+                state.step3DriveMounted = true;
+                rewardStar('s3_drive', 1);
+            } else {
+                state.step3WheelsMounted = true;
+                rewardStar('s3_wheels', 1);
+            }
+            if (state.step3DriveMounted && state.step3WheelsMounted) {
+                setTimeout(() => playSound('correct'), 200);
+            }
+            renderApp();
+        }
+
+        // Bước 9/9: 3. Thực hành Bước 4 – Kiểm tra hoạt động của mô hình (Hình 6a, 6b – Trang 36)
+        function renderStep2_9(container) {
+            // Vẽ chính xác Hình 6a (nhìn từ mặt trên có 2 viên pin xanh) và Hình 6b (nhìn từ mặt gầm có đai truyền nối bánh đai & động cơ) như Trang 36 SGK
+            const hinh6Svg = `
+                <svg viewBox="0 0 420 220" class="w-full max-w-[420px] h-auto mx-auto">
+                    <!-- Hình 6a: Nhìn từ mặt trên (2 viên pin tiểu xanh dương lắp trong giá pin) -->
+                    <text x="16" y="22" fill="#0284c7" font-size="14" font-weight="900">a)</text>
+                    <rect x="58" y="22" width="88" height="176" rx="4" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <!-- 4 Bánh xe nhìn từ trên xuống ở 4 góc -->
+                    <rect x="34" y="42" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="152" y="42" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="34" y="134" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="152" y="134" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <!-- Giá pin + 2 viên pin tiểu 1,5V màu xanh dương -->
+                    <rect x="74" y="26" width="56" height="96" rx="4" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    ${state.step4BatteryInserted ? `
+                        <rect x="79" y="32" width="21" height="84" rx="3" fill="#2563eb" stroke="#93c5fd" stroke-width="1.5"/>
+                        <rect x="104" y="32" width="21" height="84" rx="3" fill="#2563eb" stroke="#93c5fd" stroke-width="1.5"/>
+                    ` : ''}
+                    <!-- Cần gạt công tắc -->
+                    <line x1="118" y1="26" x2="${state.step4SwitchClosed ? '138' : '148'}" y2="${state.step4SwitchClosed ? '24' : '16'}" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Dây đỏ & đen luồn qua lỗ -->
+                    <path d="M102,122 Q86,155 102,175" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+                    <path d="M104,122 Q118,155 104,175" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+
+                    <!-- Hình 6b: Nhìn từ mặt dưới gầm xe -->
+                    <text x="224" y="22" fill="#0284c7" font-size="14" font-weight="900">b)</text>
+                    <rect x="268" y="22" width="88" height="176" rx="4" fill="#059669" stroke="#064e3b" stroke-width="2.5"/>
+                    <!-- 2 Trục thép & 4 Bánh xe -->
+                    <line x1="252" y1="56" x2="372" y2="56" stroke="#94a3b8" stroke-width="5"/>
+                    <line x1="252" y1="148" x2="372" y2="148" stroke="#94a3b8" stroke-width="5"/>
+                    <rect x="242" y="36" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="364" y="36" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="242" y="128" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <rect x="364" y="128" width="18" height="44" rx="5" fill="#1e293b"/>
+                    <!-- 2 Thanh chữ U vàng -->
+                    <rect x="264" y="50" width="96" height="12" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                    <rect x="264" y="142" width="96" height="12" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                    <!-- Bánh đai đỏ trên trục trên & Động cơ + Tấm 2 lỗ đỏ ở dưới nối bằng Đai truyền vàng -->
+                    <rect x="326" y="40" width="10" height="34" rx="3" fill="#dc2626"/>
+                    <rect x="292" y="130" width="40" height="48" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <line x1="331" y1="68" x2="331" y2="145" stroke="#eab308" stroke-width="4"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Hình 6a & 6b chuẩn SGK -->
+                    <div class="lg:col-span-6 bg-slate-50 border-4 ${state.step4SwitchClosed ? 'border-emerald-500 bg-emerald-50/40' : 'border-sky-400'} rounded-3xl p-4 flex flex-col items-center">
+                        <div class="flex items-center justify-between w-full px-2 mb-1">
+                            <span class="tv-badge bg-sky-700 text-white px-3.5 py-1 rounded-full">Hình 6a, 6b (Trang 36)</span>
+                            <span class="tv-badge px-3.5 py-1 rounded-full ${state.step4SwitchClosed ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}">
+                                ${state.step4SwitchClosed ? '⚡ CÔNG TẮC: ĐÓNG (XE CHẠY TỐT)' : '🔌 CÔNG TẮC: ĐANG MỞ'}
+                            </span>
+                        </div>
+
+                        ${renderSgkCropOrSVG(3, { x: 54, y: 68, w: 38, h: 25 }, hinh6Svg)}
+
+                        <div class="bg-amber-100 border-2 border-amber-400 rounded-2xl p-3 mt-2 w-full tv-body text-amber-950 text-center">
+                            ⚠️ <b>Lưu ý (Trang 36):</b> Khi lắp pin phải <b>mở công tắc</b> và <b>lắp đúng cực</b> (+ / –).
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: 3 thao tác tuần tự của Bước 4 -->
+                    <div class="lg:col-span-6 flex flex-col gap-3.5">
+                        <!-- Bước 4.1 -->
+                        <div class="bg-white border-3 ${state.step4CheckedJoints ? 'border-emerald-500' : 'border-slate-300'} rounded-2xl p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="tv-badge text-sky-800 uppercase">Thao tác 1 / 3</div>
+                                <div class="tv-card-title text-slate-900">1. Kiểm tra các mối ghép và độ căng đai truyền</div>
+                            </div>
+                            <button onclick="doStep4Test('joints')"
+                                class="btn-kid px-5 py-3 rounded-2xl font-black text-lg shrink-0 ${
+                                    state.step4CheckedJoints ? 'bg-emerald-600 text-white' : 'bg-sky-600 text-white'
+                                }">
+                                ${state.step4CheckedJoints ? '✓ Đã kiểm tra' : '🔍 Kiểm tra'}
+                            </button>
+                        </div>
+
+                        <!-- Bước 4.2 -->
+                        <div class="bg-white border-3 ${state.step4BatteryInserted ? 'border-emerald-500' : 'border-slate-300'} rounded-2xl p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="tv-badge text-amber-800 uppercase">Thao tác 2 / 3 (Khi đang MỞ công tắc)</div>
+                                <div class="tv-card-title text-slate-900">2. Lắp 2 pin tiểu 1,5 V vào giá pin đúng cực (+ / –)</div>
+                            </div>
+                            <button onclick="doStep4Test('battery')"
+                                class="btn-kid px-5 py-3 rounded-2xl font-black text-lg shrink-0 ${
+                                    state.step4BatteryInserted ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'
+                                }">
+                                ${state.step4BatteryInserted ? '✓ Đã lắp 2 pin' : '🔋 Lắp 2 pin'}
+                            </button>
+                        </div>
+
+                        <!-- Bước 4.3 -->
+                        <div class="bg-white border-3 ${state.step4SwitchClosed ? 'border-emerald-500' : 'border-slate-300'} rounded-2xl p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="tv-badge text-emerald-800 uppercase">Thao tác 3 / 3 (Vận hành mô hình)</div>
+                                <div class="tv-card-title text-slate-900">3. Đóng công tắc để chạy thử mô hình xe điện!</div>
+                            </div>
+                            <button onclick="doStep4Test('switch')"
+                                class="btn-kid px-5 py-3 rounded-2xl font-black text-lg shrink-0 ${
+                                    state.step4SwitchClosed ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
+                                }">
+                                ${state.step4SwitchClosed ? '⏹️ Mở công tắc (Dừng)' : '⚡ Đóng công tắc (Chạy!)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.step4CheckedJoints && state.step4BatteryInserted && state.step4SwitchClosed) {
+                showFeedback(true, 'Chúc mừng em! Mô hình xe điện chạy bằng pin đã lăn bánh êm ái khi đóng công tắc! Hãy sang Chặng 3: Luyện tập nhé!');
+            }
+        }
+
+        function doStep4Test(action) {
+            if (action === 'joints') {
+                state.step4CheckedJoints = true;
+                playSound('wrench');
+                rewardStar('s4_joints', 1);
+            } else if (action === 'battery') {
+                if (!state.step4CheckedJoints) {
+                    playSound('wrong');
+                    showFeedback(false, 'Em hãy thực hiện Thao tác 1 (Kiểm tra các mối ghép) trước khi lắp pin nhé!');
+                    return;
+                }
+                state.step4BatteryInserted = true;
+                playSound('pop');
+                rewardStar('s4_battery', 1);
+            } else if (action === 'switch') {
+                if (!state.step4BatteryInserted) {
+                    playSound('wrong');
+                    showFeedback(false, 'Chưa có pin! Em hãy hoàn thành Thao tác 1 và Thao tác 2 (Lắp 2 pin tiểu 1,5 V vào giá pin) trước khi đóng công tắc nhé!');
+                    return;
+                }
+                state.step4SwitchClosed = !state.step4SwitchClosed;
+                if (state.step4SwitchClosed) {
+                    playSound('motor');
+                    rewardStar('s4_run', 1);
+                } else {
+                    playSound('click');
+                }
+            }
+            renderApp();
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 3: LUYỆN TẬP (6 CÂU HỎI TRẮC NGHIỆM CÓ ĐỘ NHIỄU CAO)
+         **************************************************************/
+        function renderPracticeMCQ7(container, flagName, badgeTitle, questionText, options) {
+            const isDone = state[flagName];
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-emerald-100 to-sky-100 border-4 border-emerald-400 rounded-3xl p-5">
+                        <span class="inline-block bg-emerald-700 text-white tv-badge uppercase px-4 py-1 rounded-full mb-2">
+                            ${badgeTitle}
+                        </span>
+                        <h3 class="tv-card-title text-slate-900 leading-snug">
+                            ${questionText}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        ${options.map(opt => `
+                            <button onclick="selectPrac7Answer('${flagName}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 sm:p-5 rounded-3xl border-3 tv-option flex items-center justify-between gap-4 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ ĐÚNG' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function selectPrac7Answer(flagName, isCorrect, explain) {
+            if (isCorrect) {
+                state[flagName] = true;
+                playSound('correct');
+                rewardStar('prac7_' + flagName, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Câu 1/6
+        function renderStep3_1(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac1Done',
+                'Câu hỏi luyện tập 1 / 6 • Nhận biết bộ phận & chi tiết',
+                'Quan sát Hình 1d (trang 32) và Bảng chi tiết (trang 33), bộ phận "Động cơ và hệ truyền động" của mô hình xe điện chạy bằng pin gồm những chi tiết nào?',
+                [
+                    {
+                        text: 'A. Động cơ, tấm 2 lỗ, 2 trục thẳng dài và 4 bánh xe.',
+                        correct: false,
+                        explain: 'Chưa đúng! Trục thẳng dài và bánh xe thuộc bộ phận "Trục và bánh xe" (Hình 1c), còn tấm 2 lỗ dùng để giữ động cơ vào khung xe.'
+                    },
+                    {
+                        text: 'B. Động cơ, puli, bánh đai và đai truyền.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Trong Hình 1d, bộ phận "Động cơ và hệ truyền động" gồm: Động cơ, puli (màu trắng), bánh đai (màu đỏ) và đai truyền (màu vàng).'
+                    },
+                    {
+                        text: 'C. Động cơ, giá 2 pin tiểu x 1,5 V, bánh đai và 2 viên pin tiểu 1,5 V.',
+                        correct: false,
+                        explain: 'Chưa đúng! Giá 2 pin tiểu và 2 viên pin tiểu thuộc bộ phận "Nguồn điện" (Hình 1e).'
+                    },
+                    {
+                        text: 'D. Tấm lớn, 2 thanh chữ U dài, 4 thanh thẳng 3 lỗ và đai truyền.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tấm lớn, thanh chữ U dài và thanh thẳng 3 lỗ thuộc bộ phận "Khung xe" (Hình 1b).'
+                    }
+                ]
+            );
+        }
+
+        // Câu 2/6
+        function renderStep3_2(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac2Done',
+                'Câu hỏi luyện tập 2 / 6 • Số lượng chi tiết lắp ghép',
+                'Theo Bảng chi tiết, vật liệu và dụng cụ (trang 34 SGK), để lắp hoàn chỉnh một mô hình xe điện chạy bằng pin, số lượng Vít ngắn, Vít dài, Đai ốc và Vòng hãm cần chuẩn bị lần lượt là bao nhiêu?',
+                [
+                    {
+                        text: 'A. 10 vít ngắn, 2 vít dài, 12 đai ốc và 8 vòng hãm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Em hãy cộng lại số mối ghép ở khung xe (8 vít ngắn) và tấm 2 lỗ giữ động cơ (2 vít dài) nhé.'
+                    },
+                    {
+                        text: 'B. 8 vít ngắn, 2 vít dài, 10 đai ốc và 10 vòng hãm.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Theo STT 13 đến 16 ở trang 34: cần chuẩn bị 8 vít ngắn, 2 vít dài, 10 đai ốc (8 + 2 = 10) và 10 vòng hãm.'
+                    },
+                    {
+                        text: 'C. 8 vít ngắn, 4 vít dài, 10 đai ốc và 4 vòng hãm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tấm 2 lỗ chỉ cần 2 vít dài, và các trục bánh xe cần tới 10 vòng hãm để giữ bánh xe và bánh đai.'
+                    },
+                    {
+                        text: 'D. 4 vít ngắn, 4 vít dài, 8 đai ốc và 10 vòng hãm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Bước 1 lắp khung xe cần tới 8 vít ngắn (mỗi bên 4 vít ngắn), không phải 4 vít ngắn.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 3/6
+        function renderStep3_3(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac3Done',
+                'Câu hỏi luyện tập 3 / 6 • Kĩ thuật lắp ghép chi tiết',
+                'Vì sao ở Bước 1 (Lắp khung xe) chúng ta sử dụng 8 vít ngắn, nhưng ở Bước 2 khi dùng tấm 2 lỗ cố định động cơ vào khung xe lại phải sử dụng 2 vít dài?',
+                [
+                    {
+                        text: 'A. Vì tấm 2 lỗ có độ dày và độ cao ôm vòng qua thân động cơ, cần dùng 2 vít dài mới xuyên qua được cả tấm 2 lỗ, thanh chữ U và tấm lớn để vặn đai ốc.',
+                        correct: true,
+                        explain: 'Rất sâu sắc và chính xác! Tấm 2 lỗ phải ôm lấy động cơ và xuyên qua nhiều lớp chi tiết dày ở gầm khung xe nên vít ngắn không đủ chiều dài để bắt đai ốc.'
+                    },
+                    {
+                        text: 'B. Vì 2 vít dài có tác dụng dẫn dòng điện trực tiếp từ giá pin xuống động cơ thay cho dây điện màu đỏ và màu đen.',
+                        correct: false,
+                        explain: 'Chưa đúng! Vít dài chỉ làm nhiệm vụ cơ khí là giữ chặt tấm 2 lỗ và động cơ vào khung xe, còn dẫn điện là nhiệm vụ của 2 dây dẫn điện.'
+                    },
+                    {
+                        text: 'C. Vì ở Bước 2 chúng ta đã dùng hết sạch vít ngắn nên bắt buộc phải lấy 2 vít dài còn thừa để thay thế ngẫu nhiên.',
+                        correct: false,
+                        explain: 'Chưa đúng! Việc chọn vít ngắn hay vít dài là do yêu cầu kĩ thuật về độ dày của mối ghép chứ không phải chọn ngẫu nhiên.'
+                    },
+                    {
+                        text: 'D. Vì 2 vít dài sẽ chạm xuống mặt đất để làm phanh hãm tốc độ khi mô hình xe điện chạy quá nhanh.',
+                        correct: false,
+                        explain: 'Chưa đúng! Vít dài không chạm đất làm phanh mà dùng để cố định tấm 2 lỗ giữ động cơ.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 4/6
+        function renderStep3_4(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac4Done',
+                'Câu hỏi luyện tập 4 / 6 • Quy tắc đấu điện & lắp pin an toàn',
+                'Khi thực hiện nối dây điện vào động cơ (Bước 2 – trang 35) và lắp pin vào giá pin (Bước 4 – trang 36), cách làm nào dưới đây tuân thủ ĐÚNG lưu ý trong sách giáo khoa?',
+                [
+                    {
+                        text: 'A. Nối dây đỏ vào cực âm, dây đen vào cực dương của động cơ; khi lắp pin phải đóng công tắc trước để thử điện ngay.',
+                        correct: false,
+                        explain: 'Sai cả hai ý! Dây đỏ phải nối vào cực dương (+), dây đen vào cực âm (–); và khi lắp pin bắt buộc phải MỞ công tắc.'
+                    },
+                    {
+                        text: 'B. Nối dây điện màu đỏ vào cực dương, dây điện màu đen vào cực âm của động cơ; khi lắp pin phải mở công tắc và lắp đúng cực của pin.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Đây chính là 2 lưu ý vàng ở trang 35 và trang 36 SGK giúp mô hình hoạt động đúng chiều và an toàn.'
+                    },
+                    {
+                        text: 'C. Nối cả hai dây điện màu đỏ và màu đen vào cùng một cực dương của động cơ; khi lắp pin thì lắp hai đầu cực dương của pin quay về cùng một phía.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nối chung 2 dây vào 1 cực sẽ gây đoản mạch và động cơ không thể hoạt động.'
+                    },
+                    {
+                        text: 'D. Không cần phân biệt màu dây điện hay cực của pin, chỉ cần dán băng dính 2 mặt thật chặt là xe tự chạy đúng hướng.',
+                        correct: false,
+                        explain: 'Chưa đúng! Lắp ngược cực pin hoặc nối sai cực dây điện sẽ làm xe không chạy hoặc chạy ngược chiều.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 5/6
+        function renderStep3_5(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac5Done',
+                'Câu hỏi luyện tập 5 / 6 • Quy trình 4 bước lắp ráp',
+                'Thứ tự 4 bước thực hành nào dưới đây là ĐÚNG khi lắp ráp mô hình xe điện chạy bằng pin (trang 34 – 36 SGK)?',
+                [
+                    {
+                        text: 'A. Bước 1: Lắp khung xe ➔ Bước 2: Lắp động cơ và giá pin vào khung xe ➔ Bước 3: Lắp hệ truyền động vào trục và bánh xe ➔ Bước 4: Kiểm tra hoạt động của mô hình.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Quy trình chuẩn gồm 4 bước: Lắp khung xe ➔ Lắp động cơ và giá pin vào khung xe ➔ Lắp hệ truyền động vào trục và bánh xe ➔ Kiểm tra hoạt động của mô hình.'
+                    },
+                    {
+                        text: 'B. Bước 1: Lắp hệ truyền động và bánh xe ➔ Bước 2: Lắp pin và đóng công tắc chạy thử ➔ Bước 3: Lắp khung xe ➔ Bước 4: Lắp động cơ vào khung xe.',
+                        correct: false,
+                        explain: 'Chưa đúng! Phải lắp khung xe (Bước 1) và cố định động cơ, giá pin (Bước 2) trước khi lắp trục bánh xe và kiểm tra hoạt động.'
+                    },
+                    {
+                        text: 'C. Bước 1: Lắp động cơ và giá pin ➔ Bước 2: Kiểm tra hoạt động của mô hình ➔ Bước 3: Lắp khung xe ➔ Bước 4: Lắp hệ truyền động và bánh xe.',
+                        correct: false,
+                        explain: 'Chưa đúng! Bước kiểm tra hoạt động của mô hình luôn thực hiện ở Bước 4 sau khi đã lắp hoàn chỉnh các bộ phận.'
+                    },
+                    {
+                        text: 'D. Bước 1: Lắp 2 pin tiểu vào giá pin và đóng công tắc ➔ Bước 2: Lắp khung xe ➔ Bước 3: Lắp động cơ ➔ Bước 4: Lắp bánh xe.',
+                        correct: false,
+                        explain: 'Chưa đúng! Không bao giờ lắp pin và đóng công tắc ngay từ đầu khi chưa lắp ráp các bộ phận cơ khí của xe.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 6/6
+        function renderStep3_6(container) {
+            renderPracticeMCQ7(
+                container,
+                'prac6Done',
+                'Câu hỏi luyện tập 6 / 6 • Chẩn đoán & điều chỉnh sản phẩm',
+                'Ở Bước 4 (Kiểm tra hoạt động của mô hình), khi đóng công tắc, bạn Minh nghe thấy tiếng động cơ điện quay vù vù rất khỏe nhưng 4 bánh xe vẫn đứng yên không lăn. Nguyên nhân hợp lí nhất là gì và Minh cần điều chỉnh thế nào?',
+                [
+                    {
+                        text: 'A. Do 2 viên pin tiểu đã hết sạch điện hoặc dây điện bị đứt ngầm nên động cơ không nhận được nguồn điện.',
+                        correct: false,
+                        explain: 'Chưa hợp lí! Đề bài nêu rõ "nghe thấy tiếng động cơ điện quay vù vù rất khỏe", chứng tỏ pin vẫn còn điện và dây điện không bị đứt.'
+                    },
+                    {
+                        text: 'B. Do đai truyền bị tuột khỏi puli và bánh đai (hoặc vòng hãm chưa giữ chặt bánh đai với trục), cần lắp lại đai truyền và kiểm tra vòng hãm để truyền lực quay xuống trục bánh xe.',
+                        correct: true,
+                        explain: 'Rất xuất sắc! Khi động cơ quay mà bánh xe không quay, lỗi nằm ở hệ truyền động (đai truyền bị tuột/quá lỏng giữa puli và bánh đai, hoặc bánh đai bị trượt trên trục).'
+                    },
+                    {
+                        text: 'C. Do bạn Minh dùng tua-vít và cờ-lê vặn 8 vít ngắn trên khung xe quá chặt làm dòng điện không chạy qua tấm lớn được.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mối ghép khung xe chắc chắn là yêu cầu bắt buộc của sản phẩm, và dòng điện chạy qua dây dẫn chứ không chạy qua tấm lớn.'
+                    },
+                    {
+                        text: 'D. Do bạn Minh chưa bóc lớp băng dính 2 mặt dưới giá pin nên bánh xe bị dính chặt xuống mặt bàn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Băng dính 2 mặt nằm ở mặt trên của khung xe để giữ giá pin, không tiếp xúc với bánh xe hay mặt bàn.'
+                    }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 9. CHẶNG 4: VẬN DỤNG (3 BƯỚC - ĐÁNH GIÁ & THIẾT KẾ SÁNG TẠO)
+         **************************************************************/
+        // Bước 1/3: Phiếu đánh giá sản phẩm (Trang 37 - Hình 7)
+        const EVAL_ROWS = [
+            { id: 'c1', label: '1. Đúng và đủ chi tiết' },
+            { id: 'c2', label: '2. Đúng hình dạng, gọn gàng' },
+            { id: 'c3', label: '3. Mối ghép chắc chắn' },
+            { id: 'c4', label: '4. Xe chạy được khi đóng công tắc' }
+        ];
+
+        function renderStep4_1(container) {
+            const allRated = Object.values(state.evalCriteria).every(v => v !== null);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Hình 7 - Trưng bày sản phẩm -->
+                    <div class="lg:col-span-5 bg-amber-50/70 border-4 border-amber-300 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-amber-600 text-white px-4 py-1 rounded-full mb-2">Hình 7 (Trang 37) – Trưng bày sản phẩm</span>
+                        ${getElectricCarSVG(allRated)}
+                        <p class="tv-body text-slate-800 mt-2">
+                            Mô hình xe điện chạy bằng pin sau khi hoàn thiện gọn gàng, chắc chắn.
+                        </p>
+                    </div>
+
+                    <!-- Cột phải: Bảng Phiếu đánh giá sản phẩm (Trang 37) -->
+                    <div class="lg:col-span-7 bg-white border-4 border-sky-400 rounded-3xl overflow-hidden shadow">
+                        <div class="bg-sky-500 text-white text-center py-3 px-4 tv-card-title uppercase tracking-wide">
+                            PHIẾU ĐÁNH GIÁ SẢN PHẨM (TRANG 37)
+                        </div>
+                        <div class="p-4">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-sky-100 text-slate-900 border-b-3 border-sky-300">
+                                        <th class="p-3 text-left tv-body">Tiêu chí</th>
+                                        <th class="p-3 text-center text-3xl">😊</th>
+                                        <th class="p-3 text-center text-3xl">😐</th>
+                                        <th class="p-3 text-center text-3xl">😣</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${EVAL_ROWS.map(row => {
+                                        const val = state.evalCriteria[row.id];
+                                        return `
+                                            <tr class="border-b-2 border-slate-200">
+                                                <td class="p-3 tv-body text-slate-900">${row.label}</td>
+                                                ${['good', 'ok', 'try'].map((level, idx) => {
+                                                    const emojis = ['😊 Rất tốt', '😐 Đạt', '😣 Cần cố gắng'];
+                                                    const selected = val === level;
+                                                    return `
+                                                        <td class="p-2 text-center">
+                                                            <button onclick="rateCriteria7('${row.id}', '${level}')"
+                                                                class="btn-kid px-3 py-2 rounded-2xl border-2 font-black text-base ${
+                                                                    selected
+                                                                        ? 'bg-emerald-600 text-white border-emerald-800 scale-105'
+                                                                        : 'bg-slate-50 hover:bg-sky-50 text-slate-700 border-slate-300'
+                                                                }">
+                                                                ${selected ? '✓ ' : ''}${emojis[idx].split(' ')[0]}
+                                                            </button>
+                                                        </td>
+                                                    `;
+                                                }).join('')}
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allRated) {
+                showFeedback(true, 'Tuyệt vời! Em đã hoàn thành Phiếu đánh giá sản phẩm theo đúng 4 tiêu chí ở trang 37 SGK!');
+            }
+        }
+
+        function rateCriteria7(id, level) {
+            state.evalCriteria[id] = level;
+            playSound('pop');
+            if (Object.values(state.evalCriteria).every(v => v !== null)) {
+                playSound('correct');
+                rewardStar('eval_sheet_7', 1);
+            }
+            renderApp();
+        }
+
+        // Bước 2/3: Xưởng sáng tạo mô hình xe điện em thích (Hình 8 – Trang 37)
+        const CAR_STYLES = {
+            racer: {
+                name: 'Xe đua thể thao Tia Chớp Đỏ',
+                shellColor: '#ef4444',
+                stripeColor: '#fef08a',
+                desc: 'Lắp thêm mui xe khí động học màu đỏ sọc vàng và cờ đuôi nheo giống chiếc xe tiền cảnh trong Hình 8!'
+            },
+            truck: {
+                name: 'Xe tải chở hàng Xanh Dương',
+                shellColor: '#2563eb',
+                stripeColor: '#bae6fd',
+                desc: 'Lắp thêm thùng chở hàng phía sau và buồng lái vuông vắn giúp xe chở được đồ chơi nhỏ.'
+            },
+            bus: {
+                name: 'Xe buýt học sinh Vàng Tươi',
+                shellColor: '#f59e0b',
+                stripeColor: '#ffffff',
+                desc: 'Lắp thêm thân xe buýt nhiều ô cửa sổ vui nhộn để cùng bạn bè thi tài trên đường đua!'
+            }
+        };
+
+        function renderStep4_2(container) {
+            const styleObj = CAR_STYLES[state.customCarStyle];
+            const running = state.customCarRunning;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Đường đua thử nghiệm Hình 8 (Bánh xe gắn chuẩn trên trục, không bị bay lệch) -->
+                    <div class="lg:col-span-7 bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-100 border-4 border-purple-400 rounded-3xl p-4 flex flex-col items-center">
+                        <div class="flex items-center justify-between w-full px-2 mb-1">
+                            <span class="tv-badge bg-purple-700 text-white px-4 py-1 rounded-full">Hình 8 (Trang 37) – Thiết kế mô hình xe điện em thích</span>
+                            <span class="tv-badge ${running ? 'bg-emerald-600 text-white' : 'bg-white text-slate-800'} px-3 py-1 rounded-full border">
+                                ${running ? '🏁 Công tắc: ĐÓNG (Đang vận hành)' : 'Công tắc: MỞ'}
+                            </span>
+                        </div>
+
+                        ${renderSgkCropOrSVG(4, { x: 28, y: 60, w: 62, h: 33 }, `
+                            <svg viewBox="0 0 440 230" class="w-full max-w-[440px] h-auto">
+                                <!-- Cờ trang trí đường đua giống Hình 8 -->
+                                <polygon points="45,185 45,140 78,152 45,164" fill="#ec4899"/>
+                                <line x1="45" y1="140" x2="45" y2="195" stroke="#475569" stroke-width="3"/>
+                                <polygon points="370,185 370,140 403,152 370,164" fill="#eab308"/>
+                                <line x1="370" y1="140" x2="370" y2="195" stroke="#475569" stroke-width="3"/>
+                                <!-- Mặt đường đất vàng Hình 8 -->
+                                <rect x="10" y="190" width="420" height="28" rx="8" fill="#fde68a" stroke="#d97706" stroke-width="2"/>
+
+                                <g>
+                                    <!-- Cờ đua cắm trên xe -->
+                                    <line x1="120" y1="58" x2="120" y2="14" stroke="#334155" stroke-width="4"/>
+                                    <polygon points="120,14 168,26 120,38" fill="${state.customFlagColor}"/>
+
+                                    <!-- Thân vỏ trang trí lắp thêm lên khung xe (Hình 8 trang 37) -->
+                                    <polygon points="65,62 345,44 362,76 82,96" fill="${styleObj.shellColor}" stroke="#0f172a" stroke-width="3"/>
+                                    <line x1="78" y1="76" x2="352" y2="58" stroke="${styleObj.stripeColor}" stroke-width="8" stroke-dasharray="14 8"/>
+
+                                    <!-- Khung gầm, thanh chữ U, thanh 3 lỗ & hệ truyền động bên dưới -->
+                                    <rect x="108" y="92" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                                    <rect x="302" y="78" width="16" height="62" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                                    <rect x="195" y="95" width="52" height="34" rx="4" fill="#dc2626"/>
+                                    <circle cx="162" cy="148" r="22" fill="#dc2626" stroke="#7f1d1d" stroke-width="3"/>
+                                    <line x1="162" y1="126" x2="235" y2="108" stroke="#eab308" stroke-width="4"/>
+
+                                    <!-- Bánh xe trước & sau cố định chuẩn trên trục -->
+                                    ${drawKitWheel(116, 158, 34)}
+                                    ${drawKitWheel(310, 144, 34)}
+                                </g>
+                            </svg>
+                        `)}
+                        <div class="tv-card-title text-purple-950 mt-1">${styleObj.name}</div>
+                        <p class="tv-body text-slate-700 text-center">${styleObj.desc}</p>
+                    </div>
+
+                    <!-- Cột phải: Bảng điều khiển thiết kế & lắp thêm chi tiết -->
+                    <div class="lg:col-span-5 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="tv-badge uppercase text-purple-800">🎨 1. Chọn kiểu thân xe lắp thêm:</div>
+                        <div class="flex flex-col gap-2.5">
+                            ${Object.keys(CAR_STYLES).map(key => `
+                                <button onclick="changeCarStyle7('${key}')"
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.customCarStyle === key
+                                            ? 'bg-purple-600 text-white border-purple-800'
+                                            : 'bg-slate-50 hover:bg-purple-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${state.customCarStyle === key ? '✓ ' : ''}🚗 ${CAR_STYLES[key].name}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <div class="tv-badge uppercase text-purple-800 mt-1">🚩 2. Chọn màu cờ trang trí trên xe:</div>
+                        <div class="flex items-center gap-3">
+                            ${[
+                                { c: '#ef4444', name: 'Cờ Đỏ' },
+                                { c: '#eab308', name: 'Cờ Vàng' },
+                                { c: '#10b981', name: 'Cờ Xanh lá' },
+                                { c: '#ec4899', name: 'Cờ Hồng' }
+                            ].map(f => `
+                                <button onclick="changeFlagColor7('${f.c}')"
+                                    class="btn-kid flex-1 py-2.5 rounded-xl font-black text-white border-2 border-slate-900/20"
+                                    style="background:${f.c}">
+                                    ${f.name}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <button onclick="toggleCustomRace7()"
+                            class="btn-kid mt-2 py-4 px-6 rounded-2xl font-black text-xl text-white ${
+                                running ? 'bg-rose-600 hover:bg-rose-700' : 'bg-gradient-to-r from-emerald-600 to-teal-700'
+                            }">
+                            ${running ? '⏹️ Mở công tắc (Dừng xe)' : '⚡ Đóng công tắc – Chạy thử cùng bạn!'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (running) {
+                showFeedback(true, 'Tuyệt vời! Chiếc xe điện sáng tạo của em đang lăn bánh băng băng trên đường đua giống như Hình 8 trang 37!');
+            }
+        }
+
+        function changeCarStyle7(styleKey) {
+            playSound('wrench');
+            state.customCarStyle = styleKey;
+            rewardStar('custom_style_7', 1);
+            renderApp();
+        }
+
+        function changeFlagColor7(color) {
+            playSound('pop');
+            state.customFlagColor = color;
+            renderApp();
+        }
+
+        function toggleCustomRace7() {
+            state.customCarRunning = !state.customCarRunning;
+            if (state.customCarRunning) {
+                playSound('motor');
+                rewardStar('custom_race_7', 1);
+            } else {
+                playSound('click');
+            }
+            renderApp();
+        }
+
+        // Bước 3/3: Tổng kết bài học & Trao Huy hiệu (Trang 37)
+        function renderStep4_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-sky-100 via-emerald-50 to-amber-100 border-4 border-sky-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl sm:text-6xl">🏆🚗⚡</div>
+                            <div>
+                                <div class="tv-badge uppercase text-sky-900">Hoàn thành xuất sắc Bài 7: Lắp ráp mô hình xe điện chạy bằng pin</div>
+                                <h2 class="tv-title text-slate-900">
+                                    Huy Hiệu: Kĩ Sư Nhí Lắp Ráp Xe Điện Tài Ba!
+                                </h2>
+                                <p class="tv-body text-slate-800 mt-1">
+                                    Tổng số Sao lớp mình đạt được: <span class="text-amber-600 font-black text-3xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="celebrateFinishLesson7()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-5 py-3 rounded-2xl text-lg">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-sky-50 text-sky-950 border-3 border-sky-400 font-black px-5 py-3 rounded-2xl text-lg">
+                                🔄 Học lại từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng kết kiến thức cốt lõi Bài 7 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-sky-50 border-4 border-sky-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-sky-950 mb-2">🔩 1. Cấu tạo & Chi tiết mô hình xe điện:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>4 bộ phận chính:</b> Khung xe; Trục và bánh xe; Động cơ và hệ truyền động; Nguồn điện.</li>
+                                <li><b>Chi tiết ghép nối:</b> 8 vít ngắn (lắp khung), 2 vít dài (lắp tấm 2 lỗ giữ động cơ), 10 đai ốc, 10 vòng hãm, băng dính 2 mặt.</li>
+                                <li><b>Yêu cầu sản phẩm:</b> Đúng và đủ chi tiết; đúng hình dạng, gọn gàng; mối ghép chắc chắn; xe chạy được khi đóng công tắc.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-50 border-4 border-emerald-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-emerald-950 mb-2">⚙️ 2. Quy trình 4 bước lắp ráp & Lưu ý an toàn:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Bước 1:</b> Lắp khung xe (Hình 2).</li>
+                                <li><b>Bước 2:</b> Lắp động cơ và giá pin vào khung xe (Hình 3, 4). <i>Lưu ý: Dây đỏ nối cực dương (+), dây đen nối cực âm (–).</i></li>
+                                <li><b>Bước 3:</b> Lắp hệ truyền động vào trục và bánh xe (Hình 5).</li>
+                                <li><b>Bước 4:</b> Kiểm tra hoạt động (Hình 6). <i>Lưu ý: Mở công tắc khi lắp pin đúng cực, đóng công tắc để chạy thử.</i></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showFeedback(true, 'Chúc mừng các em đã nắm vững toàn bộ kiến thức và quy trình thực hành Bài 7: Lắp ráp mô hình xe điện chạy bằng pin!');
+        }
+
+        function celebrateFinishLesson7() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng các Kĩ sư nhí đã hoàn thành xuất sắc Bài 7: Lắp ráp mô hình xe điện chạy bằng pin!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson7();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-4 py-1.5 rounded-xl font-black text-base sm:text-lg transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-700 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại (Chữ cực to rõ cho Tivi)
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-0.5 rounded-xl tv-badge uppercase border-2 ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="tv-title text-slate-900 mt-1">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="tv-subtitle text-slate-700 mt-0.5">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-4 rounded-full transition-all ${
+                            active ? 'w-10 bg-sky-600' : 'w-4 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

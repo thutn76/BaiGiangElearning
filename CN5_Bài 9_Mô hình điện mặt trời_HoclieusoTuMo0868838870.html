@@ -1,0 +1,2970 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 9: Mô Hình Điện Mặt Trời - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Quicksand:wght@700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #fefce8 0%, #e0f2fe 55%, #f0fdf4 100%);
+            color: #0f172a;
+        }
+        /* Hệ thống cỡ chữ tối ưu trình chiếu Tivi lớp học để học sinh bàn cuối nhìn rõ */
+        body.tv-normal {
+            --title-size: clamp(1.42rem, 2.15vw, 2.02rem);
+            --subtitle-size: clamp(1.04rem, 1.38vw, 1.3rem);
+            --card-title: clamp(1.18rem, 1.65vw, 1.55rem);
+            --body-size: clamp(1.06rem, 1.45vw, 1.38rem);
+            --option-size: clamp(1.08rem, 1.5vw, 1.4rem);
+            --badge-size: clamp(0.9rem, 1.1vw, 1.06rem);
+        }
+        body.tv-large {
+            --title-size: clamp(1.6rem, 2.4vw, 2.28rem);
+            --subtitle-size: clamp(1.14rem, 1.56vw, 1.46rem);
+            --card-title: clamp(1.3rem, 1.85vw, 1.75rem);
+            --body-size: clamp(1.18rem, 1.62vw, 1.54rem);
+            --option-size: clamp(1.2rem, 1.66vw, 1.58rem);
+            --badge-size: clamp(0.96rem, 1.2vw, 1.16rem);
+        }
+        body.tv-xlarge {
+            --title-size: clamp(1.76rem, 2.68vw, 2.52rem);
+            --subtitle-size: clamp(1.24rem, 1.72vw, 1.6rem);
+            --card-title: clamp(1.42rem, 2.05vw, 1.92rem);
+            --body-size: clamp(1.28rem, 1.8vw, 1.68rem);
+            --option-size: clamp(1.3rem, 1.85vw, 1.72rem);
+            --badge-size: clamp(1.04rem, 1.28vw, 1.24rem);
+        }
+        .tv-title { font-size: var(--title-size); line-height: 1.22; font-weight: 900; }
+        .tv-subtitle { font-size: var(--subtitle-size); line-height: 1.34; font-weight: 800; }
+        .tv-card-title { font-size: var(--card-title); line-height: 1.28; font-weight: 900; }
+        .tv-body { font-size: var(--body-size); line-height: 1.38; font-weight: 800; }
+        .tv-option { font-size: var(--option-size); line-height: 1.35; font-weight: 800; }
+        .tv-badge { font-size: var(--badge-size); line-height: 1.2; font-weight: 900; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(15, 23, 42, 0.22);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.1), 0 8px 14px -6px rgba(15, 23, 42, 0.06);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.98) translateY(4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="tv-large flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- MODAL NẠP ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN CHO GIÁO VIÊN) -->
+    <div id="sgk-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-4 border-amber-500 rounded-3xl max-w-4xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto custom-scroll">
+            <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📷</span>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900">Nạp ảnh trang sách giáo khoa gốc (Trang 44 – 50)</h3>
+                        <p class="text-base font-bold text-slate-600">Ứng dụng đã vẽ sẵn đầy đủ hình kĩ thuật chuẩn SGK. Nếu muốn hiển thị trực tiếp ảnh chụp trang sách, thầy/cô có thể chọn 4 ảnh dưới đây:</p>
+                    </div>
+                </div>
+                <button onclick="closeSgkModal()" class="btn-kid bg-rose-100 hover:bg-rose-200 text-rose-900 font-black px-4 py-2 rounded-2xl text-lg">✕ Đóng</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 1. Ảnh Trang 44 (Tình huống & Hình 1)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(1, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-1" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 2. Ảnh Trang 45–46 (Hình 2, Hình 3 & Bảng STT 1–3)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(2, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-2" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 3. Ảnh Trang 47–48 (Bảng STT 4–13, Hình 4, Hình 5)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(3, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-3" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 4. Ảnh Trang 49–50 (Hình 6, Bước 4, Phiếu đánh giá & Hình 7)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(4, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-4" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5">
+                <span class="text-base font-extrabold text-amber-950">💡 Mẹo: Bạn có thể chọn cả 4 file ảnh cùng lúc ở nút bên phải:</span>
+                <label class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl cursor-pointer">
+                    📂 Chọn nhanh 4 ảnh
+                    <input type="file" accept="image/*" multiple onchange="loadMultipleSgkPages(this)" class="hidden"/>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-amber-300 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-xs font-black uppercase tracking-wider leading-none">Bài</span>
+                <span class="text-2xl sm:text-3xl font-black leading-none">9</span>
+            </div>
+            <div>
+                <div class="text-xs sm:text-sm font-black text-sky-700 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-lg sm:text-2xl xl:text-3xl font-black text-slate-900 tracking-tight leading-tight">Mô hình điện mặt trời</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn -->
+        <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-300" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Ảnh SGK, Chỉnh cỡ chữ Tivi, Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Nút nạp ảnh SGK gốc -->
+            <button onclick="openSgkModal()" title="Nạp ảnh chụp trang sách giáo khoa gốc"
+                class="btn-kid flex items-center gap-1.5 bg-sky-100 hover:bg-sky-200 border-2 border-sky-400 text-sky-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>📷 Ảnh SGK</span>
+            </button>
+
+            <!-- Nút chỉnh cỡ chữ Tivi cho học sinh bàn cuối -->
+            <button onclick="cycleFontSize()" title="Thay đổi cỡ chữ cho màn hình Tivi"
+                class="btn-kid flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-400 text-violet-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>🔍 Cỡ chữ:</span>
+                <span id="font-size-label" class="bg-violet-600 text-white px-2 py-0.5 rounded-lg">To (TV)</span>
+            </button>
+
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-7 h-7 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-xl sm:text-2xl font-black text-amber-900">0</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden md:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-600 hover:bg-sky-700 text-white p-2.5 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="xl:hidden bg-white/90 border-b-2 border-amber-200 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - RỘNG RÃI, CHỮ TO RÕ CHO TIVI) -->
+    <main class="flex-1 w-full max-w-[1620px] mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-amber-300 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3 bg-gradient-to-r from-amber-100/90 via-sky-50 to-emerald-100/80 border-b-2 border-amber-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-4 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-amber-300 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-800 font-black px-5 sm:px-7 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-sm sm:text-base font-black text-slate-700">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-black px-6 sm:px-9 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI 9: MÔ HÌNH ĐIỆN MẶT TRỜI -->
+    <script>
+        /**************************************************************
+         * 1. CHẾ ĐỘ CỠ CHỮ TIVI & HỆ THỐNG ÂM THANH KĨ THUẬT SINH ĐỘNG
+         **************************************************************/
+        const fontModes = [
+            { cls: 'tv-normal', label: 'Chuẩn TV' },
+            { cls: 'tv-large', label: 'To (TV)' },
+            { cls: 'tv-xlarge', label: 'Siêu to' }
+        ];
+        let currentFontModeIdx = 1; // Mặc định chọn "To (TV)" cho học sinh bàn cuối nhìn rõ
+
+        function cycleFontSize() {
+            playSound('click');
+            document.body.classList.remove(fontModes[currentFontModeIdx].cls);
+            currentFontModeIdx = (currentFontModeIdx + 1) % fontModes.length;
+            document.body.classList.add(fontModes[currentFontModeIdx].cls);
+            document.getElementById('font-size-label').textContent = fontModes[currentFontModeIdx].label;
+        }
+
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(580, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.065);
+                    gain.gain.setValueAtTime(0.16, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(460, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'wrench') {
+                    // Tiếng vặn ốc vít / cờ-lê lách cách cơ khí
+                    [620, 780, 960].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.055);
+                        gain.gain.setValueAtTime(0.12, now + i * 0.055);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.05);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.055);
+                        osc.stop(now + i * 0.055 + 0.055);
+                    });
+                } else if (type === 'sun_low' || type === 'sun_high') {
+                    // Tiếng tia nắng chiếu vào tấm pin mặt trời tích tụ năng lượng điện
+                    const isBright = type === 'sun_high';
+                    const freqs = isBright ? [440, 554.37, 659.25, 880] : [330, 440, 523.25];
+                    freqs.forEach((f, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(f, now + idx * 0.08);
+                        gain.gain.setValueAtTime(isBright ? 0.2 : 0.12, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.26);
+                    });
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.24, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.26);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 230];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.13, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.04;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 1B. HỆ THỐNG NẠP & CẮT ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN)
+         **************************************************************/
+        const sgkPages = { 1: null, 2: null, 3: null, 4: null };
+
+        function openSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function loadSgkPage(pageIndex, inputEl) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                sgkPages[pageIndex] = evt.target.result;
+                const st = document.getElementById('status-page-' + pageIndex);
+                if (st) {
+                    st.textContent = '✓ Đã nạp ảnh gốc từ máy (' + file.name + ')';
+                    st.className = 'text-sm font-black text-sky-700';
+                }
+                playSound('correct');
+                renderApp();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadMultipleSgkPages(inputEl) {
+            if (!inputEl.files || !inputEl.files.length) return;
+            const files = Array.from(inputEl.files).slice(0, 4);
+            files.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const pIdx = idx + 1;
+                    sgkPages[pIdx] = evt.target.result;
+                    const st = document.getElementById('status-page-' + pIdx);
+                    if (st) {
+                        st.textContent = '✓ Đã nạp ảnh gốc (' + file.name + ')';
+                        st.className = 'text-sm font-black text-sky-700';
+                    }
+                    if (idx === files.length - 1) {
+                        playSound('correct');
+                        renderApp();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderSgkCropOrSVG(pageNo, cropBox, fallbackSvgHtml, captionText = '') {
+            const pageUrl = sgkPages[pageNo];
+            if (pageUrl && cropBox) {
+                const bgWidth = (100 / cropBox.w) * 100;
+                const bgPosX = cropBox.w >= 100 ? 0 : (cropBox.x / (100 - cropBox.w)) * 100;
+                const bgPosY = cropBox.h >= 100 ? 0 : (cropBox.y / (100 - cropBox.h)) * 100;
+                const aspect = (cropBox.w / cropBox.h).toFixed(2);
+                return `
+                    <div class="w-full flex flex-col items-center">
+                        <div class="w-full max-w-[500px] rounded-2xl border-2 border-slate-300 shadow-inner bg-white overflow-hidden"
+                             style="aspect-ratio: ${aspect}; background-image: url('${pageUrl}'); background-size: ${bgWidth}% auto; background-position: ${bgPosX}% ${bgPosY}%; background-repeat: no-repeat;">
+                        </div>
+                        ${captionText ? `<div class="text-sm font-black text-slate-600 mt-1">${captionText}</div>` : ''}
+                    </div>
+                `;
+            }
+            return fallbackSvgHtml;
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f59e0b', '#10b981', '#0284c7', '#ef4444', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 320,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 11 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG (21 BƯỚC TÁCH NHỎ)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động (3 bước)
+            goalsUnlocked: [false, false, false, false, false, false], // 4 mục tiêu + 2 nhóm yêu cầu sản phẩm
+            introDialogSolved: false,
+            solarAppExploreDone: false,
+
+            // Chặng 2: Khám phá (9 bước tách biệt)
+            fillBlanks: { b1: null, b2: null, b3: null }, // (1) ánh sáng, (2) năng lượng, (3) điện
+            selectedWord: null,
+            compareWindDone: false,
+            samplePartsMatched: { a: null, b: null, c: null, d: null }, // a: Khung giá đỡ, b: Tấm pin mặt trời, c: Đèn LED, d: Dây dẫn điện
+            selectedPartDesc: 'a',
+            tableGroup1Done: false,
+            tableGroup2Done: false,
+            step1StandBuilt: false,
+            step2RedWireDone: false,
+            step2BlackWireDone: false,
+            step2TapeDone: false,
+            step3PanelMounted: false,
+            step3LedMounted: false,
+            step4LightLevel: 0, // 0: Không có ánh sáng, 1: Ít ánh sáng, 2: Nhiều ánh sáng
+            step4Recorded: { l0: false, l1: false, l2: false },
+
+            // Chặng 3: Luyện tập (6 câu hỏi trắc nghiệm có phương án nhiễu hợp lí)
+            prac1Done: false,
+            prac2Done: false,
+            prac3Done: false,
+            prac4Done: false,
+            prac5Done: false,
+            prac6Done: false,
+
+            // Chặng 4: Vận dụng (3 bước)
+            evalCriteria: { c1: null, c2: null, c3: null, c4: null, c5: null, c6: null },
+            upgradeOption: 'solar_car', // 'solar_car', 'solar_house', 'solar_street'
+            upgradeTested: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-900 border-amber-400',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học & Yêu cầu sản phẩm (Trang 44 – 45)',
+                        subtitle: 'Bấm vào từng thẻ dưới đây để mở khóa 4 mục tiêu bài học và các yêu cầu sản phẩm!',
+                        voiceText: 'Chào mừng các em đến với Bài 9: Mô hình điện mặt trời. Học xong bài này, em sẽ: Một, mô tả được cách tạo ra điện từ ánh sáng mặt trời. Hai, nhận biết và mô tả được các bộ phận chính của mô hình điện dùng năng lượng mặt trời. Ba, lắp ráp được mô hình điện mặt trời. Bốn, kiểm tra được hoạt động của mô hình với những độ sáng mặt trời khác nhau.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Tình huống khởi động: Chia sẻ cách lắp ráp mô hình điện mặt trời (Trang 44)',
+                        subtitle: 'Cùng lắng nghe cuộc trò chuyện của hai bạn nhỏ bên bức tranh mô hình điện mặt trời!',
+                        voiceText: 'Bạn nữ nói: Mình biết cách lắp ráp mô hình điện mặt trời từ bộ lắp ghép mô hình kĩ thuật. Bạn nam hào hứng nói: Chia sẻ cho mình cách lắp ráp với nhé. Em hãy quan sát bức tranh mô hình và trả lời câu hỏi nhé!',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Tìm hiểu “Điện năng lượng mặt trời” trong cuộc sống (Hình 2 – Trang 45)',
+                        subtitle: 'Khám phá lợi ích và những lưu ý quan trọng khi sử dụng các tấm pin mặt trời.',
+                        voiceText: 'Điện năng lượng mặt trời đang được xếp vào nguồn năng lượng tái tạo sạch, cần được khuyến khích phát triển. Quá trình sử dụng pin mặt trời tạo ra điện từ năng lượng ánh sáng mặt trời không gây ô nhiễm. Tuy nhiên, các tấm pin mặt trời có thể được làm từ các chất độc hại nên cần được quản lí chặt chẽ và đúng cách.',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-600 to-blue-700',
+                badgeBg: 'bg-sky-100 text-sky-900 border-sky-400',
+                steps: [
+                    {
+                        title: '1. Điện được tạo ra từ pin mặt trời (Hình 1 – Trang 44)',
+                        subtitle: 'Quan sát Hình 1 và sắp xếp 3 từ (năng lượng, điện, ánh sáng) vào chỗ trống (1), (2), (3).',
+                        voiceText: 'Mục 1: Điện được tạo ra từ pin mặt trời. Quan sát Hình 1, đọc thông tin và sắp xếp các từ năng lượng, điện, ánh sáng vào chỗ trống thích hợp để mô tả cách tạo ra điện từ ánh sáng mặt trời.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '1. So sánh cách tạo ra điện từ ánh sáng mặt trời với cách tạo ra điện từ gió (Trang 44)',
+                        subtitle: 'Hãy cho biết sự khác nhau giữa cách tạo ra điện từ ánh sáng mặt trời với cách tạo ra điện từ gió.',
+                        voiceText: 'Hãy cho biết sự khác nhau giữa cách tạo ra điện từ ánh sáng mặt trời với cách tạo ra điện từ gió. Ghi nhớ: Pin mặt trời được dùng để biến đổi năng lượng ánh sáng mặt trời thành năng lượng điện.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '2a. Tìm hiểu sản phẩm mẫu – Các bộ phận chính (Hình 3 – Trang 45, 46)',
+                        subtitle: 'Quan sát Hình 3 và ghép mỗi mô tả (a, b, c, d) với đúng bộ phận của mô hình điện mặt trời.',
+                        voiceText: 'Mục 2a: Tìm hiểu sản phẩm mẫu. Mô hình điện mặt trời gồm có các bộ phận chính như: tấm pin mặt trời, khung giá đỡ, dây dẫn điện và thiết bị tiêu thụ năng lượng điện. Em hãy ghép mỗi mô tả a, b, c, d ở trang 46 với tên bộ phận phù hợp.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 6 – Trang 46, 47)',
+                        subtitle: 'Quan sát tên gọi, hình minh họa và số lượng của 6 chi tiết đầu tiên rồi trả lời câu hỏi.',
+                        voiceText: 'Mục 2b: Bảng chi tiết, vật liệu và dụng cụ. Nhóm 1 gồm: 1 tấm lớn, 4 thanh chữ U dài, 1 thanh chữ U ngắn, 4 thanh chữ L dài, 1 tấm pin mặt trời và dây dẫn điện, và 1 đèn LED.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 7 đến 13 – Trang 47)',
+                        subtitle: 'Quan sát các chi tiết ghép nối và dụng cụ (STT 7 đến 13) và kiểm tra số lượng ốc vít.',
+                        voiceText: 'Nhóm 2 gồm: 9 đai ốc, 9 vít ngắn, 1 tua-vít, 1 cờ-lê, 1 cuộn băng dính 2 mặt, 1 cuộn băng dính điện, và 1 chiếc kéo.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 1 – Lắp khung giá đỡ (Hình 4 – Trang 48)',
+                        subtitle: 'Dùng 4 thanh chữ U dài, 4 thanh chữ L dài và 1 thanh chữ U ngắn lắp vào tấm lớn để tạo thành khung giá đỡ.',
+                        voiceText: 'Mục 2c: Thực hành. Bước 1: Lắp khung giá đỡ. Dùng bốn thanh chữ U dài, bốn thanh chữ L dài và một thanh chữ U ngắn lắp vào tấm lớn để tạo thành khung giá đỡ như Hình 4. Lưu ý: Sử dụng dụng cụ lắp ghép an toàn, các mối ghép chắc chắn.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 2 – Lắp đèn LED với dây dẫn điện (Hình 5 – Trang 48)',
+                        subtitle: 'Nối đúng chân dài, chân ngắn của đèn LED với dây dẫn điện của tấm pin mặt trời và cố định bằng băng dính điện.',
+                        voiceText: 'Bước 2: Lắp đèn LED với dây dẫn điện và dùng băng dính điện để cố định đèn LED với đầu dây dẫn điện như Hình 5. Lưu ý: Dây dẫn điện màu đỏ nối với chân dài của đèn LED, dây dẫn điện màu đen nối với chân ngắn của đèn LED.',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 3 – Gắn tấm pin mặt trời và đèn LED vào khung giá đỡ (Hình 6 – Trang 49)',
+                        subtitle: 'Gắn cố định tấm pin mặt trời lên 4 thanh chữ L dài và dùng băng dính 2 mặt để gắn đèn LED lên khung giá đỡ.',
+                        voiceText: 'Bước 3: Gắn tấm pin mặt trời và đèn LED vào khung giá đỡ. Gắn cố định tấm pin mặt trời lên khung giá đỡ và dùng băng dính 2 mặt để gắn đèn LED lên khung giá đỡ như Hình 6.',
+                        render: renderStep2_8
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 4 – Kiểm tra hoạt động của mô hình với các độ sáng khác nhau (Trang 49)',
+                        subtitle: 'Thử nghiệm 3 điều kiện ánh sáng chiếu vào pin mặt trời (Không có ánh sáng, Ít ánh sáng, Nhiều ánh sáng) và ghi chép!',
+                        voiceText: 'Bước 4: Kiểm tra hoạt động của mô hình. Quan sát các trạng thái của đèn LED tương ứng với sự thay đổi của ánh sáng chiếu tới tấm pin mặt trời: Không có ánh sáng, Ít ánh sáng, Nhiều ánh sáng và ghi chép lại vào bảng.',
+                        render: renderStep2_9
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-600 to-teal-700',
+                badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+                steps: [
+                    {
+                        title: 'Câu hỏi 1/6 – Nguyên lí biến đổi năng lượng của Pin mặt trời',
+                        subtitle: 'Vận dụng kiến thức Mục 1 (Trang 44) và Mục 2a (Trang 45, 46).',
+                        voiceText: 'Câu hỏi 1: Trong mô hình điện mặt trời, khi có ánh sáng chiếu vào tấm pin mặt trời thì quá trình tạo ra điện và làm sáng đèn LED diễn ra như thế nào?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi 2/6 – Số lượng chi tiết trong Bảng chi tiết, vật liệu và dụng cụ',
+                        subtitle: 'Vận dụng Bảng chi tiết, vật liệu và dụng cụ (Trang 46 – 47 SGK).',
+                        voiceText: 'Câu hỏi 2: Để lắp ráp khung giá đỡ của mô hình điện mặt trời ở Bước 1 theo đúng bảng gợi ý trang 46 và 47, ngoài 1 tấm lớn thì em cần chuẩn bị số lượng các thanh và ốc vít như thế nào?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi 3/6 – So sánh điểm khác biệt giữa Khung giá đỡ Bài 9 và Bài 8',
+                        subtitle: 'Phân tích cấu tạo kĩ thuật của Khung giá đỡ trong Hình 4 (Trang 48 SGK).',
+                        voiceText: 'Câu hỏi 3: Vì sao ở Bước 1 của mô hình điện mặt trời lại cần dùng tới 4 thanh chữ U dài và 4 thanh chữ L dài lắp thành 4 trụ ở 4 góc?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi 4/6 – Quy tắc kĩ thuật khi nối đèn LED với dây dẫn điện',
+                        subtitle: 'Vận dụng lưu ý quan trọng ở Bước 2 (Hình 5 – Trang 48 SGK).',
+                        voiceText: 'Câu hỏi 4: Khi thực hiện Bước 2: Lắp đèn LED với dây dẫn điện của tấm pin mặt trời, thao tác nào dưới đây là ĐÚNG quy tắc kĩ thuật?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Câu hỏi 5/6 – Mối quan hệ giữa độ sáng chiếu vào tấm pin và trạng thái đèn LED',
+                        subtitle: 'Vận dụng kết quả thí nghiệm ở Bước 4 (Trang 49 SGK).',
+                        voiceText: 'Câu hỏi 5: Khi kiểm tra hoạt động của mô hình điện mặt trời với các điều kiện ánh sáng khác nhau ở Bước 4, nhận xét nào dưới đây là ĐÚNG?',
+                        render: renderStep3_5
+                    },
+                    {
+                        title: 'Câu hỏi 6/6 – Xử lí tình huống khi kiểm tra và điều chỉnh mô hình',
+                        subtitle: 'Vận dụng kiến thức Bước 4: Kiểm tra và điều chỉnh lại mô hình (Trang 49).',
+                        voiceText: 'Câu hỏi 6: Bạn Minh mang mô hình điện mặt trời ra chỗ có nắng gắt nhưng đèn LED vẫn không sáng. Sau khi kiểm tra dây đỏ đã nối đúng vào chân dài, dây đen vào chân ngắn, nguyên nhân hợp lí nhất cần điều chỉnh là gì?',
+                        render: renderStep3_6
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-600 to-indigo-700',
+                badgeBg: 'bg-purple-100 text-purple-900 border-purple-400',
+                steps: [
+                    {
+                        title: '2d. Giới thiệu, đánh giá và hoàn thiện sản phẩm (Trang 50)',
+                        subtitle: 'Cùng bạn đánh giá sản phẩm mô hình điện mặt trời theo 6 tiêu chí trong Phiếu đánh giá.',
+                        voiceText: 'Mục 2d: Giới thiệu, đánh giá và hoàn thiện sản phẩm. Em hãy cùng bạn đánh giá sản phẩm theo 6 tiêu chí trong Phiếu đánh giá sản phẩm ở trang 50.',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Xưởng sáng tạo: Cải tiến mô hình điện mặt trời (Hình 7 – Trang 50)',
+                        subtitle: 'Sử dụng các chi tiết trong bộ lắp ghép để cải tiến mô hình điện mặt trời theo ý tưởng sáng tạo của em!',
+                        voiceText: 'Em hãy sử dụng các chi tiết trong bộ lắp ghép mô hình kĩ thuật để cải tiến mô hình điện mặt trời đã lắp theo ý tưởng sáng tạo của em như Hình 7 trang 50.',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Tổng kết bài học & Trao Huy hiệu Kĩ Sư Năng Lượng Mặt Trời',
+                        subtitle: 'Cùng nhìn lại toàn bộ kiến thức Bài 9 và nhận huy hiệu khen thưởng!',
+                        voiceText: 'Chúc mừng các em đã hoàn thành xuất sắc Bài 9: Mô hình điện mặt trời! Các em đã hiểu rõ cách biến đổi năng lượng ánh sáng mặt trời thành năng lượng điện và nắm vững 4 bước lắp ráp, kiểm tra mô hình điện mặt trời.',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 4. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI (CHỮ TO RÕ)
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-950', 'bg-rose-100', 'border-rose-500', 'text-rose-950');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shrink-0">✓</span>
+                        <span class="tv-body text-emerald-950">${message}</span>
+                    </div>
+                    <span class="tv-badge bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full shrink-0 border-2 border-amber-500">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-black text-2xl shrink-0">!</span>
+                        <span class="tv-body text-rose-950">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 5. THƯ VIỆN HÌNH VẼ KĨ THUẬT CHÍNH XÁC 100% THEO SGK TRANG 44–50
+         *    (Cố định đúng vị trí chi tiết, tuyệt đối không lệch lạc)
+         **************************************************************/
+        // Vẽ Hình 1 (Trang 44): Mặt trời chiếu sáng vào Tấm pin mặt trời -> Điện
+        function getHinh1SolarPrincipleSVG() {
+            return `
+                <svg viewBox="0 0 320 230" class="w-full max-w-[310px] h-auto mx-auto">
+                    <defs>
+                        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#f97316"/>
+                            <stop offset="55%" stop-color="#facc15"/>
+                            <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
+                        </radialGradient>
+                        <linearGradient id="beamGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#fde047" stop-opacity="0.75"/>
+                            <stop offset="100%" stop-color="#fef9c3" stop-opacity="0.15"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Chùm tia nắng chiếu từ mặt trời xuống tấm pin -->
+                    <polygon points="78,56 202,94 134,175 55,82" fill="url(#beamGrad)"/>
+
+                    <!-- Ông mặt trời tỏa nắng -->
+                    <circle cx="68" cy="64" r="42" fill="url(#sunGlow)"/>
+                    <circle cx="68" cy="64" r="22" fill="#f59e0b" stroke="#fde047" stroke-width="3"/>
+
+                    <!-- Tấm pin mặt trời nghiêng có lưới ô trắng xanh như Hình 1 SGK -->
+                    <polygon points="165,92 204,96 176,174 132,168" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="2.5"/>
+                    <!-- Các đường chia ô pin mặt trời -->
+                    <line x1="178" y1="93" x2="146" y2="170" stroke="#93c5fd" stroke-width="1.5"/>
+                    <line x1="191" y1="95" x2="161" y2="172" stroke="#93c5fd" stroke-width="1.5"/>
+                    <line x1="160" y1="108" x2="198" y2="112" stroke="#93c5fd" stroke-width="1.5"/>
+                    <line x1="154" y1="123" x2="193" y2="128" stroke="#93c5fd" stroke-width="1.5"/>
+                    <line x1="148" y1="138" x2="187" y2="143" stroke="#93c5fd" stroke-width="1.5"/>
+                    <line x1="141" y1="153" x2="181" y2="158" stroke="#93c5fd" stroke-width="1.5"/>
+
+                    <!-- Chân giá đỡ sau lưng tấm pin -->
+                    <polygon points="204,96 206,162 176,174" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+
+                    <!-- Mũi tên đỏ chỉ ra Điện -->
+                    <line x1="208" y1="132" x2="246" y2="132" stroke="#dc2626" stroke-width="3"/>
+                    <polygon points="246,127 256,132 246,137" fill="#dc2626"/>
+                    <text x="278" y="137" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900" font-style="italic">Điện</text>
+
+                    <!-- Nhãn Pin mặt trời bên dưới -->
+                    <text x="168" y="198" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900" font-style="italic">Pin mặt trời</text>
+                </svg>
+            `;
+        }
+
+        // Vẽ Mô hình điện mặt trời hoàn chỉnh chuẩn xác theo Hình 3a & Hình 6 SGK:
+        // - Tấm lớn xanh lá nằm dưới làm đế
+        // - 4 thanh chữ U dài màu vàng dựng đứng làm 4 trụ (2 trụ trước, 2 trụ sau)
+        // - 4 thanh chữ L dài màu đỏ gắn trên đỉnh 4 trụ
+        // - Tấm pin mặt trời chữ nhật màu xanh đen có sọc dọc đặt nằm ngang trên 4 thanh chữ L dài đỏ
+        // - 1 thanh chữ U ngắn màu vàng dựng đứng bên phải đỡ bóng đèn LED đỏ quấn băng dính điện đen
+        function getSolarModelSVG(lightLevel = 0) {
+            // lightLevel: 0 = Không có ánh sáng, 1 = Ít ánh sáng, 2 = Nhiều ánh sáng
+            const ledFill = lightLevel === 2 ? '#ff1e1e' : (lightLevel === 1 ? '#f87171' : '#991b1b');
+            const ledStroke = lightLevel > 0 ? '#fef08a' : '#7f1d1d';
+
+            return `
+                <svg viewBox="0 0 390 265" class="w-full max-w-[375px] h-auto mx-auto">
+                    <!-- Bóng nền dưới đế -->
+                    <ellipse cx="195" cy="232" rx="148" ry="24" fill="${lightLevel === 2 ? '#fef08a' : '#f1f5f9'}" opacity="0.85"/>
+
+                    <!-- Hiệu ứng Mặt trời / Ánh sáng chiếu xuống tấm pin khi kiểm tra mô hình (Bước 4) -->
+                    ${lightLevel > 0 ? `
+                        <g>
+                            <!-- Chùm tia sáng chiếu xuống mặt tấm pin -->
+                            <polygon points="48,18 98,18 198,64 82,64" fill="#fde047" opacity="${lightLevel === 2 ? '0.45' : '0.2'}"/>
+                            <!-- Mặt trời -->
+                            <circle cx="52" cy="30" r="${lightLevel === 2 ? '24' : '16'}" fill="#facc15" stroke="#f59e0b" stroke-width="2.5"/>
+                            ${lightLevel === 2 ? `
+                                <line x1="52" y1="0" x2="52" y2="5" stroke="#f59e0b" stroke-width="3"/>
+                                <line x1="52" y1="55" x2="52" y2="60" stroke="#f59e0b" stroke-width="3"/>
+                                <line x1="22" y1="30" x2="27" y2="30" stroke="#f59e0b" stroke-width="3"/>
+                                <line x1="77" y1="30" x2="82" y2="30" stroke="#f59e0b" stroke-width="3"/>
+                            ` : ''}
+                            <text x="125" y="24" fill="#b45309" font-size="13" font-weight="900">
+                                ${lightLevel === 2 ? '☀️ NHIỀU ÁNH SÁNG' : '⛅ ÍT ÁNH SÁNG'}
+                            </text>
+                        </g>
+                    ` : `
+                        <g>
+                            <rect x="24" y="10" width="145" height="24" rx="12" fill="#334155"/>
+                            <text x="96" y="26" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-weight="900">🌑 KHÔNG CÓ ÁNH SÁNG</text>
+                        </g>
+                    `}
+
+                    <!-- Tấm lớn màu xanh lá cây nằm ngang làm đế (Hình 3a, 4b, 6) -->
+                    <polygon points="56,184 268,184 298,226 86,226" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="56,184 86,226 86,242 56,200" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                    <polygon points="86,226 298,226 298,242 86,242" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                    <!-- Lưới lỗ tròn trên mặt tấm lớn -->
+                    ${[0,1,2,3,4,5,6,7,8].map(c => [0,1,2].map(r => `
+                        <circle cx="${82 + c*21 + r*6}" cy="${194 + r*11}" r="2.6" fill="#064e3b"/>
+                    `).join('')).join('')}
+
+                    <!-- 2 Trụ sau: 2 Thanh chữ U dài màu vàng dựng đứng (hàng sau) -->
+                    <rect x="86" y="72" width="14" height="118" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    <rect x="164" y="72" width="14" height="118" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3,4].map(i => `
+                        <circle cx="93" cy="${88 + i*20}" r="2.5" fill="#713f12"/>
+                        <circle cx="171" cy="${88 + i*20}" r="2.5" fill="#713f12"/>
+                    `).join('')}
+
+                    <!-- Dây dẫn điện màu Đỏ & Đen đi từ mặt dưới tấm pin sang đèn LED như Hình 6 -->
+                    <path d="M110,82 C108,136 196,125 245,124" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M116,82 C122,144 202,132 245,127" fill="none" stroke="#1e293b" stroke-width="3"/>
+
+                    <!-- 2 Trụ trước: 2 Thanh chữ U dài màu vàng dựng đứng (hàng trước) -->
+                    <rect x="104" y="84" width="15" height="122" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="182" y="84" width="15" height="122" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2,3,4].map(i => `
+                        <circle cx="111.5" cy="${100 + i*20}" r="2.6" fill="#713f12"/>
+                        <circle cx="189.5" cy="${100 + i*20}" r="2.6" fill="#713f12"/>
+                    `).join('')}
+                    <!-- Đai ốc bắt chân trụ vào tấm lớn -->
+                    <circle cx="111.5" cy="202" r="4.2" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+                    <circle cx="189.5" cy="202" r="4.2" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+
+                    <!-- 4 Thanh chữ L dài màu đỏ gắn trên đỉnh 4 trụ vàng để đỡ tấm pin mặt trời (Hình 4b, 6) -->
+                    <path d="M78,62 L102,62 L102,82 L88,82 L88,70 L78,70 Z" fill="#dc2626" stroke="#991b1b" stroke-width="1.8"/>
+                    <path d="M158,62 L182,62 L182,82 L168,82 L168,70 L158,70 Z" fill="#dc2626" stroke="#991b1b" stroke-width="1.8"/>
+                    <path d="M96,74 L122,74 L122,96 L108,96 L108,82 L96,82 Z" fill="#ef4444" stroke="#991b1b" stroke-width="1.8"/>
+                    <path d="M174,74 L200,74 L200,96 L186,96 L186,82 L174,82 Z" fill="#ef4444" stroke="#991b1b" stroke-width="1.8"/>
+
+                    <!-- Tấm pin mặt trời chữ nhật màu xanh đen đặt trên 4 thanh chữ L dài đỏ (Hình 3a, 6) -->
+                    <polygon points="84,56 184,56 198,78 98,78" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+                    <!-- Các đường mạch quang điện dọc trên tấm pin mặt trời -->
+                    ${[0,1,2,3,4,5,6,7].map(i => `
+                        <line x1="${95 + i*12}" y1="58" x2="${109 + i*12}" y2="76" stroke="#38bdf8" stroke-width="1.2" opacity="0.75"/>
+                    `).join('')}
+
+                    <!-- Trụ đỡ đèn LED bên phải: 1 Thanh chữ U ngắn màu vàng dựng đứng (Hình 4b, 6) -->
+                    <rect x="252" y="128" width="15" height="76" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2].map(i => `<circle cx="259.5" cy="${144 + i*18}" r="2.6" fill="#713f12"/>`).join('')}
+                    <circle cx="259.5" cy="200" r="4.2" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+
+                    <!-- Băng dính điện màu đen quấn quanh chân đèn LED và gắn lên đỉnh trụ ngắn -->
+                    <rect x="242" y="120" width="26" height="9" rx="2" fill="#0f172a"/>
+
+                    <!-- Quầng sáng của Đèn LED tùy theo độ sáng chiếu vào tấm pin -->
+                    ${lightLevel === 1 ? `
+                        <circle cx="276" cy="124" r="16" fill="#fef08a" opacity="0.65"/>
+                    ` : ''}
+                    ${lightLevel === 2 ? `
+                        <circle cx="276" cy="124" r="28" fill="#fef08a" opacity="0.88"/>
+                        <circle cx="276" cy="124" r="18" fill="#fde047" opacity="0.95"/>
+                        <line x1="276" y1="90" x2="276" y2="100" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="276" y1="148" x2="276" y2="158" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="300" y1="124" x2="310" y2="124" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="294" y1="102" x2="302" y2="110" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="294" y1="146" x2="302" y2="138" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                    ` : ''}
+
+                    <!-- Bóng đèn LED màu đỏ quay sang phải giống Hình 6 SGK -->
+                    <path d="M268,119 L279,119 A5,5 0 0,1 279,129 L268,129 Z" fill="${ledFill}" stroke="${ledStroke}" stroke-width="2"/>
+                </svg>
+            `;
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC)
+         **************************************************************/
+        // Bước 1/3: Mở khóa 4 Mục tiêu bài học & Yêu cầu sản phẩm (Trang 44 – 45)
+        function renderStep1_1(container) {
+            const goals = [
+                {
+                    type: 'Mục tiêu 1',
+                    icon: '☀️',
+                    text: 'Mô tả được cách tạo ra điện từ ánh sáng mặt trời.',
+                    badgeColor: 'bg-amber-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 2',
+                    icon: '🔍',
+                    text: 'Nhận biết và mô tả được các bộ phận chính của mô hình điện dùng năng lượng mặt trời.',
+                    badgeColor: 'bg-amber-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 3',
+                    icon: '🛠️',
+                    text: 'Lắp ráp được mô hình điện mặt trời.',
+                    badgeColor: 'bg-amber-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 4',
+                    icon: '💡',
+                    text: 'Kiểm tra được hoạt động của mô hình với những độ sáng mặt trời khác nhau.',
+                    badgeColor: 'bg-amber-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm (1–3)',
+                    icon: '🔩',
+                    text: 'Đúng và đủ các bộ phận; đúng hình dạng; mối ghép chắc chắn.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm (4–6)',
+                    icon: '⚡',
+                    text: 'Dây dẫn điện gọn gàng; đèn LED phát sáng khi có ánh sáng chiếu vào tấm pin; độ sáng đèn LED thay đổi khi độ sáng chiếu vào tấm pin thay đổi.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                }
+            ];
+
+            const allUnlocked = state.goalsUnlocked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-amber-50 border-3 border-amber-300 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">🎯</span>
+                            <span class="tv-body text-amber-950">
+                                <b>Học xong bài này, em sẽ đạt 4 mục tiêu và các yêu cầu sản phẩm (Trang 44–45):</b> Bấm vào từng thẻ để mở khóa!
+                            </span>
+                        </div>
+                        <button onclick="unlockAllGoals9()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl text-base shrink-0">
+                            🔓 Mở nhanh tất cả
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        ${goals.map((g, idx) => {
+                            const unlocked = state.goalsUnlocked[idx];
+                            return `
+                                <button onclick="unlockGoal9(${idx})"
+                                    class="btn-kid text-left p-4 rounded-3xl border-4 flex items-center gap-4 transition-all ${
+                                        unlocked
+                                            ? 'bg-emerald-50 border-emerald-500 shadow-sm'
+                                            : 'bg-white hover:bg-amber-50 border-slate-300'
+                                    }">
+                                    <div class="w-14 h-14 rounded-2xl ${ unlocked ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700' } flex items-center justify-center text-3xl shrink-0 font-black">
+                                        ${unlocked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="tv-badge px-3 py-0.5 rounded-full ${g.badgeColor}">${g.type}</span>
+                                            <span class="tv-badge ${unlocked ? 'text-emerald-700' : 'text-amber-700'}">
+                                                ${unlocked ? 'Đã mở khóa ⭐' : '👆 Bấm để mở'}
+                                            </span>
+                                        </div>
+                                        <div class="tv-body text-slate-900">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allUnlocked) {
+                showFeedback(true, 'Tuyệt vời! Em đã nắm rõ 4 mục tiêu bài học và 6 yêu cầu sản phẩm của mô hình điện mặt trời!');
+            }
+        }
+
+        function unlockAllGoals9() {
+            state.goalsUnlocked = [true, true, true, true, true, true];
+            playSound('correct');
+            rewardStar('b9_goal_all', 2);
+            renderApp();
+        }
+
+        function unlockGoal9(idx) {
+            state.goalsUnlocked[idx] = true;
+            playSound('wrench');
+            rewardStar('b9_goal_' + idx, 1);
+            if (state.goalsUnlocked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Tình huống khởi động bên giá vẽ mô hình điện mặt trời (Trang 44)
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    text: 'A. Nhờ tấm pin mặt trời đặt ở phía trên khung giá đỡ hấp thụ ánh sáng mặt trời và biến đổi thành năng lượng điện truyền qua dây dẫn tới đèn LED.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Điểm đặc trưng của mô hình điện mặt trời là sử dụng tấm pin mặt trời để biến đổi năng lượng ánh sáng thành năng lượng điện.'
+                },
+                {
+                    text: 'B. Nhờ gắn một cánh quạt màu xanh dương quay trong gió để tạo ra điện làm sáng bóng đèn LED.',
+                    correct: false,
+                    explain: 'Chưa đúng! Đó là mô hình máy phát điện gió ở Bài 8, còn mô hình trên bảng vẽ trang 44 dùng tấm pin mặt trời phẳng màu đen.'
+                },
+                {
+                    text: 'C. Nhờ đốt than củi ở dưới tấm lớn màu xanh lá cây để đun nóng bóng đèn LED.',
+                    correct: false,
+                    explain: 'Chưa đúng! Mô hình điện mặt trời hoàn toàn không đốt nhiên liệu mà thu nhận ánh sáng chiếu vào tấm pin mặt trời.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Tranh tình huống khởi động trang 44 -->
+                    <div class="lg:col-span-6 bg-gradient-to-br from-amber-50 via-yellow-50 to-sky-50 border-4 border-amber-300 rounded-3xl p-4 flex flex-col gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-white border-3 border-sky-400 rounded-2xl p-3.5 shadow-sm">
+                                <div class="tv-badge text-sky-800 uppercase">👧🏻 Bạn nữ giới thiệu:</div>
+                                <p class="tv-body text-slate-900 mt-1">“Mình biết cách lắp ráp mô hình điện mặt trời từ bộ lắp ghép mô hình kĩ thuật.”</p>
+                            </div>
+                            <div class="bg-white border-3 border-amber-400 rounded-2xl p-3.5 shadow-sm">
+                                <div class="tv-badge text-amber-800 uppercase">👦🏻 Bạn nam hào hứng:</div>
+                                <p class="tv-body text-slate-900 mt-1">“Chia sẻ cho mình cách lắp ráp với nhé.”</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border-2 border-amber-200 p-2">
+                            ${renderSgkCropOrSVG(1, { x: 14, y: 31, w: 72, h: 21 }, getSolarModelSVG(2))}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Câu hỏi trả lời -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Quan sát bức tranh mô hình điện mặt trời của hai bạn (Trang 44), theo em bộ phận nào giúp mô hình này tạo ra điện?
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerIntro9(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.introDialogSolved && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.introDialogSolved) {
+                showFeedback(true, 'Chính xác! Tấm pin mặt trời hấp thụ ánh sáng và chuyển đổi thành năng lượng điện làm sáng đèn LED!');
+            }
+        }
+
+        function answerIntro9(isCorrect, explain) {
+            if (isCorrect) {
+                state.introDialogSolved = true;
+                playSound('sun_high');
+                rewardStar('intro_9', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Tìm hiểu “Điện năng lượng mặt trời” và ứng dụng trong cuộc sống (Hình 2 – Trang 45)
+        function renderStep1_3(container) {
+            const options = [
+                {
+                    text: 'A. Quá trình sử dụng pin mặt trời tạo ra điện không gây ô nhiễm, nhưng các tấm pin có thể làm từ chất độc hại nên cần quản lí chặt chẽ và chi phí lưu trữ điện còn rất cao.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Em đã nắm rất vững cả ưu điểm (tái tạo sạch, không gây ô nhiễm khi phát điện) và lưu ý về quản lí chất thải, chi phí lưu trữ ở trang 45 SGK.'
+                },
+                {
+                    text: 'B. Pin mặt trời khi hoạt động tạo ra rất nhiều khói bụi độc hại nhưng bù lại có thể tự phân hủy như lá cây.',
+                    correct: false,
+                    explain: 'Chưa đúng! Quá trình tạo ra điện của pin mặt trời không gây ô nhiễm khói bụi, nhưng tấm pin chứa chất độc hại cần quản lí chặt chẽ khi sản xuất, thay thế.'
+                },
+                {
+                    text: 'C. Pin mặt trời chỉ dùng được cho đồ chơi trẻ em, không thể cung cấp điện cho đèn đường hay vệ tinh nhân tạo.',
+                    correct: false,
+                    explain: 'Chưa đúng! Hình 2a và 2b trang 45 cho thấy pin mặt trời được ứng dụng cho cả đèn chiếu sáng ngoài trời và vệ tinh nhân tạo ngoài không gian.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-100/90 border-4 border-sky-400 rounded-3xl p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <div class="lg:col-span-8 flex flex-col gap-2">
+                            <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full w-fit">☀️ Thông tin khoa học (Trang 45 SGK)</span>
+                            <p class="tv-body text-slate-900 leading-relaxed">
+                                • <b>Ưu điểm:</b> “Điện năng lượng mặt trời” là nguồn năng lượng tái tạo sạch. Quá trình sử dụng pin mặt trời tạo ra điện từ ánh sáng mặt trời <b>không gây ô nhiễm</b>, được ứng dụng nhiều trong cuộc sống (Hình 2).<br>
+                                • <b>Lưu ý:</b> Các tấm pin mặt trời có thể được làm từ các <b>chất độc hại</b>, cần được quản lí chặt chẽ trong quá trình sản xuất, sử dụng và thay thế. Ngoài ra, <b>chi phí lưu trữ điện</b> từ năng lượng mặt trời cũng rất cao.
+                            </p>
+                        </div>
+                        <div class="lg:col-span-4 grid grid-cols-2 gap-2.5">
+                            <div class="bg-white rounded-2xl border-2 border-sky-300 p-3 text-center">
+                                <div class="text-4xl mb-1">☀️🏮</div>
+                                <div class="tv-badge text-sky-950">Hình 2a: Đèn năng lượng mặt trời</div>
+                            </div>
+                            <div class="bg-white rounded-2xl border-2 border-sky-300 p-3 text-center">
+                                <div class="text-4xl mb-1">🛰️🌌</div>
+                                <div class="tv-badge text-sky-950">Hình 2b: Pin mặt trời trên vệ tinh</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Theo thông tin ở trang 45 SGK, nhận xét nào dưới đây nêu ĐÚNG về điện năng lượng mặt trời?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerSolarApp9(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.solarAppExploreDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.solarAppExploreDone) {
+                showFeedback(true, 'Xuất sắc! Em đã hiểu rõ vai trò, ứng dụng và những lưu ý bảo vệ môi trường khi sử dụng pin mặt trời. Hãy sang Chặng 2: Khám phá nhé!');
+            }
+        }
+
+        function answerSolarApp9(isCorrect, explain) {
+            if (isCorrect) {
+                state.solarAppExploreDone = true;
+                playSound('correct');
+                rewardStar('solar_app_9', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 2: KHÁM PHÁ (9 BƯỚC TÁCH NHỎ TỪNG MỤC SGK)
+         **************************************************************/
+        // Bước 1/9: 1. Điện được tạo ra từ pin mặt trời (Hình 1 – Điền từ vào chỗ trống (1), (2), (3) Trang 44)
+        function renderStep2_1(container) {
+            const words = [
+                { id: 'năng lượng', label: 'năng lượng', color: 'bg-sky-200 border-sky-500 text-sky-950' },
+                { id: 'điện', label: 'điện', color: 'bg-amber-200 border-amber-500 text-amber-950' },
+                { id: 'ánh sáng', label: 'ánh sáng', color: 'bg-pink-200 border-pink-500 text-pink-950' }
+            ];
+
+            const b1 = state.fillBlanks.b1;
+            const b2 = state.fillBlanks.b2;
+            const b3 = state.fillBlanks.b3;
+            const isComplete = (b1 === 'ánh sáng' && b2 === 'năng lượng' && b3 === 'điện');
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Bài tập điền từ trang 44 -->
+                    <div class="lg:col-span-8 bg-white border-4 border-sky-400 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <span class="tv-body text-slate-800">
+                                👆 <b>Bước 1:</b> Bấm chọn 1 thẻ từ màu ở dưới $\rightarrow$ <b>Bước 2:</b> Bấm vào ô trống <b>(1)</b>, <b>(2)</b> hoặc <b>(3)</b>:
+                            </span>
+                            <button onclick="fillQuickStep2_1()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-3.5 py-1.5 rounded-xl text-base">
+                                ✨ Điền mẫu nhanh
+                            </button>
+                        </div>
+
+                        <!-- 3 Thẻ từ như SGK trang 44 -->
+                        <div class="flex items-center justify-center gap-4 flex-wrap my-1">
+                            ${words.map(w => {
+                                const isSelected = state.selectedWord === w.id;
+                                return `
+                                    <button onclick="selectWord9('${w.id}')"
+                                        class="btn-kid px-7 py-3 rounded-2xl border-3 tv-card-title ${w.color} ${
+                                            isSelected ? 'ring-4 ring-sky-500 scale-105' : ''
+                                        }">
+                                        ${isSelected ? '👉 ' : ''}${w.label}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Đoạn văn nền xanh nhạt giống hệt trang 44 SGK -->
+                        <div class="bg-sky-50 border-3 border-sky-400 rounded-3xl p-5 tv-card-title text-slate-900 leading-loose">
+                            <div class="font-black text-sky-950 mb-2">Cách tạo ra điện từ ánh sáng mặt trời:</div>
+                            <div>
+                                Pin mặt trời hấp thụ
+                                <button onclick="placeWordInBlank9('b1')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[175px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b1 === 'ánh sáng' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b1 ? b1 : '...(1)...'}
+                                </button>
+                                mặt trời
+                            </div>
+                            <div class="mt-2">
+                                và chuyển đổi
+                                <button onclick="placeWordInBlank9('b2')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[195px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b2 === 'năng lượng' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b2 ? b2 : '...(2)...'}
+                                </button>
+                                ánh sáng thành năng lượng
+                                <button onclick="placeWordInBlank9('b3')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[140px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b3 === 'điện' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b3 ? b3 : '...(3)...'}
+                                </button>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Hình 1 trang 44 -->
+                    <div class="lg:col-span-4 bg-slate-50 border-4 border-amber-300 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-amber-600 text-white px-4 py-1 rounded-full mb-2">Hình 1 (Trang 44)</span>
+                        ${renderSgkCropOrSVG(1, { x: 56, y: 60, w: 30, h: 19 }, getHinh1SolarPrincipleSVG())}
+                    </div>
+                </div>
+            `;
+
+            if (isComplete) {
+                rewardStar('step2_1_blanks9', 1);
+                showFeedback(true, 'Chính xác 100%! “Pin mặt trời hấp thụ ánh sáng mặt trời và chuyển đổi năng lượng ánh sáng thành năng lượng điện.”');
+            }
+        }
+
+        function selectWord9(wordId) {
+            playSound('pop');
+            state.selectedWord = wordId;
+            renderApp();
+        }
+
+        function placeWordInBlank9(blankKey) {
+            const expected = { b1: 'ánh sáng', b2: 'năng lượng', b3: 'điện' };
+            if (!state.selectedWord) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy bấm chọn 1 trong 3 thẻ từ (năng lượng, điện, ánh sáng) ở phía trên trước khi bấm vào ô trống nhé!');
+                return;
+            }
+            if (state.selectedWord === expected[blankKey]) {
+                state.fillBlanks[blankKey] = state.selectedWord;
+                state.selectedWord = null;
+                playSound('correct');
+                hideFeedback();
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Từ "${state.selectedWord}" chưa phù hợp với ô trống này. Em hãy đọc kĩ cụm từ trước và sau ô trống nhé!`);
+            }
+        }
+
+        function fillQuickStep2_1() {
+            state.fillBlanks = { b1: 'ánh sáng', b2: 'năng lượng', b3: 'điện' };
+            playSound('correct');
+            rewardStar('step2_1_blanks9', 1);
+            renderApp();
+        }
+
+        // Bước 2/9: So sánh cách tạo ra điện từ ánh sáng mặt trời với cách tạo ra điện từ gió & Ghi nhớ (Trang 44)
+        function renderStep2_2(container) {
+            const options = [
+                {
+                    text: 'A. Điện mặt trời dùng tấm pin mặt trời hấp thụ ánh sáng và chuyển đổi trực tiếp năng lượng ánh sáng thành điện; còn điện gió dùng sức gió làm quay cánh quạt của máy phát điện để tạo ra điện.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Pin mặt trời biến đổi trực tiếp năng lượng ánh sáng mặt trời thành điện, còn máy phát điện gió biến đổi năng lượng gió (nhờ sự quay của cánh quạt) thành điện.'
+                },
+                {
+                    text: 'B. Cả pin mặt trời và máy phát điện gió đều bắt buộc phải có cánh quạt quay tít trong gió mới tạo ra được dòng điện.',
+                    correct: false,
+                    explain: 'Chưa đúng! Tấm pin mặt trời nằm yên để hấp thụ ánh sáng mặt trời chứ không dùng cánh quạt quay như máy phát điện gió.'
+                },
+                {
+                    text: 'C. Pin mặt trời tạo ra điện nhờ sức gió thổi vào ban đêm, còn máy phát điện gió tạo ra điện nhờ ánh nắng chiếu vào cánh quạt.',
+                    correct: false,
+                    explain: 'Chưa đúng! Em đã đổi ngược nguồn năng lượng của hai thiết bị rồi.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <!-- Bảng đối chiếu trực quan -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-amber-50 border-4 border-amber-400 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">☀️➔🟦➔⚡</div>
+                            <div>
+                                <div class="tv-card-title text-amber-950">Cách tạo ra điện từ ánh sáng mặt trời</div>
+                                <div class="tv-body text-slate-800 mt-1"><b>Pin mặt trời</b> hấp thụ ánh sáng mặt trời và biến đổi <b>năng lượng ánh sáng</b> thành <b>năng lượng điện</b>.</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-sky-50 border-4 border-sky-400 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">🌬️➔🌀➔⚡</div>
+                            <div>
+                                <div class="tv-card-title text-sky-950">Cách tạo ra điện từ gió (Bài 8)</div>
+                                <div class="tv-body text-slate-800 mt-1">Gió làm quay <b>cánh quạt</b> của máy phát điện, biến đổi <b>năng lượng gió</b> thành <b>năng lượng điện</b>.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Câu hỏi trang 44 -->
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Hãy cho biết sự khác nhau giữa cách tạo ra điện từ ánh sáng mặt trời với cách tạo ra điện từ gió (Trang 44):
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerCompareWind9(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.compareWindDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Hộp Ghi nhớ cuối trang 44 -->
+                    <div class="bg-sky-100 border-3 border-sky-500 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="text-3xl">🤖</span>
+                        <span class="tv-body text-sky-950">
+                            <b>Ghi nhớ (Trang 44):</b> Pin mặt trời được dùng để biến đổi năng lượng ánh sáng mặt trời thành năng lượng điện.
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            if (state.compareWindDone) {
+                showFeedback(true, 'Rất giỏi! Em đã phân biệt rất rõ sự khác nhau giữa cách tạo ra điện từ ánh sáng mặt trời và cách tạo ra điện từ gió!');
+            }
+        }
+
+        function answerCompareWind9(isCorrect, explain) {
+            if (isCorrect) {
+                state.compareWindDone = true;
+                playSound('correct');
+                rewardStar('compare_wind_9', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/9: 2a. Tìm hiểu sản phẩm mẫu – Hình 3 & Ghép 4 mô tả (a, b, c, d) trang 45 – 46
+        const SAMPLE_DESCRIPTIONS_9 = {
+            a: {
+                code: 'Mô tả a)',
+                text: 'a) Gồm có các trụ đỡ và giá đỡ, dùng để đỡ pin mặt trời và đèn LED.',
+                correctPart: 'Khung giá đỡ'
+            },
+            b: {
+                code: 'Mô tả b)',
+                text: 'b) Là thiết bị biến đổi năng lượng ánh sáng mặt trời thành năng lượng điện.',
+                correctPart: 'Tấm pin mặt trời'
+            },
+            c: {
+                code: 'Mô tả c)',
+                text: 'c) Là thiết bị tiêu thụ năng lượng điện.',
+                correctPart: 'Đèn LED'
+            },
+            d: {
+                code: 'Mô tả d)',
+                text: 'd) Dẫn điện từ pin mặt trời đến thiết bị tiêu thụ năng lượng điện.',
+                correctPart: 'Dây dẫn điện'
+            }
+        };
+
+        function renderStep2_3(container) {
+            const allMatched = Object.keys(SAMPLE_DESCRIPTIONS_9).every(k => state.samplePartsMatched[k] === SAMPLE_DESCRIPTIONS_9[k].correctPart);
+            const curKey = state.selectedPartDesc;
+            const curObj = SAMPLE_DESCRIPTIONS_9[curKey];
+
+            const partChoices = [
+                { name: 'Khung giá đỡ', icon: '🟩🟨', sub: 'Hình 3d' },
+                { name: 'Tấm pin mặt trời', icon: '☀️🟦', sub: 'Hình 3b' },
+                { name: 'Đèn LED', icon: '🔴💡', sub: 'Hình 3c' },
+                { name: 'Dây dẫn điện', icon: '🔌〰️', sub: 'Hình 3b' }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Minh họa Hình 3 (Trang 45) -->
+                    <div class="lg:col-span-5 bg-slate-50 border-4 border-amber-400 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-amber-600 text-white px-4 py-1 rounded-full mb-1">Hình 3 (Trang 45) – Sản phẩm mẫu</span>
+                        ${renderSgkCropOrSVG(2, { x: 6, y: 52, w: 38, h: 32 }, getSolarModelSVG(allMatched ? 2 : 0))}
+                        <div class="bg-sky-100 border-2 border-sky-300 rounded-2xl p-2.5 mt-1 tv-badge text-sky-950">
+                            Bộ phận chính: Tấm pin mặt trời • Khung giá đỡ • Dây dẫn điện • Đèn LED
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bài tập ghép mô tả a, b, c, d trang 46 -->
+                    <div class="lg:col-span-7 bg-white border-4 border-slate-200 rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="tv-card-title text-slate-900">
+                                ❓ Hãy cho biết mỗi mô tả dưới đây nói về bộ phận nào trong Hình 3 (Trang 46):
+                            </h3>
+                            <button onclick="matchAllPartsQuick9()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-3 py-1.5 rounded-xl text-sm shrink-0">
+                                ✨ Ghép nhanh
+                            </button>
+                        </div>
+
+                        <!-- Danh sách 4 câu mô tả a, b, c, d như trang 46 SGK -->
+                        <div class="flex flex-col gap-2.5">
+                            ${Object.keys(SAMPLE_DESCRIPTIONS_9).map(k => {
+                                const item = SAMPLE_DESCRIPTIONS_9[k];
+                                const matchedVal = state.samplePartsMatched[k];
+                                const isSelected = state.selectedPartDesc === k;
+                                return `
+                                    <button onclick="selectDescRow9('${k}')"
+                                        class="btn-kid text-left p-3.5 rounded-2xl border-3 flex items-center justify-between gap-3 ${
+                                            matchedVal
+                                                ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
+                                                : isSelected
+                                                ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-200 text-slate-900'
+                                                : 'bg-orange-50/70 border-orange-200 text-slate-900'
+                                        }">
+                                        <span class="tv-body flex-1">${item.text}</span>
+                                        <span class="tv-badge px-3.5 py-1.5 rounded-xl shrink-0 ${
+                                            matchedVal ? 'bg-emerald-600 text-white' : 'bg-white text-amber-900 border-2 border-amber-400'
+                                        }">
+                                            ${matchedVal ? '✓ ' + matchedVal : '👆 Chọn bộ phận'}
+                                        </span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- 4 nút bộ phận để ghép vào dòng đang chọn -->
+                        <div class="bg-sky-50 border-2 border-sky-300 rounded-2xl p-3">
+                            <div class="tv-badge text-sky-900 mb-2">
+                                👉 Bấm chọn bộ phận đúng cho <b>${curObj.code}</b>:
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                ${partChoices.map(p => `
+                                    <button onclick="assignPartToDesc9('${p.name}')"
+                                        class="btn-kid bg-white hover:bg-sky-100 border-2 border-sky-400 rounded-xl p-2.5 flex flex-col items-center text-center">
+                                        <span class="text-2xl">${p.icon}</span>
+                                        <span class="tv-badge text-slate-900 mt-1">${p.name}</span>
+                                        <span class="text-xs font-bold text-slate-500">${p.sub}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allMatched) {
+                rewardStar('step2_3_match9', 1);
+                showFeedback(true, 'Hoàn toàn chính xác! Em đã nhận biết và mô tả đúng chức năng của cả 4 bộ phận chính trong mô hình điện mặt trời!');
+            }
+        }
+
+        function selectDescRow9(key) {
+            playSound('click');
+            state.selectedPartDesc = key;
+            renderApp();
+        }
+
+        function assignPartToDesc9(partName) {
+            const key = state.selectedPartDesc;
+            const target = SAMPLE_DESCRIPTIONS_9[key];
+            if (partName === target.correctPart) {
+                state.samplePartsMatched[key] = partName;
+                playSound('wrench');
+                hideFeedback();
+                const nextKey = Object.keys(SAMPLE_DESCRIPTIONS_9).find(k => !state.samplePartsMatched[k]);
+                if (nextKey) state.selectedPartDesc = nextKey;
+                else playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Bộ phận "${partName}" chưa khớp với ${target.code}. Em hãy đọc kĩ từ khóa trong câu mô tả nhé!`);
+            }
+        }
+
+        function matchAllPartsQuick9() {
+            state.samplePartsMatched = {
+                a: 'Khung giá đỡ',
+                b: 'Tấm pin mặt trời',
+                c: 'Đèn LED',
+                d: 'Dây dẫn điện'
+            };
+            playSound('correct');
+            rewardStar('step2_3_match9', 1);
+            renderApp();
+        }
+
+        // Bước 4/9: 2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 6 – Trang 46, 47)
+        const TABLE9_GROUP_1 = [
+            {
+                stt: 1,
+                name: 'Tấm lớn',
+                qty: 1,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <polygon points="10,12 108,12 122,58 24,58" fill="#10b981" stroke="#047857" stroke-width="2"/>
+                    <polygon points="10,12 108,12 105,6 7,6" fill="#047857"/>
+                    <polygon points="24,58 122,58 125,65 21,65" fill="#059669"/>
+                    ${[0,1,2,3,4,5,6,7].map(c => [0,1,2].map(r => `<circle cx="${24 + c*11 + r*3}" cy="${22 + r*12}" r="2.1" fill="#ecfdf5"/>`).join('')).join('')}
+                `
+            },
+            {
+                stt: 2,
+                name: 'Thanh chữ U dài',
+                qty: 4,
+                color: 'bg-yellow-100 border-yellow-400',
+                svg: `
+                    <rect x="14" y="24" width="102" height="22" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <line x1="14" y1="27" x2="116" y2="27" stroke="#fef08a" stroke-width="2"/>
+                    <line x1="14" y1="43" x2="116" y2="43" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3,4,5].map(i => `<circle cx="${25 + i*16}" cy="35" r="3.2" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>`).join('')}
+                `
+            },
+            {
+                stt: 3,
+                name: 'Thanh chữ U ngắn',
+                qty: 1,
+                color: 'bg-amber-100 border-amber-400',
+                svg: `
+                    <rect x="28" y="24" width="74" height="22" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <line x1="28" y1="27" x2="102" y2="27" stroke="#fef08a" stroke-width="2"/>
+                    <line x1="28" y1="43" x2="102" y2="43" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3].map(i => `<circle cx="${38 + i*18}" cy="35" r="3.2" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>`).join('')}
+                `
+            },
+            {
+                stt: 4,
+                name: 'Thanh chữ L dài',
+                qty: 4,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <path d="M54,10 L74,10 L74,44 L58,60 L40,52 L54,38 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <circle cx="64" cy="20" r="3.5" fill="#ffffff"/>
+                    <circle cx="64" cy="34" r="3.5" fill="#ffffff"/>
+                    <circle cx="52" cy="49" r="3.5" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 5,
+                name: 'Tấm pin mặt trời và dây dẫn điện',
+                qty: 1,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <!-- Tấm pin mặt trời chữ nhật màu xanh đen + dây điện đỏ/đen có giắc trắng như STT 5 trang 47 -->
+                    <polygon points="30,8 92,8 96,38 26,38" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    ${[0,1,2,3,4,5].map(i => `<line x1="${36 + i*10}" y1="10" x2="${34 + i*10}" y2="36" stroke="#38bdf8" stroke-width="1"/>`).join('')}
+                    <path d="M36,38 C28,62 68,64 96,54" fill="none" stroke="#ef4444" stroke-width="2.2"/>
+                    <path d="M40,38 C32,65 70,66 96,56" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+                    <rect x="94" y="50" width="9" height="8" rx="1" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+                `
+            },
+            {
+                stt: 6,
+                name: 'Đèn LED',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <line x1="25" y1="32" x2="76" y2="32" stroke="#64748b" stroke-width="2"/>
+                    <line x1="36" y1="38" x2="76" y2="38" stroke="#64748b" stroke-width="2"/>
+                    <path d="M76,26 L94,26 A9,9 0 0,1 94,44 L76,44 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                `
+            }
+        ];
+
+        function renderStep2_4(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        ${TABLE9_GROUP_1.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-3 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-28 h-16 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900 leading-tight">${item.name}</div>
+                                <div class="mt-1.5 w-full py-1 rounded-xl font-black text-lg ${item.color} border-2">
+                                    Số lượng: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh Bảng chi tiết (STT 1 – 6): Để lắp phần khung giá đỡ cho tấm pin mặt trời và đèn LED, em cần lấy mấy <span class="text-amber-700">Thanh chữ U dài</span>, mấy <span class="text-rose-700">Thanh chữ L dài</span> và mấy <span class="text-amber-800">Thanh chữ U ngắn</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroup9Quiz('tableGroup1Done', false, 'Chưa đúng! Đó là số lượng của Bài 8, còn ở Bài 9 cần tới 4 trụ đỡ cho tấm pin mặt trời.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                A. 2 thanh chữ U dài, 2 thanh chữ L dài và 2 thanh chữ U ngắn
+                            </button>
+                            <button onclick="answerGroup9Quiz('tableGroup1Done', true, 'Chính xác 100%! Cần 4 thanh chữ U dài + 4 thanh chữ L dài (đỡ 4 góc tấm pin) và 1 thanh chữ U ngắn (đỡ đèn LED)!')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup1Done ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup1Done ? '✓ ' : ''}B. 4 thanh chữ U dài, 4 thanh chữ L dài và 1 thanh chữ U ngắn
+                            </button>
+                            <button onclick="answerGroup9Quiz('tableGroup1Done', false, 'Chưa đúng! Em hãy quan sát cột Số lượng của STT 2, STT 3 và STT 4 ở trên nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. 1 thanh chữ U dài, 1 thanh chữ L dài và 4 thanh chữ U ngắn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup1Done) {
+                showFeedback(true, 'Tuyệt vời! Em đã nhớ rất chính xác: 1 Tấm lớn + 4 Thanh chữ U dài + 4 Thanh chữ L dài + 1 Thanh chữ U ngắn!');
+            }
+        }
+
+        // Bước 5/9: 2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 7 đến 13 – Trang 47)
+        const TABLE9_GROUP_2 = [
+            {
+                stt: 7,
+                name: 'Đai ốc',
+                qty: 9,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <polygon points="65,14 85,24 85,46 65,56 45,46 45,24" fill="#cbd5e1" stroke="#475569" stroke-width="2.5"/>
+                    <circle cx="65" cy="35" r="8.5" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+                `
+            },
+            {
+                stt: 8,
+                name: 'Vít ngắn',
+                qty: 9,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <path d="M46,23 C38,23 38,47 46,47 Z" fill="#64748b" stroke="#334155" stroke-width="2"/>
+                    <rect x="46" y="29" width="32" height="12" rx="2" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                    ${[52,58,64,70,74].map(x => `<line x1="${x}" y1="29" x2="${x}" y2="41" stroke="#334155" stroke-width="1.5"/>`).join('')}
+                `
+            },
+            {
+                stt: 9,
+                name: 'Tua-vít',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <rect x="10" y="25" width="54" height="20" rx="7" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <line x1="64" y1="35" x2="114" y2="35" stroke="#64748b" stroke-width="4.5"/>
+                `
+            },
+            {
+                stt: 10,
+                name: 'Cờ-lê',
+                qty: 1,
+                color: 'bg-slate-100 border-slate-400',
+                svg: `
+                    <path d="M18,22 A13,13 0 1,0 18,48 L28,42 L98,42 L106,52 C116,48 118,26 104,24 L30,24 Z" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <circle cx="22" cy="35" r="5.5" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+                `
+            },
+            {
+                stt: 11,
+                name: 'Băng dính 2 mặt',
+                qty: 1,
+                color: 'bg-orange-100 border-orange-400',
+                svg: `
+                    <ellipse cx="65" cy="38" rx="38" ry="18" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="38" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="27" ry="12" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+                    <ellipse cx="65" cy="35" rx="25" ry="9" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 12,
+                name: 'Băng dính điện',
+                qty: 1,
+                color: 'bg-indigo-100 border-indigo-400',
+                svg: `
+                    <ellipse cx="65" cy="40" rx="38" ry="16" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+                    <ellipse cx="65" cy="28" rx="38" ry="16" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="27" y="28" width="76" height="12" fill="#0f172a"/>
+                    <ellipse cx="65" cy="28" rx="20" ry="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+                `
+            },
+            {
+                stt: 13,
+                name: 'Kéo',
+                qty: 1,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <line x1="16" y1="24" x2="76" y2="38" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="16" y1="46" x2="76" y2="32" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
+                    <ellipse cx="94" cy="23" rx="16" ry="10" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                    <ellipse cx="94" cy="47" rx="16" ry="10" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                    <circle cx="64" cy="35" r="4" fill="#facc15"/>
+                `
+            }
+        ];
+
+        function renderStep2_5(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        ${TABLE9_GROUP_2.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-2.5 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-24 h-14 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900 leading-tight">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-base ${item.color} border-2">
+                                    SL: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh (STT 7 – 13): Để ghép nối 4 thanh chữ U dài, 4 thanh chữ L dài và 1 thanh chữ U ngắn vào tấm lớn, em cần bao nhiêu <span class="text-sky-700">Đai ốc</span> và bao nhiêu <span class="text-emerald-700">Vít ngắn</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroup9Quiz('tableGroup2Done', true, 'Chính xác 100%! Cần đúng 9 đai ốc và 9 vít ngắn (4 bộ bắt chân 4 thanh U dài + 4 bộ bắt 4 thanh L dài trên đỉnh + 1 bộ bắt chân thanh U ngắn = 9 bộ).')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup2Done ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup2Done ? '✓ ' : ''}A. 9 đai ốc và 9 vít ngắn
+                            </button>
+                            <button onclick="answerGroup9Quiz('tableGroup2Done', false, 'Chưa đúng! 12 đai ốc và 12 vít ngắn là của Bài 8 (Mô hình máy phát điện gió), còn Bài 9 chỉ dùng 9 đai ốc và 9 vít ngắn.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                B. 12 đai ốc và 12 vít ngắn
+                            </button>
+                            <button onclick="answerGroup9Quiz('tableGroup2Done', false, 'Chưa đúng! Em hãy nhìn cột Số lượng của STT 7 (Đai ốc: 9) và STT 8 (Vít ngắn: 9) nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. 6 đai ốc và 6 vít dài
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup2Done) {
+                showFeedback(true, 'Xuất sắc! Em đã nắm vững toàn bộ 13 chi tiết, vật liệu và dụng cụ trong bảng trang 46–47 SGK!');
+            }
+        }
+
+        function answerGroup9Quiz(flag, isRight, explain) {
+            if (isRight) {
+                state[flag] = true;
+                playSound('correct');
+                rewardStar('quiz9_' + flag, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 6/9: 2c. Thực hành Bước 1 – Lắp khung giá đỡ (Hình 4a, 4b – Trang 48)
+        function renderStep2_6(container) {
+            const built = state.step1StandBuilt;
+
+            // Vẽ chính xác Hình 4a (các chi tiết xếp rời: 1 tấm lớn xanh lá, 4 thanh chữ U dài vàng, 1 thanh chữ U ngắn vàng, 4 thanh chữ L dài đỏ, 9 vít ngắn, 9 đai ốc) và Hình 4b (Khung giá đỡ đã lắp hoàn chỉnh) như Trang 48 SGK
+            const hinh4Svg = !built ? `
+                <svg viewBox="0 0 400 230" class="w-full max-w-[400px] h-auto">
+                    <text x="20" y="22" fill="#0284c7" font-size="15" font-weight="900">a)</text>
+                    <!-- Tấm lớn xanh lá nằm ngang ở trên giống Hình 4a trang 48 -->
+                    <rect x="44" y="14" width="180" height="86" rx="4" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <rect x="44" y="14" width="180" height="10" fill="#059669"/>
+                    <rect x="44" y="90" width="180" height="10" fill="#047857"/>
+                    ${[0,1,2,3,4,5,6,7,8].map(c => [0,1,2,3].map(r => `<circle cx="${58 + c*18}" cy="${32 + r*16}" r="2.5" fill="#ecfdf5"/>`).join('')).join('')}
+
+                    <!-- 4 Thanh chữ U dài vàng dựng dọc bên dưới trái -->
+                    ${[0,1,2,3].map(i => `
+                        <rect x="${42 + i*24}" y="110" width="18" height="106" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        ${[0,1,2,3,4,5].map(k => `<circle cx="${51 + i*24}" cy="${120 + k*16}" r="2.4" fill="#ffffff"/>`).join('')}
+                    `).join('')}
+
+                    <!-- 1 Thanh chữ U ngắn vàng + 4 Thanh chữ L dài đỏ -->
+                    <rect x="142" y="110" width="18" height="72" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2,3].map(i => `
+                        <rect x="${168 + i*22}" y="110" width="16" height="44" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                        <circle cx="${176 + i*22}" cy="120" r="2.5" fill="#ffffff"/>
+                        <circle cx="${176 + i*22}" cy="142" r="2.5" fill="#ffffff"/>
+                    `).join('')}
+
+                    <!-- 9 Vít ngắn & 9 Đai ốc xếp bên dưới phải giống Hình 4a -->
+                    ${[0,1,2,3,4].map(i => `
+                        <rect x="${168 + i*18}" y="164" width="6" height="13" rx="1" fill="#64748b"/>
+                        <circle cx="${171 + i*18}" cy="186" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="1.6"/>
+                    `).join('')}
+                    ${[0,1,2,3].map(i => `
+                        <rect x="${168 + i*18}" y="198" width="6" height="13" rx="1" fill="#64748b"/>
+                        <circle cx="${171 + i*18}" cy="218" r="5" fill="#cbd5e1" stroke="#334155" stroke-width="1.6"/>
+                    `).join('')}
+                </svg>
+            ` : `
+                <svg viewBox="0 0 400 230" class="w-full max-w-[400px] h-auto">
+                    <text x="20" y="24" fill="#0284c7" font-size="15" font-weight="900">b)</text>
+                    <!-- Tấm lớn xanh lá nằm ngang làm đế -->
+                    <polygon points="56,154 276,154 306,196 86,196" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="56,154 86,196 86,212 56,170" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                    <polygon points="86,196 306,196 306,212 86,212" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+
+                    <!-- 2 Trụ sau (Thanh chữ U dài vàng + Thanh chữ L dài đỏ trên đỉnh) -->
+                    <rect x="86" y="46" width="14" height="114" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    <rect x="166" y="46" width="14" height="114" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    <path d="M78,36 L104,36 L104,58 L88,58 L88,46 L78,46 Z" fill="#dc2626" stroke="#991b1b" stroke-width="1.8"/>
+                    <path d="M158,36 L184,36 L184,58 L168,58 L168,46 L158,46 Z" fill="#dc2626" stroke="#991b1b" stroke-width="1.8"/>
+
+                    <!-- 2 Trụ trước (Thanh chữ U dài vàng + Thanh chữ L dài đỏ trên đỉnh) -->
+                    <rect x="104" y="60" width="15" height="118" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="184" y="60" width="15" height="118" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <path d="M96,50 L124,50 L124,72 L108,72 L108,60 L96,60 Z" fill="#ef4444" stroke="#991b1b" stroke-width="1.8"/>
+                    <path d="M176,50 L204,50 L204,72 L188,72 L188,60 L176,60 Z" fill="#ef4444" stroke="#991b1b" stroke-width="1.8"/>
+
+                    <!-- 1 Thanh chữ U ngắn dựng đứng bên phải đỡ đèn LED -->
+                    <rect x="256" y="102" width="15" height="74" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-slate-50 border-4 border-emerald-400 rounded-3xl p-4 flex flex-col items-center gap-2">
+                        <span class="tv-badge bg-emerald-700 text-white px-4 py-1 rounded-full">
+                            Hình 4 (Trang 48) – ${built ? 'Hình 4b: Khung giá đỡ đã lắp hoàn chỉnh' : 'Hình 4a: Các chi tiết chuẩn bị lắp khung giá đỡ'}
+                        </span>
+                        ${renderSgkCropOrSVG(3, { x: 54, y: 20, w: 40, h: 25 }, hinh4Svg)}
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="inline-block bg-sky-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 1: Lắp khung giá đỡ (Trang 48)
+                        </div>
+                        <p class="tv-card-title text-slate-900">
+                            Dùng <b>bốn thanh chữ U dài</b>, <b>bốn thanh chữ L dài</b> và <b>một thanh chữ U ngắn</b> lắp vào <b>tấm lớn</b> để tạo thành khung giá đỡ như Hình 4.
+                        </p>
+                        <div class="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 tv-body text-amber-950">
+                            ⚠️ <b>Lưu ý (Trang 48):</b> Sử dụng dụng cụ lắp ghép (tua-vít, cờ-lê) an toàn. Vặn đủ <b>9 vít ngắn</b> và <b>9 đai ốc</b> để các mối ghép chắc chắn.
+                        </div>
+
+                        <button onclick="buildStandStep1_9()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-3 ${
+                                built
+                                    ? 'bg-emerald-600 text-white border-4 border-emerald-800'
+                                    : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white'
+                            }">
+                            <span>${built ? '✓ Đã lắp xong Khung giá đỡ (Hình 4b)' : '🔩 Bấm để lắp Khung giá đỡ chắc chắn (Hình 4b)'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (built) {
+                showFeedback(true, 'Hoàn thành Bước 1 (Hình 4b)! 4 trụ thanh chữ U dài có gắn 4 thanh chữ L dài trên đỉnh và 1 trụ thanh chữ U ngắn đã được lắp chắc chắn vào tấm lớn!');
+            }
+        }
+
+        function buildStandStep1_9() {
+            state.step1StandBuilt = true;
+            playSound('wrench');
+            setTimeout(() => playSound('correct'), 220);
+            rewardStar('step1_stand_9', 1);
+            renderApp();
+        }
+
+        // Bước 7/9: 2c. Thực hành Bước 2 – Lắp đèn LED với dây dẫn điện (Hình 5a, 5b – Trang 48)
+        function renderStep2_7(container) {
+            const allDone = state.step2RedWireDone && state.step2BlackWireDone && state.step2TapeDone;
+
+            const hinh5Svg = `
+                <svg viewBox="0 0 360 190" class="w-full max-w-[360px] h-auto mx-auto">
+                    <!-- Hình 5a: Đèn LED (chân dài, chân ngắn) & đầu dây dẫn điện đỏ/đen -->
+                    <text x="18" y="24" fill="#0284c7" font-size="14" font-weight="900">a)</text>
+                    <path d="M72,42 L72,26 A10,10 0 0,1 92,26 L92,42 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <line x1="78" y1="42" x2="78" y2="96" stroke="#64748b" stroke-width="2.5"/>
+                    <line x1="86" y1="42" x2="86" y2="78" stroke="#64748b" stroke-width="2.5"/>
+                    <text x="44" y="88" fill="#dc2626" font-size="11" font-weight="900">Chân dài</text>
+                    <text x="115" y="75" fill="#1e293b" font-size="11" font-weight="900">Chân ngắn</text>
+
+                    <rect x="70" y="110" width="22" height="22" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <line x1="76" y1="132" x2="72" y2="178" stroke="#ef4444" stroke-width="3.5"/>
+                    <line x1="86" y1="132" x2="82" y2="178" stroke="#1e293b" stroke-width="3.5"/>
+
+                    <!-- Hình 5b: Tấm pin mặt trời chữ nhật + dây dẫn đã nối đèn LED và quấn băng dính điện đen -->
+                    <text x="165" y="24" fill="#0284c7" font-size="14" font-weight="900">b)</text>
+                    <polygon points="188,28 292,28 296,94 184,94" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+                    ${[0,1,2,3,4,5,6].map(i => `<line x1="${198 + i*14}" y1="30" x2="${195 + i*14}" y2="92" stroke="#38bdf8" stroke-width="1.2" opacity="0.75"/>`).join('')}
+
+                    <path d="M196,94 C188,162 265,168 314,132" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M202,94 C196,166 270,172 316,135" fill="none" stroke="#1e293b" stroke-width="3"/>
+                    <!-- Băng dính điện màu đen quấn quanh mối nối như Hình 5b -->
+                    <polygon points="306,132 326,118 333,126 313,140" fill="${state.step2TapeDone ? '#0f172a' : '#cbd5e1'}" stroke="#0f172a" stroke-width="1.5"/>
+                    <circle cx="334" cy="117" r="7.5" fill="#dc2626"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-amber-50 border-3 border-amber-400 rounded-2xl p-3.5 flex items-center gap-3 tv-body text-amber-950">
+                        <span>⚠️</span>
+                        <span><b>Lưu ý quan trọng (Trang 48):</b> <b>Dây dẫn điện màu đỏ</b> nối với <b>chân dài</b> của đèn LED, <b>dây dẫn điện màu đen</b> nối với <b>chân ngắn</b> của đèn LED.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <!-- Minh họa Hình 5a, 5b -->
+                        <div class="lg:col-span-5 bg-slate-50 border-4 border-sky-400 rounded-3xl p-3 flex flex-col items-center">
+                            <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">Hình 5a, 5b (Trang 48)</span>
+                            ${renderSgkCropOrSVG(3, { x: 54, y: 62, w: 38, h: 25 }, hinh5Svg)}
+                        </div>
+
+                        <!-- 3 Thao tác thực hành Bước 2 -->
+                        <div class="lg:col-span-7 grid grid-cols-1 gap-3">
+                            <!-- Thao tác 1: Dây đỏ -->
+                            <div class="bg-white border-3 ${state.step2RedWireDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-300'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-rose-600 text-white px-3 py-0.5 rounded-full">Thao tác 1/3</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Nối dây dẫn điện MÀU ĐỎ của tấm pin vào chân nào của đèn LED?</div>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="doStep2Led9('red_long')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base ${
+                                            state.step2RedWireDone ? 'bg-emerald-600 text-white' : 'bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-rose-400'
+                                        }">
+                                        ${state.step2RedWireDone ? '✓ ' : ''}Chân dài
+                                    </button>
+                                    <button onclick="doStep2Led9('red_short')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300">
+                                        Chân ngắn
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thao tác 2: Dây đen -->
+                            <div class="bg-white border-3 ${state.step2BlackWireDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-400'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-slate-800 text-white px-3 py-0.5 rounded-full">Thao tác 2/3</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Nối dây dẫn điện MÀU ĐEN của tấm pin vào chân nào của đèn LED?</div>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="doStep2Led9('black_long')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300">
+                                        Chân dài
+                                    </button>
+                                    <button onclick="doStep2Led9('black_short')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base ${
+                                            state.step2BlackWireDone ? 'bg-emerald-600 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-950 border-2 border-slate-500'
+                                        }">
+                                        ${state.step2BlackWireDone ? '✓ ' : ''}Chân ngắn
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thao tác 3: Quấn băng dính điện -->
+                            <div class="bg-white border-3 ${state.step2TapeDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-indigo-300'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-indigo-700 text-white px-3 py-0.5 rounded-full">Thao tác 3/3 (Hình 5b)</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Dùng băng dính điện cố định đèn LED với đầu dây dẫn điện</div>
+                                </div>
+                                <button onclick="doStep2Led9('tape')"
+                                    class="btn-kid px-5 py-2.5 rounded-xl font-black text-base shrink-0 ${
+                                        state.step2TapeDone ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                    }">
+                                    ${state.step2TapeDone ? '✓ Đã quấn băng dính điện' : '🖤 Quấn băng dính điện'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Hoàn thành xuất sắc Bước 2 (Hình 5)! Dây đỏ đã nối với chân dài, dây đen nối với chân ngắn của đèn LED và được cố định chắc chắn bằng băng dính điện!');
+            }
+        }
+
+        function doStep2Led9(action) {
+            if (action === 'red_long') {
+                state.step2RedWireDone = true;
+                playSound('wrench');
+                rewardStar('s2_red9', 1);
+            } else if (action === 'black_short') {
+                state.step2BlackWireDone = true;
+                playSound('wrench');
+                rewardStar('s2_black9', 1);
+            } else if (action === 'tape') {
+                if (!state.step2RedWireDone || !state.step2BlackWireDone) {
+                    playSound('wrong');
+                    showFeedback(false, 'Em hãy nối đúng dây điện màu đỏ (vào chân dài) và dây điện màu đen (vào chân ngắn) trước khi quấn băng dính điện cố định nhé!');
+                    return;
+                }
+                state.step2TapeDone = true;
+                playSound('correct');
+                rewardStar('s2_tape9', 1);
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Nhầm chân đèn LED rồi! Em hãy nhớ lưu ý ở trang 48: Dây dẫn điện màu đỏ nối với CHÂN DÀI, dây dẫn điện màu đen nối với CHÂN NGẮN của đèn LED.');
+                return;
+            }
+            renderApp();
+        }
+
+        // Bước 8/9: 2c. Thực hành Bước 3 – Gắn tấm pin mặt trời và đèn LED vào khung giá đỡ (Hình 6 – Trang 49)
+        function renderStep2_8(container) {
+            const bothDone = state.step3PanelMounted && state.step3LedMounted;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-5 bg-slate-50 border-4 border-sky-400 rounded-3xl p-4 flex flex-col items-center">
+                        <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">
+                            Hình 6 (Trang 49) – Gắn tấm pin mặt trời và đèn LED
+                        </span>
+                        ${renderSgkCropOrSVG(4, { x: 12, y: 16, w: 28, h: 30 }, getSolarModelSVG(bothDone ? 1 : 0))}
+                    </div>
+
+                    <div class="lg:col-span-7 flex flex-col gap-4">
+                        <div class="inline-block bg-sky-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 3: Gắn tấm pin mặt trời và đèn LED vào khung giá đỡ (Trang 49)
+                        </div>
+
+                        <!-- Thao tác 1: Gắn cố định tấm pin mặt trời -->
+                        <div class="bg-white border-4 ${state.step3PanelMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-sky-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-sky-800">Công việc 1 / 2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                1. Gắn cố định <b>tấm pin mặt trời</b> lên đỉnh khung giá đỡ (đặt cân đối trên mặt phẳng của 4 thanh chữ L dài màu đỏ).
+                            </div>
+                            <button onclick="doStep3Mount9('panel')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3PanelMounted ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-700 text-white'
+                                }">
+                                ${state.step3PanelMounted ? '✓ Đã gắn cố định Tấm pin mặt trời lên khung giá đỡ' : '☀️ Bấm để gắn Tấm pin mặt trời lên khung giá đỡ'}
+                            </button>
+                        </div>
+
+                        <!-- Thao tác 2: Dùng băng dính 2 mặt gắn đèn LED -->
+                        <div class="bg-white border-4 ${state.step3LedMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-amber-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-amber-800">Công việc 2 / 2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                2. Dùng <b>băng dính 2 mặt</b> để gắn <b>đèn LED</b> lên thanh chữ U ngắn của khung giá đỡ như Hình 6.
+                            </div>
+                            <button onclick="doStep3Mount9('led')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3LedMounted ? 'bg-emerald-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                }">
+                                ${state.step3LedMounted ? '✓ Đã dán Băng dính 2 mặt gắn Đèn LED lên giá đỡ' : '🎗️ Bấm dùng Băng dính 2 mặt gắn Đèn LED (Hình 6)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (bothDone) {
+                showFeedback(true, 'Hoàn thành Bước 3 (Hình 6)! Tấm pin mặt trời và đèn LED đã được gắn chắc chắn, gọn gàng trên khung giá đỡ!');
+            }
+        }
+
+        function doStep3Mount9(part) {
+            playSound('wrench');
+            if (part === 'panel') {
+                state.step3PanelMounted = true;
+                rewardStar('s3_panel9', 1);
+            } else {
+                state.step3LedMounted = true;
+                rewardStar('s3_led9', 1);
+            }
+            if (state.step3PanelMounted && state.step3LedMounted) {
+                setTimeout(() => playSound('correct'), 200);
+            }
+            renderApp();
+        }
+
+        // Bước 9/9: 2c. Thực hành Bước 4 – Kiểm tra hoạt động của mô hình với các độ sáng khác nhau (Trang 49)
+        function renderStep2_9(container) {
+            const lLevel = state.step4LightLevel;
+            const allTested = state.step4Recorded.l0 && state.step4Recorded.l1 && state.step4Recorded.l2;
+
+            const lightRows = [
+                {
+                    stt: 1,
+                    level: 0,
+                    key: 'l0',
+                    condition: 'Không có ánh sáng',
+                    btnLabel: '🌑 1. Thử: Không có ánh sáng',
+                    ledStatus: 'Đèn LED không sáng (Tắt)',
+                    subText: 'Che tối tấm pin mặt trời'
+                },
+                {
+                    stt: 2,
+                    level: 1,
+                    key: 'l1',
+                    condition: 'Ít ánh sáng',
+                    btnLabel: '⛅ 2. Thử: Ít ánh sáng',
+                    ledStatus: 'Đèn LED sáng yếu (Sáng mờ)',
+                    subText: 'Ánh sáng yếu chiếu vào tấm pin'
+                },
+                {
+                    stt: 3,
+                    level: 2,
+                    key: 'l2',
+                    condition: 'Nhiều ánh sáng',
+                    btnLabel: '☀️ 3. Thử: Nhiều ánh sáng',
+                    ledStatus: 'Đèn LED sáng rõ (Sáng mạnh)',
+                    subText: 'Ánh sáng mạnh chiếu thẳng vào tấm pin'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Mô hình thực nghiệm với 3 điều kiện độ sáng -->
+                    <div class="lg:col-span-5 bg-slate-50 border-4 ${lLevel === 2 ? 'border-amber-500 bg-amber-50/40' : lLevel === 1 ? 'border-sky-400' : 'border-slate-300'} rounded-3xl p-4 flex flex-col items-center">
+                        <div class="flex items-center justify-between w-full px-2 mb-1">
+                            <span class="tv-badge bg-sky-700 text-white px-3.5 py-1 rounded-full">Bước 4 (Trang 49)</span>
+                            <span class="tv-badge px-3.5 py-1 rounded-full ${
+                                lLevel === 2 ? 'bg-red-600 text-white' : lLevel === 1 ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-800'
+                            }">
+                                ${lLevel === 2 ? '💡 ĐÈN LED: SÁNG MẠNH' : lLevel === 1 ? '💡 ĐÈN LED: SÁNG YẾU' : '⚫ ĐÈN LED: KHÔNG SÁNG'}
+                            </span>
+                        </div>
+
+                        ${getSolarModelSVG(lLevel)}
+
+                        <!-- 3 Nút điều khiển độ sáng chiếu vào tấm pin -->
+                        <div class="grid grid-cols-3 gap-2 w-full mt-2">
+                            ${lightRows.map(r => `
+                                <button onclick="testLightLevel9(${r.level}, '${r.key}')"
+                                    class="btn-kid py-2.5 px-2 rounded-2xl font-black text-sm sm:text-base border-2 ${
+                                        lLevel === r.level
+                                            ? 'bg-amber-600 text-white border-amber-900 scale-105'
+                                            : 'bg-white hover:bg-amber-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${r.btnLabel}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bảng ghi chép hoạt động của mô hình (Trang 49 SGK) -->
+                    <div class="lg:col-span-7 bg-white border-4 border-sky-400 rounded-3xl overflow-hidden shadow">
+                        <div class="bg-sky-600 text-white py-3 px-5 tv-card-title">
+                            📋 BẢNG GHI CHÉP HOẠT ĐỘNG CỦA MÔ HÌNH (TRANG 49)
+                        </div>
+                        <div class="p-4 flex flex-col gap-3">
+                            <p class="tv-body text-slate-700">
+                                👉 Em hãy bấm thử cả <b>3 điều kiện ánh sáng</b> bên dưới hoặc bên trái để quan sát và ghi chép trạng thái của đèn LED vào bảng:
+                            </p>
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-sky-100 text-slate-900 border-b-3 border-sky-300">
+                                        <th class="p-3 text-center tv-body w-20">STT</th>
+                                        <th class="p-3 text-left tv-body">Điều kiện ánh sáng chiếu vào pin mặt trời</th>
+                                        <th class="p-3 text-left tv-body">Trạng thái của đèn LED</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${lightRows.map(r => {
+                                        const recorded = state.step4Recorded[r.key];
+                                        return `
+                                            <tr class="border-b-2 border-slate-200 ${lLevel === r.level ? 'bg-amber-50/70' : ''}">
+                                                <td class="p-3 text-center tv-body text-slate-900">${r.stt}</td>
+                                                <td class="p-3 tv-body text-slate-900">
+                                                    <div>${r.condition}</div>
+                                                    <div class="text-sm font-bold text-slate-500">(${r.subText})</div>
+                                                </td>
+                                                <td class="p-3">
+                                                    <button onclick="testLightLevel9(${r.level}, '${r.key}')"
+                                                        class="btn-kid w-full text-left px-4 py-2.5 rounded-xl font-black tv-body ${
+                                                            recorded
+                                                                ? 'bg-emerald-600 text-white'
+                                                                : 'bg-slate-100 hover:bg-sky-100 text-sky-900 border-2 border-sky-300'
+                                                        }">
+                                                        ${recorded ? '✓ ' + r.ledStatus : '❓ Bấm thử ánh sáng để ghi chép'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allTested) {
+                showFeedback(true, 'Xuất sắc! Em đã kiểm tra đủ 3 điều kiện ánh sáng và rút ra kết luận: Ánh sáng chiếu vào tấm pin mặt trời càng mạnh thì đèn LED phát sáng càng rõ!');
+            }
+        }
+
+        function testLightLevel9(level, key) {
+            state.step4LightLevel = level;
+            state.step4Recorded[key] = true;
+            if (level === 0) playSound('click');
+            else if (level === 1) playSound('sun_low');
+            else playSound('sun_high');
+
+            rewardStar('s4_light_' + key, 1);
+            renderApp();
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 3: LUYỆN TẬP (6 CÂU HỎI TRẮC NGHIỆM CÓ ĐỘ NHIỄU HỢP LÍ)
+         **************************************************************/
+        function renderPracticeMCQ9(container, flagName, badgeTitle, questionText, options) {
+            const isDone = state[flagName];
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-emerald-100 to-sky-100 border-4 border-emerald-400 rounded-3xl p-5">
+                        <span class="inline-block bg-emerald-700 text-white tv-badge uppercase px-4 py-1 rounded-full mb-2">
+                            ${badgeTitle}
+                        </span>
+                        <h3 class="tv-card-title text-slate-900 leading-snug">
+                            ${questionText}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        ${options.map(opt => `
+                            <button onclick="selectPrac9Answer('${flagName}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 sm:p-5 rounded-3xl border-3 tv-option flex items-center justify-between gap-4 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ ĐÚNG' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function selectPrac9Answer(flagName, isCorrect, explain) {
+            if (isCorrect) {
+                state[flagName] = true;
+                playSound('correct');
+                rewardStar('prac9_' + flagName, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Câu 1/6
+        function renderStep3_1(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac1Done',
+                'Câu hỏi luyện tập 1 / 6 • Nguyên lí hoạt động của mô hình điện mặt trời',
+                'Trong mô hình điện mặt trời (Hình 3 – trang 45), khi có ánh sáng chiếu vào tấm pin mặt trời thì quá trình tạo ra điện và làm sáng bóng đèn diễn ra theo trình tự nào dưới đây?',
+                [
+                    {
+                        text: 'A. Tấm pin mặt trời hấp thụ ánh sáng mặt trời và biến đổi thành năng lượng điện ➔ Dòng điện truyền qua dây dẫn điện ➔ Thiết bị tiêu thụ điện (đèn LED) phát sáng.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Tấm pin mặt trời biến đổi năng lượng ánh sáng thành năng lượng điện, dẫn qua dây điện tới làm sáng đèn LED.'
+                    },
+                    {
+                        text: 'B. Ánh sáng mặt trời chiếu trực tiếp vào bóng đèn LED làm dây tóc bên trong đèn LED nóng chảy và phát ra dòng điện truyền ngược về tấm pin.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đèn LED là thiết bị tiêu thụ điện chứ không phải bộ phận tạo ra điện từ ánh sáng mặt trời.'
+                    },
+                    {
+                        text: 'C. Gió thổi làm tấm pin mặt trời quay tròn quanh 4 thanh chữ U dài để sinh ra dòng điện thắp sáng đèn LED.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tấm pin mặt trời được gắn cố định trên khung giá đỡ để thu nhận ánh sáng, không phải cánh quạt quay trong gió.'
+                    },
+                    {
+                        text: 'D. Khung giá đỡ bằng kim loại hấp thụ nhiệt độ trong phòng rồi truyền qua băng dính 2 mặt để làm đèn LED phát sáng.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khung giá đỡ chỉ có nhiệm vụ nâng đỡ tấm pin mặt trời và đèn LED.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 2/6
+        function renderStep3_2(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac2Done',
+                'Câu hỏi luyện tập 2 / 6 • Bảng chi tiết, vật liệu và dụng cụ',
+                'Theo Bảng chi tiết, vật liệu và dụng cụ (trang 46 – 47 SGK), để lắp ráp hoàn chỉnh phần Khung giá đỡ ở Bước 1, ngoài 1 Tấm lớn thì em cần lấy số lượng các thanh và ốc vít như thế nào?',
+                [
+                    {
+                        text: 'A. 4 thanh chữ U dài, 1 thanh chữ U ngắn, 4 thanh chữ L dài cùng 9 vít ngắn và 9 đai ốc.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Theo bảng trang 46–47 SGK: cần 4 thanh chữ U dài (STT 2), 1 thanh chữ U ngắn (STT 3), 4 thanh chữ L dài (STT 4), 9 đai ốc (STT 7) và 9 vít ngắn (STT 8).'
+                    },
+                    {
+                        text: 'B. 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ cùng 12 vít ngắn và 12 đai ốc.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đây là số lượng chi tiết của mô hình máy phát điện gió ở Bài 8, còn Bài 9 không dùng thanh thẳng 3 lỗ và dùng 4 thanh U dài, 4 thanh L dài, 9 bộ ốc vít.'
+                    },
+                    {
+                        text: 'C. 4 thanh chữ U dài, 4 thanh chữ U ngắn, 2 thanh chữ L dài cùng 10 vít ngắn và 10 đai ốc.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mô hình điện mặt trời chỉ cần 1 thanh chữ U ngắn để đỡ đèn LED và dùng 9 bộ vít ngắn – đai ốc.'
+                    },
+                    {
+                        text: 'D. 2 thanh chữ U dài, 1 thanh chữ U ngắn, 4 thanh thẳng 3 lỗ cùng 8 vít ngắn và 2 vít dài.',
+                        correct: false,
+                        explain: 'Chưa đúng! Trong Bài 9 hoàn toàn không sử dụng thanh thẳng 3 lỗ hay vít dài.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 3/6
+        function renderStep3_3(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac3Done',
+                'Câu hỏi luyện tập 3 / 6 • Cấu tạo kĩ thuật của Khung giá đỡ',
+                'Vì sao khi lắp Khung giá đỡ của mô hình điện mặt trời (Hình 4 – trang 48) lại cần dùng tới 4 thanh chữ U dài dựng đứng và 4 thanh chữ L dài gắn ở 4 đỉnh trụ?',
+                [
+                    {
+                        text: 'A. Để tạo thành 4 trụ đỡ cân đối ở 4 góc và mặt phẳng đỡ rộng rãi ở phía trên, giúp giữ tấm pin mặt trời hình chữ nhật nằm vững chắc, đón ánh sáng tốt nhất.',
+                        correct: true,
+                        explain: 'Rất chính xác! Tấm pin mặt trời có dạng bản phẳng hình chữ nhật khá rộng nên cần 4 trụ chữ U dài kết hợp 4 thanh chữ L dài tạo mặt phẳng đỡ ở cả 4 góc.'
+                    },
+                    {
+                        text: 'B. Vì 4 thanh chữ U dài và 4 thanh chữ L dài đóng vai trò là dây dẫn điện truyền điện từ tấm lớn lên tấm pin mặt trời.',
+                        correct: false,
+                        explain: 'Chưa đúng! Điện năng từ tấm pin mặt trời được truyền tới đèn LED qua 2 sợi dây dẫn điện màu đỏ và màu đen chứ không truyền qua khung giá đỡ.'
+                    },
+                    {
+                        text: 'C. Để làm cho tấm pin mặt trời có thể tự động xoay tròn 360 độ khi có gió thổi qua.',
+                        correct: false,
+                        explain: 'Chưa đúng! Việc gắn tấm pin lên 4 trụ ở 4 góc là để cố định chắc chắn tấm pin, không phải để xoay tròn trong gió.'
+                    },
+                    {
+                        text: 'D. Để che bớt ánh sáng mặt trời chiếu vào tấm pin, giúp đèn LED không bị chói.',
+                        correct: false,
+                        explain: 'Chưa đúng! 4 thanh chữ L dài nằm ở phía dưới đỡ 4 góc tấm pin để tấm pin hướng mặt thu sáng lên trên.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 4/6
+        function renderStep3_4(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac4Done',
+                'Câu hỏi luyện tập 4 / 6 • Quy tắc nối đèn LED và sử dụng băng dính',
+                'Khi thực hiện Bước 2 (trang 48) và Bước 3 (trang 49), cách nối dây đèn LED và sử dụng các loại băng dính nào dưới đây là ĐÚNG quy tắc kĩ thuật?',
+                [
+                    {
+                        text: 'A. Nối dây đỏ với chân dài, dây đen với chân ngắn của đèn LED rồi cố định mối nối bằng băng dính điện; sau đó dùng băng dính 2 mặt để gắn tấm pin và đèn LED lên khung giá đỡ.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Dây đỏ nối chân dài, dây đen nối chân ngắn, quấn cố định đầu dây bằng băng dính điện (Hình 5) và dùng băng dính 2 mặt gắn lên khung giá đỡ (Hình 6).'
+                    },
+                    {
+                        text: 'B. Nối dây đỏ với chân ngắn, dây đen với chân dài của đèn LED rồi dùng băng dính 2 mặt quấn quanh chân đèn LED.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nối dây đỏ vào chân ngắn, dây đen vào chân dài là bị ngược cực khiến đèn LED không thể phát sáng.'
+                    },
+                    {
+                        text: 'C. Dùng kéo cắt bỏ phần chân dài của đèn LED cho bằng chân ngắn rồi nối dây nào vào cũng được.',
+                        correct: false,
+                        explain: 'Chưa đúng! Chân dài và chân ngắn giúp phân biệt cực dương và cực âm của đèn LED, tuyệt đối không được cắt bỏ.'
+                    },
+                    {
+                        text: 'D. Dùng vít ngắn và đai ốc vặn xuyên thủng qua giữa tấm pin mặt trời và bóng đèn LED để bắt chặt vào thanh chữ U.',
+                        correct: false,
+                        explain: 'Chưa đúng! Vặn vít xuyên qua tấm pin mặt trời sẽ làm vỡ hỏng tấm pin; ta phải gắn lên giá đỡ bằng băng dính 2 mặt.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 5/6
+        function renderStep3_5(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac5Done',
+                'Câu hỏi luyện tập 5 / 6 • Kiểm tra với các độ sáng khác nhau',
+                'Khi thực hiện Bước 4 (Kiểm tra hoạt động của mô hình – trang 49 SGK) với 3 điều kiện ánh sáng chiếu vào tấm pin mặt trời, kết quả quan sát nào dưới đây là ĐÚNG?',
+                [
+                    {
+                        text: 'A. Khi không có ánh sáng thì đèn LED tắt; khi ít ánh sáng thì đèn LED sáng yếu; khi nhiều ánh sáng chiếu vào tấm pin thì đèn LED sáng rõ (sáng mạnh).',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Độ sáng của đèn LED thay đổi tỉ lệ thuận với độ sáng chiếu vào tấm pin mặt trời.'
+                    },
+                    {
+                        text: 'B. Khi che kín tấm pin mặt trời (không có ánh sáng) thì đèn LED phát sáng rực rỡ nhất vì trời tối dễ nhìn thấy ánh đèn hơn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mô hình không có pin tích trữ điện, nên khi che kín tấm pin mặt trời thì không có dòng điện tạo ra và đèn LED sẽ tắt.'
+                    },
+                    {
+                        text: 'C. Dù chiếu nhiều ánh sáng hay ít ánh sáng vào tấm pin mặt trời thì độ sáng của đèn LED vẫn giữ nguyên không thay đổi.',
+                        correct: false,
+                        explain: 'Chưa đúng! Một trong những yêu cầu sản phẩm quan trọng là "độ sáng đèn LED thay đổi khi độ sáng chiếu vào tấm pin thay đổi".'
+                    },
+                    {
+                        text: 'D. Đèn LED chỉ phát sáng khi ta dùng quạt thổi gió thật mạnh vào tấm pin mặt trời.',
+                        correct: false,
+                        explain: 'Chưa đúng! Pin mặt trời hoạt động nhờ ánh sáng chiếu vào chứ không phải nhờ sức gió.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 6/6
+        function renderStep3_6(container) {
+            renderPracticeMCQ9(
+                container,
+                'prac6Done',
+                'Câu hỏi luyện tập 6 / 6 • Chẩn đoán & điều chỉnh mô hình',
+                'Sau khi lắp xong mô hình điện mặt trời, bạn Minh kiểm tra thấy dây đỏ đã nối vào chân dài, dây đen đã nối vào chân ngắn của đèn LED, nhưng khi chiếu đèn bàn sáng mạnh mà đèn LED vẫn không sáng. Nguyên nhân nào dưới đây cần kiểm tra và điều chỉnh?',
+                [
+                    {
+                        text: 'A. Có thể bạn Minh đã đặt úp ngược mặt thu sáng của tấm pin mặt trời xuống dưới hoặc hai chân đèn LED bị lỏng, tuột khỏi đầu giắc dây dẫn điện bên trong lớp băng dính điện.',
+                        correct: true,
+                        explain: 'Rất xuất sắc! Nếu tấm pin bị úp ngược mặt thu sáng hoặc chân đèn LED tiếp xúc lỏng với đầu dây dẫn điện thì dòng điện không thể truyền tới đèn LED.'
+                    },
+                    {
+                        text: 'B. Do bạn Minh quên chưa lắp 2 viên pin tiểu 1,5 V vào dưới tấm lớn của khung giá đỡ.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mô hình điện mặt trời tạo ra điện trực tiếp từ tấm pin mặt trời, không sử dụng pin tiểu 1,5 V.'
+                    },
+                    {
+                        text: 'C. Do bạn Minh dùng 9 vít ngắn và 9 đai ốc bắt khung giá đỡ quá chắc chắn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khung giá đỡ chắc chắn giúp tấm pin mặt trời đứng vững, hoàn toàn không làm mất điện của mô hình.'
+                    },
+                    {
+                        text: 'D. Do bạn Minh không lắp thêm cánh quạt màu xanh dương vào trước bóng đèn LED.',
+                        correct: false,
+                        explain: 'Chưa đúng! Cánh quạt xanh dương là chi tiết của mô hình máy phát điện gió (Bài 8), không có trong mô hình điện mặt trời.'
+                    }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 9. CHẶNG 4: VẬN DỤNG (3 BƯỚC - ĐÁNH GIÁ & CẢI TIẾN SÁNG TẠO)
+         **************************************************************/
+        // Bước 1/3: Phiếu đánh giá sản phẩm (6 tiêu chí - Trang 50 SGK)
+        const EVAL9_ROWS = [
+            { id: 'c1', label: '1. Đúng và đủ các bộ phận' },
+            { id: 'c2', label: '2. Đúng hình dạng' },
+            { id: 'c3', label: '3. Mối ghép chắc chắn' },
+            { id: 'c4', label: '4. Dây dẫn điện gọn gàng' },
+            { id: 'c5', label: '5. Đèn LED phát sáng khi có ánh sáng chiếu vào tấm pin' },
+            { id: 'c6', label: '6. Độ sáng đèn LED thay đổi khi độ sáng chiếu vào tấm pin thay đổi' }
+        ];
+
+        function renderStep4_1(container) {
+            const allRated = Object.values(state.evalCriteria).every(v => v !== null);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Hình sản phẩm trưng bày -->
+                    <div class="lg:col-span-4 bg-amber-50/70 border-4 border-amber-300 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-amber-600 text-white px-4 py-1 rounded-full mb-1">Trưng bày & Đánh giá (Trang 50)</span>
+                        ${getSolarModelSVG(allRated ? 2 : 1)}
+                        <button onclick="rateAllQuick9()" class="btn-kid bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-base mt-2">
+                            😊 Đánh giá tốt tất cả
+                        </button>
+                    </div>
+
+                    <!-- Cột phải: Bảng Phiếu đánh giá sản phẩm 6 tiêu chí (Trang 50) -->
+                    <div class="lg:col-span-8 bg-white border-4 border-sky-400 rounded-3xl overflow-hidden shadow">
+                        <div class="bg-sky-500 text-white text-center py-2.5 px-4 tv-card-title uppercase tracking-wide">
+                            PHIẾU ĐÁNH GIÁ SẢN PHẨM (TRANG 50)
+                        </div>
+                        <div class="p-3 sm:p-4">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-sky-100 text-slate-900 border-b-3 border-sky-300">
+                                        <th class="p-2.5 text-left tv-body">Tiêu chí</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😊</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😐</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😣</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${EVAL9_ROWS.map(row => {
+                                        const val = state.evalCriteria[row.id];
+                                        return `
+                                            <tr class="border-b-2 border-slate-200">
+                                                <td class="p-2.5 tv-body text-slate-900">${row.label}</td>
+                                                ${['good', 'ok', 'try'].map((level, idx) => {
+                                                    const emojis = ['😊', '😐', '😣'];
+                                                    const selected = val === level;
+                                                    return `
+                                                        <td class="p-1.5 text-center">
+                                                            <button onclick="rateCriteria9('${row.id}', '${level}')"
+                                                                class="btn-kid px-3 py-1.5 rounded-xl border-2 font-black text-base ${
+                                                                    selected
+                                                                        ? 'bg-emerald-600 text-white border-emerald-800 scale-105'
+                                                                        : 'bg-slate-50 hover:bg-sky-50 text-slate-700 border-slate-300'
+                                                                }">
+                                                                ${selected ? '✓ ' : ''}${emojis[idx]}
+                                                            </button>
+                                                        </td>
+                                                    `;
+                                                }).join('')}
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allRated) {
+                showFeedback(true, 'Tuyệt vời! Em đã hoàn thành Phiếu đánh giá sản phẩm với đầy đủ 6 tiêu chí ở trang 50 SGK!');
+            }
+        }
+
+        function rateCriteria9(id, level) {
+            state.evalCriteria[id] = level;
+            playSound('pop');
+            if (Object.values(state.evalCriteria).every(v => v !== null)) {
+                playSound('correct');
+                rewardStar('eval_sheet_9', 1);
+            }
+            renderApp();
+        }
+
+        function rateAllQuick9() {
+            state.evalCriteria = { c1: 'good', c2: 'good', c3: 'good', c4: 'good', c5: 'good', c6: 'good' };
+            playSound('correct');
+            rewardStar('eval_sheet_9', 1);
+            renderApp();
+        }
+
+        // Bước 2/3: Xưởng sáng tạo – Cải tiến mô hình điện mặt trời (Hình 7 – Trang 50)
+        const UPGRADE_SOLAR_IDEAS = {
+            solar_car: {
+                name: 'Ý tưởng 1: Mô hình Ô tô điện mặt trời có đèn pha (Như Hình 7)',
+                desc: 'Lắp thêm 4 bánh xe và trục thẳng vào dưới tấm lớn để biến mô hình thành chiếc xe ô tô năng lượng mặt trời giống trên bảng vẽ ở Hình 7 trang 50!'
+            },
+            solar_house: {
+                name: 'Ý tưởng 2: Ngôi nhà thông minh dùng điện mặt trời áp mái',
+                desc: 'Ghép thêm các thanh chữ U tạo khung ngôi nhà bên dưới tấm pin mặt trời để thắp sáng không gian sinh hoạt gia đình!'
+            },
+            solar_street: {
+                name: 'Ý tưởng 3: Trạm đèn đường đôi năng lượng mặt trời tự động',
+                desc: 'Lắp thêm thanh chữ U ngắn thứ hai để tạo thành trạm đèn chiếu sáng công cộng dùng năng lượng mặt trời!'
+            }
+        };
+
+        function renderStep4_2(container) {
+            const curIdea = UPGRADE_SOLAR_IDEAS[state.upgradeOption];
+            const tested = state.upgradeTested;
+
+            const customUpgradeSvg = `
+                <svg viewBox="0 0 420 250" class="w-full max-w-[400px] h-auto mx-auto">
+                    <ellipse cx="210" cy="226" rx="165" ry="20" fill="#fef08a" opacity="0.8"/>
+
+                    <!-- Mặt trời chiếu sáng khi bật thử -->
+                    ${tested ? `
+                        <circle cx="54" cy="34" r="22" fill="#facc15" stroke="#f59e0b" stroke-width="2.5"/>
+                        <polygon points="54,34 195,58 100,58" fill="#fde047" opacity="0.35"/>
+                    ` : ''}
+
+                    <!-- Nếu là Ý tưởng 1 (Xe điện mặt trời như Hình 7 trang 50) thì có thêm 4 bánh xe dưới đế -->
+                    ${state.upgradeOption === 'solar_car' ? `
+                        <circle cx="105" cy="212" r="24" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+                        <circle cx="105" cy="212" r="11" fill="#e2e8f0"/>
+                        <circle cx="255" cy="212" r="24" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+                        <circle cx="255" cy="212" r="11" fill="#e2e8f0"/>
+                    ` : ''}
+
+                    <!-- Tấm lớn xanh lá -->
+                    <polygon points="60,176 285,176 315,212 90,212" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="90,212 315,212 315,224 90,224" fill="#047857"/>
+
+                    <!-- 4 Trụ vàng + 4 Thanh chữ L đỏ + Tấm pin mặt trời -->
+                    <rect x="94" y="72" width="13" height="110" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    <rect x="168" y="72" width="13" height="110" rx="2" fill="#eab308" stroke="#a16207" stroke-width="2"/>
+                    <rect x="112" y="82" width="14" height="112" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="186" y="82" width="14" height="112" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+
+                    <polygon points="92,58 192,58 206,78 106,78" fill="#1e293b" stroke="#475569" stroke-width="2.5"/>
+                    ${[0,1,2,3,4,5,6].map(i => `<line x1="${104 + i*13}" y1="60" x2="${116 + i*13}" y2="76" stroke="#38bdf8" stroke-width="1.2"/>`).join('')}
+
+                    <!-- Khung nhà hoặc trụ đèn cải tiến -->
+                    ${state.upgradeOption === 'solar_house' ? `
+                        <rect x="118" y="116" width="64" height="68" rx="4" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
+                    ` : ''}
+
+                    <!-- Trụ đèn LED bên phải -->
+                    <rect x="258" y="122" width="15" height="72" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="248" y="114" width="24" height="8" rx="2" fill="#0f172a"/>
+                    <circle cx="280" cy="118" r="${tested ? '26' : '0'}" fill="#fde047" opacity="0.88"/>
+                    <path d="M272,113 L283,113 A5,5 0 0,1 283,123 L272,123 Z" fill="${tested ? '#ff1e1e' : '#991b1b'}" stroke="#7f1d1d" stroke-width="2"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-gradient-to-b from-amber-100 via-sky-50 to-emerald-100 border-4 border-purple-400 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-purple-700 text-white px-4 py-1 rounded-full mb-1">
+                            Hình 7 (Trang 50) – Cải tiến mô hình điện mặt trời
+                        </span>
+                        ${renderSgkCropOrSVG(4, { x: 54, y: 60, w: 38, h: 32 }, customUpgradeSvg)}
+                        <div class="tv-card-title text-purple-950 mt-1">${curIdea.name}</div>
+                        <p class="tv-body text-slate-700">${curIdea.desc}</p>
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 tv-body text-amber-950">
+                            💡 <b>Yêu cầu vận dụng (Trang 50):</b> “Em hãy sử dụng các chi tiết trong bộ lắp ghép mô hình kĩ thuật để cải tiến mô hình điện mặt trời đã lắp theo ý tưởng sáng tạo của em.”
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            ${Object.keys(UPGRADE_SOLAR_IDEAS).map(key => `
+                                <button onclick="selectUpgradeIdea9('${key}')"
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.upgradeOption === key
+                                            ? 'bg-purple-600 text-white border-purple-800'
+                                            : 'bg-slate-50 hover:bg-purple-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${state.upgradeOption === key ? '✓ ' : ''}✨ ${UPGRADE_SOLAR_IDEAS[key].name}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <button onclick="toggleUpgradeSun9()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl text-white ${
+                                tested ? 'bg-rose-600 hover:bg-rose-700' : 'bg-gradient-to-r from-amber-500 to-orange-600'
+                            }">
+                            ${tested ? '🌑 Tắt chiếu sáng' : '☀️ Chiếu ánh sáng mặt trời thử mô hình cải tiến!'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (tested) {
+                showFeedback(true, 'Tuyệt vời! Mô hình điện mặt trời cải tiến của em đã hấp thụ ánh sáng và thắp sáng đèn LED rực rỡ!');
+            }
+        }
+
+        function selectUpgradeIdea9(key) {
+            playSound('wrench');
+            state.upgradeOption = key;
+            rewardStar('upgrade_idea_9', 1);
+            renderApp();
+        }
+
+        function toggleUpgradeSun9() {
+            state.upgradeTested = !state.upgradeTested;
+            if (state.upgradeTested) {
+                playSound('sun_high');
+                rewardStar('upgrade_test_9', 1);
+            } else {
+                playSound('click');
+            }
+            renderApp();
+        }
+
+        // Bước 3/3: Tổng kết bài học & Trao Huy hiệu (Trang 50)
+        function renderStep4_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-amber-100 via-sky-50 to-emerald-100 border-4 border-amber-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl sm:text-6xl">🏆☀️💡</div>
+                            <div>
+                                <div class="tv-badge uppercase text-amber-900">Hoàn thành xuất sắc Bài 9: Mô hình điện mặt trời</div>
+                                <h2 class="tv-title text-slate-900">
+                                    Huy Hiệu: Kĩ Sư Nhí Năng Lượng Mặt Trời Tài Ba!
+                                </h2>
+                                <p class="tv-body text-slate-800 mt-1">
+                                    Tổng số Sao lớp mình đạt được: <span class="text-amber-600 font-black text-3xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="celebrateFinishLesson9()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-5 py-3 rounded-2xl text-lg">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-sky-50 text-sky-950 border-3 border-sky-400 font-black px-5 py-3 rounded-2xl text-lg">
+                                🔄 Học lại từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng kết kiến thức cốt lõi Bài 9 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-amber-50 border-4 border-amber-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-amber-950 mb-2">☀️ 1. Nguyên lí & Cấu tạo mô hình điện mặt trời:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Nguyên lí:</b> Pin mặt trời hấp thụ <b>ánh sáng</b> mặt trời và biến đổi <b>năng lượng ánh sáng</b> thành <b>năng lượng điện</b>.</li>
+                                <li><b>4 bộ phận chính:</b> Tấm pin mặt trời, khung giá đỡ, dây dẫn điện và thiết bị tiêu thụ năng lượng điện (đèn LED).</li>
+                                <li><b>Chi tiết lắp ghép:</b> 1 tấm lớn, 4 thanh chữ U dài, 1 thanh chữ U ngắn, 4 thanh chữ L dài, 9 đai ốc, 9 vít ngắn.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-50 border-4 border-emerald-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-emerald-950 mb-2">🛠️ 2. Quy trình 4 bước lắp ráp & Kiểm tra mô hình:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Bước 1:</b> Lắp khung giá đỡ gồm 4 thanh chữ U dài, 4 thanh chữ L dài và 1 thanh chữ U ngắn vào tấm lớn (Hình 4).</li>
+                                <li><b>Bước 2:</b> Lắp đèn LED với dây dẫn điện và cố định bằng <b>băng dính điện</b> (Hình 5). <i>Lưu ý: Dây đỏ nối chân dài, dây đen nối chân ngắn.</i></li>
+                                <li><b>Bước 3:</b> Gắn cố định tấm pin mặt trời và dùng <b>băng dính 2 mặt</b> gắn đèn LED lên khung giá đỡ (Hình 6).</li>
+                                <li><b>Bước 4:</b> Kiểm tra với các độ sáng: Không có ánh sáng (đèn tắt) $\rightarrow$ Ít ánh sáng (đèn sáng yếu) $\rightarrow$ Nhiều ánh sáng (đèn sáng rõ).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showFeedback(true, 'Chúc mừng các em đã nắm vững toàn bộ kiến thức và quy trình thực hành Bài 9: Mô hình điện mặt trời!');
+        }
+
+        function celebrateFinishLesson9() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng các Kĩ sư nhí đã hoàn thành xuất sắc Bài 9: Mô hình điện mặt trời!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson9();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-4 py-1.5 rounded-xl font-black text-base sm:text-lg transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-700 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại (Chữ cực to rõ cho Tivi)
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-0.5 rounded-xl tv-badge uppercase border-2 ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="tv-title text-slate-900 mt-1">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="tv-subtitle text-slate-700 mt-0.5">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-4 rounded-full transition-all ${
+                            active ? 'w-10 bg-amber-500' : 'w-4 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

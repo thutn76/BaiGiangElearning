@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 6: Sử Dụng Tủ Lạnh - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Quicksand:wght@700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #ecfeff 50%, #f0fdf4 100%);
+            color: #0f172a;
+        }
+        /* Hệ thống cỡ chữ tối ưu cho trình chiếu Tivi lớp học */
+        body.tv-normal {
+            --title-size: clamp(1.45rem, 2.2vw, 2.05rem);
+            --subtitle-size: clamp(1.05rem, 1.4vw, 1.32rem);
+            --card-title: clamp(1.2rem, 1.68vw, 1.58rem);
+            --body-size: clamp(1.08rem, 1.48vw, 1.4rem);
+            --option-size: clamp(1.1rem, 1.52vw, 1.42rem);
+            --badge-size: clamp(0.9rem, 1.12vw, 1.08rem);
+        }
+        body.tv-large {
+            --title-size: clamp(1.62rem, 2.45vw, 2.3rem);
+            --subtitle-size: clamp(1.15rem, 1.6vw, 1.48rem);
+            --card-title: clamp(1.32rem, 1.9vw, 1.78rem);
+            --body-size: clamp(1.2rem, 1.66vw, 1.56rem);
+            --option-size: clamp(1.22rem, 1.7vw, 1.6rem);
+            --badge-size: clamp(0.98rem, 1.22vw, 1.18rem);
+        }
+        body.tv-xlarge {
+            --title-size: clamp(1.8rem, 2.75vw, 2.55rem);
+            --subtitle-size: clamp(1.26rem, 1.75vw, 1.62rem);
+            --card-title: clamp(1.46rem, 2.1vw, 1.96rem);
+            --body-size: clamp(1.32rem, 1.85vw, 1.72rem);
+            --option-size: clamp(1.34rem, 1.9vw, 1.76rem);
+            --badge-size: clamp(1.06rem, 1.32vw, 1.28rem);
+        }
+        .tv-title { font-size: var(--title-size); line-height: 1.22; font-weight: 900; }
+        .tv-subtitle { font-size: var(--subtitle-size); line-height: 1.34; font-weight: 800; }
+        .tv-card-title { font-size: var(--card-title); line-height: 1.28; font-weight: 900; }
+        .tv-body { font-size: var(--body-size); line-height: 1.38; font-weight: 800; }
+        .tv-option { font-size: var(--option-size); line-height: 1.35; font-weight: 800; }
+        .tv-badge { font-size: var(--badge-size); line-height: 1.2; font-weight: 900; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(15, 23, 42, 0.22);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.1), 0 8px 14px -6px rgba(15, 23, 42, 0.06);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.97) translateY(6px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes shakeFridge {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px) rotate(-1deg); }
+            75% { transform: translateX(3px) rotate(1deg); }
+        }
+        .fridge-shake {
+            animation: shakeFridge 0.28s infinite;
+        }
+    </style>
+</head>
+<body class="tv-large flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN (TỐI ƯU TIVI RÕ NÉT) -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-cyan-300 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-700 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-xs font-black uppercase tracking-wider leading-none">Bài</span>
+                <span class="text-2xl sm:text-3xl font-black leading-none">6</span>
+            </div>
+            <div>
+                <div class="text-xs sm:text-sm font-black text-cyan-700 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">Sử dụng tủ lạnh</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn -->
+        <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-300" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Chỉnh cỡ chữ Tivi, Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Nút chỉnh cỡ chữ Tivi cho học sinh bàn cuối -->
+            <button onclick="cycleFontSize()" title="Thay đổi cỡ chữ cho màn hình Tivi"
+                class="btn-kid flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-400 text-violet-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>🔍 Cỡ chữ:</span>
+                <span id="font-size-label" class="bg-violet-600 text-white px-2 py-0.5 rounded-lg">To (TV)</span>
+            </button>
+
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3.5 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-7 h-7 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-xl sm:text-2xl font-black text-amber-900">0</span>
+                <span class="text-sm font-black text-amber-800 hidden sm:inline">Sao</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden md:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-cyan-600 hover:bg-cyan-700 text-white p-2.5 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="xl:hidden bg-white/90 border-b-2 border-cyan-200 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - RỘNG RÃI, CHỮ TO RÕ CHO TIVI) -->
+    <main class="flex-1 w-full max-w-[1620px] mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-cyan-300 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3 bg-gradient-to-r from-cyan-100/90 via-sky-50 to-emerald-100/80 border-b-2 border-cyan-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-4 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-cyan-300 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-800 font-black px-5 sm:px-7 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-sm sm:text-base font-black text-slate-700">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white font-black px-6 sm:px-9 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI 6: SỬ DỤNG TỦ LẠNH -->
+    <script>
+        /**************************************************************
+         * 1. CHẾ ĐỘ CỠ CHỮ TIVI & HỆ THỐNG ÂM THANH SINH ĐỘNG
+         **************************************************************/
+        const fontModes = [
+            { cls: 'tv-normal', label: 'Chuẩn TV' },
+            { cls: 'tv-large', label: 'To (TV)' },
+            { cls: 'tv-xlarge', label: 'Siêu to' }
+        ];
+        let currentFontModeIdx = 1; // Mặc định chọn "To (TV)" cho học sinh bàn cuối nhìn rõ
+
+        function cycleFontSize() {
+            playSound('click');
+            document.body.classList.remove(fontModes[currentFontModeIdx].cls);
+            currentFontModeIdx = (currentFontModeIdx + 1) % fontModes.length;
+            document.body.classList.add(fontModes[currentFontModeIdx].cls);
+            document.getElementById('font-size-label').textContent = fontModes[currentFontModeIdx].label;
+        }
+
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(560, now);
+                    osc.frequency.exponentialRampToValueAtTime(860, now + 0.065);
+                    gain.gain.setValueAtTime(0.16, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(480, now);
+                    osc.frequency.exponentialRampToValueAtTime(960, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'ice') {
+                    // Tiếng đá lạnh lách cách trong trẻo
+                    [1046.5, 1396.9, 1760].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.055);
+                        gain.gain.setValueAtTime(0.18, now + i * 0.055);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.14);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.055);
+                        osc.stop(now + i * 0.055 + 0.15);
+                    });
+                } else if (type === 'door') {
+                    // Tiếng đóng/mở cửa tủ lạnh êm ái
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.14);
+                    gain.gain.setValueAtTime(0.24, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'buzz') {
+                    // Tiếng tủ lạnh kêu ù ù bất thường
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(95, now);
+                    osc.frequency.setValueAtTime(110, now + 0.12);
+                    osc.frequency.setValueAtTime(90, now + 0.24);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.39);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.24, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.26);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 230];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.13, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.04;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'];
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 300,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 11 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG (21 BƯỚC TÁCH NHỎ)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động (3 bước)
+            goalsUnlocked: [false, false, false, false],
+            introSceneDone: false,
+            warmCompareDone: false,
+
+            // Chặng 2: Khám phá (9 bước tách biệt)
+            tempMode: 'chill', // 'chill' (1°C-7°C) hoặc 'freeze' (<0°C)
+            tempTested: { chill: true, freeze: false },
+            fig1Compartment1Done: false,
+            fig1Compartment2Done: false,
+            fig2Part1Sorted: {}, // a, d, b
+            fig2Part2Sorted: {}, // c, e, g
+            fig3abChecked: {},   // a, b
+            fig3cdChecked: {},   // c, d
+            fig4abSolved: {},    // a, b
+            fig4cdSolved: {},    // c, d
+            deodorItemsSeen: { lemon: true },
+            selectedDeodor: 'lemon',
+
+            // Chặng 3: Luyện tập (6 câu hỏi trắc nghiệm khách quan có độ nhiễu cao)
+            prac1Done: false,
+            prac2Done: false,
+            prac3Done: false,
+            prac4Done: false,
+            prac5Done: false,
+            prac6Done: false,
+
+            // Chặng 4: Vận dụng (3 bước)
+            chefIdx: 0,
+            chefStepDone: [false, false, false, false],
+            chefPreTreated: false,
+            doctorDone: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-900 border-amber-400',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học (Trang 26)',
+                        subtitle: 'Bấm vào từng thẻ mục tiêu để mở khóa hành trình khám phá Bài 6: Sử dụng tủ lạnh!',
+                        voiceText: 'Chào mừng các em đến với Bài 6: Sử dụng tủ lạnh. Học xong bài này, em sẽ: Một, trình bày được tác dụng của tủ lạnh trong gia đình. Hai, nhận biết được vị trí, vai trò các khoang khác nhau trong tủ lạnh. Ba, thực hiện được việc sắp xếp, bảo quản thực phẩm trong tủ lạnh đúng cách, an toàn. Bốn, nhận ra được một số biểu hiện bất thường của tủ lạnh trong quá trình sử dụng.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Tình huống: Cất đồ vào tủ lạnh giúp mẹ (Trang 26)',
+                        subtitle: 'Quan sát cuộc trò chuyện của mẹ và bạn nhỏ bên chiếc tủ lạnh và trả lời câu hỏi.',
+                        voiceText: 'Mẹ đi chợ về đưa giỏ thức ăn và nói: Con cất đồ vào tủ lạnh giúp mẹ. Bạn nhỏ suy nghĩ: Mình nên sắp xếp vào ngăn nào được nhỉ? Theo em, vì sao bạn nhỏ cần phân loại thực phẩm trước khi xếp vào từng ngăn của tủ lạnh?',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Câu hỏi mở màn: Điều gì xảy ra nếu để thức ăn ở ngoài trời nóng?',
+                        subtitle: 'So sánh thực phẩm để ở nhiệt độ phòng với thực phẩm bảo quản trong tủ lạnh.',
+                        voiceText: 'Nếu mẹ mua thịt, cá tươi sống về mà để quên trên bàn bếp ở nhiệt độ phòng suốt 2 ngày mùa hè, chuyện gì sẽ xảy ra với thịt, cá đó?',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-cyan-600 to-blue-700',
+                badgeBg: 'bg-cyan-100 text-cyan-900 border-cyan-400',
+                steps: [
+                    {
+                        title: '1. Tác dụng của tủ lạnh (Trang 26)',
+                        subtitle: 'Bấm chuyển đổi giữa 2 mức nhiệt độ để xem thời gian bảo quản thịt, cá trong tủ lạnh!',
+                        voiceText: 'Mục 1: Tác dụng của tủ lạnh. Thịt, cá có thể bảo quản được: Từ 3 ngày đến 5 ngày với phương pháp làm lạnh thực phẩm ở nhiệt độ từ 1 độ C đến 7 độ C. Và từ vài tuần tới vài tháng với phương pháp đông lạnh ở nhiệt độ dưới 0 độ C. Ghi nhớ: Tủ lạnh có chức năng chính là bảo quản thực phẩm ở nhiệt độ thấp, giúp kéo dài thời gian sử dụng.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '2. Vị trí, vai trò các khoang trong tủ lạnh (Hình 1 – Trang 27)',
+                        subtitle: 'Ghép tên khoang và vai trò của khoang tương ứng với vị trí số (1) và vị trí số (2) trong Hình 1.',
+                        voiceText: 'Mục 2: Vị trí, vai trò các khoang trong tủ lạnh. Quan sát Hình 1, tủ lạnh thường gồm hai khoang: vị trí số 1 ở phía trên là Khoang cấp đông dùng để làm đá và bảo quản đông lạnh thực phẩm; vị trí số 2 ở phía dưới là Khoang làm lạnh dùng để bảo quản lạnh thực phẩm.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '3. Sắp xếp thực phẩm Hình 2 vào tủ lạnh – Phần 1 (Trang 28)',
+                        subtitle: 'Chọn đúng khoang/ngăn cho 3 thực phẩm đầu tiên trong Hình 2: (a) Thịt tươi, (d) Khay đá, (b) Trứng.',
+                        voiceText: 'Mục 3: Sắp xếp, bảo quản thực phẩm trong tủ lạnh. Em hãy xếp 3 thực phẩm đầu tiên trong Hình 2 gồm: hình a khay thịt tươi sống, hình d khay làm đá viên, và hình b vỉ trứng gà vào đúng khoang của tủ lạnh.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '3. Sắp xếp thực phẩm Hình 2 vào tủ lạnh – Phần 2 (Trang 28)',
+                        subtitle: 'Chọn đúng vị trí trong Khoang làm lạnh cho: (c) Rau củ tươi, (e) Rau củ cắt sẵn bọc kín, (g) Hộp sữa.',
+                        voiceText: 'Tiếp theo, em hãy sắp xếp 3 thực phẩm còn lại trong Hình 2 gồm: hình c rau củ quả tươi, hình e khay rau củ cắt sẵn đã bọc màng bọc thực phẩm, và hình g hộp sữa tươi vào các vị trí phù hợp trong khoang làm lạnh.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '3. Nhận biết cách bảo quản thực phẩm đúng / sai (Hình 3a & 3b – Trang 28)',
+                        subtitle: 'Quan sát Hình 3a và Hình 3b, cho biết cách sắp xếp nào đúng cách, cách nào KHÔNG đúng cách.',
+                        voiceText: 'Quan sát Hình 3a và Hình 3b ở trang 28. Hãy cho biết vì sao Hình 3a và Hình 3b thể hiện việc sắp xếp, bảo quản thực phẩm trong tủ lạnh không đúng cách.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '3. Nhận biết cách bảo quản thực phẩm (Hình 3c & 3d – Trang 28, 29)',
+                        subtitle: 'Quan sát Hình 3c và Hình 3d, chỉ ra hình đúng cách và hình KHÔNG đúng cách, cùng 4 lưu ý vàng.',
+                        voiceText: 'Quan sát Hình 3c và Hình 3d. Khi sắp xếp, bảo quản thực phẩm trong tủ lạnh cần lưu ý: Một, dùng khoang cấp đông để làm đá và đông lạnh, khoang làm lạnh để bảo quản lạnh. Hai, không để thực phẩm còn nóng vào tủ lạnh. Ba, không chứa quá nhiều thực phẩm. Bốn, sử dụng màng bọc hoặc hộp đựng để bảo quản thực phẩm.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '4. Biểu hiện bất thường của tủ lạnh – Phần 1 (Hình 4a & 4b – Trang 29)',
+                        subtitle: 'Quan sát Hình 4a và Hình 4b để chỉ ra biểu hiện bất thường của tủ lạnh khi sử dụng.',
+                        voiceText: 'Mục 4: Một số biểu hiện bất thường của tủ lạnh khi sử dụng. Quan sát Hình 4a và Hình 4b để chỉ ra dấu hiệu bất thường của tủ lạnh trong mỗi tình huống.',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '4. Biểu hiện bất thường của tủ lạnh – Phần 2 (Hình 4c & 4d – Trang 29, 30)',
+                        subtitle: 'Quan sát Hình 4c và Hình 4d để nhận diện biểu hiện bất thường và cách xử lí an toàn.',
+                        voiceText: 'Quan sát Hình 4c và Hình 4d trang 29. Ghi nhớ trang 30: Khi phát hiện tủ lạnh có dấu hiệu bất thường, cần thông báo ngay cho người lớn để giải quyết.',
+                        render: renderStep2_8
+                    },
+                    {
+                        title: 'Mẹo khử mùi & Vệ sinh tủ lạnh đúng cách (Trang 30)',
+                        subtitle: 'Bấm vào 3 nguyên liệu tự nhiên giúp khử mùi hôi cho tủ lạnh và tìm hiểu lợi ích của việc vệ sinh tủ.',
+                        voiceText: 'Khử mùi cho tủ lạnh: Em có thể đặt quả chanh cắt lát, vỏ cam quýt, hoặc bã cà phê vào trong tủ lạnh để khử mùi hôi. Vệ sinh tủ lạnh thường xuyên giúp loại bỏ mùi hôi, tiết kiệm điện và kéo dài thời gian sử dụng của tủ lạnh.',
+                        render: renderStep2_9
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-600 to-teal-700',
+                badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+                steps: [
+                    {
+                        title: 'Câu hỏi 1/6 – Phân biệt nhiệt độ và thời gian bảo quản thực phẩm',
+                        subtitle: 'Vận dụng kiến thức Mục 1 (Trang 26) về phương pháp làm lạnh và đông lạnh.',
+                        voiceText: 'Câu hỏi 1: Gia đình Lan mua một lượng cá thu tươi và muốn bảo quản để dùng dần trong khoảng 1 tháng. Theo em, Lan nên đặt khay cá thu này ở khoang nào và ở mức nhiệt độ bao nhiêu là phù hợp nhất?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi 2/6 – Tác hại của việc để thức ăn còn nóng vào tủ lạnh',
+                        subtitle: 'Giải thích cơ sở khoa học của lưu ý số 2 (Trang 29 SGK).',
+                        voiceText: 'Câu hỏi 2: Vì sao chúng ta KHÔNG được đặt ngay bát canh hoặc đĩa thức ăn vừa mới nấu chín còn đang bốc khói nóng vào bên trong tủ lạnh?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi 3/6 – Vì sao không nên chứa quá nhiều thực phẩm chật kín tủ lạnh?',
+                        subtitle: 'Hiểu rõ nguyên lí lưu thông khí lạnh trong các ngăn tủ (Hình 3a – Trang 28).',
+                        voiceText: 'Câu hỏi 3: Một số người cho rằng xếp thật nhiều thực phẩm chật kín hết mọi khoảng trống trong tủ lạnh sẽ giúp các thực phẩm truyền hơi lạnh cho nhau tốt hơn. Nhận định này đúng hay sai? Vì sao?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi 4/6 – Tác dụng của việc dùng màng bọc hoặc hộp đậy kín',
+                        subtitle: 'Phân tích lưu ý số 4 (Trang 29 SGK) và tình huống Hình 3b, 3c.',
+                        voiceText: 'Câu hỏi 4: Việc sử dụng màng bọc thực phẩm hoặc hộp có nắp đậy kín khi bảo quản thức ăn trong tủ lạnh mang lại tác dụng chính nào dưới đây?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Câu hỏi 5/6 – Cách xử lí an toàn khi khoang cấp đông bị đóng tuyết dày',
+                        subtitle: 'Vận dụng cách xử lí khi phát hiện biểu hiện bất thường ở Hình 4c (Trang 29, 30).',
+                        voiceText: 'Câu hỏi 5: Khi mở khoang cấp đông để lấy đá, Nam phát hiện lớp băng tuyết bám rất dày quanh thành tủ giống như Hình 4c. Cách xử lí nào dưới đây của Nam là ĐÚNG và AN TOÀN nhất?',
+                        render: renderStep3_5
+                    },
+                    {
+                        title: 'Câu hỏi 6/6 – Khử mùi và vệ sinh tủ lạnh hiệu quả',
+                        subtitle: 'Vận dụng kiến thức phần đọc thêm và lưu ý trang 30 SGK.',
+                        voiceText: 'Câu hỏi 6: Để loại bỏ mùi hôi trong tủ lạnh một cách an toàn cho sức khỏe, tiết kiệm điện và kéo dài tuổi thọ của tủ, chúng ta nên thực hiện biện pháp nào dưới đây?',
+                        render: renderStep3_6
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-600 to-indigo-700',
+                badgeBg: 'bg-purple-100 text-purple-900 border-purple-400',
+                steps: [
+                    {
+                        title: 'Thử thách: Siêu đầu bếp nhí sắp xếp tủ lạnh thông minh',
+                        subtitle: 'Xử lí đúng cách 4 món đồ mẹ mới đi chợ về trước khi xếp vào khoang tủ lạnh!',
+                        voiceText: 'Chào mừng em đến với thử thách Siêu đầu bếp nhí sắp xếp tủ lạnh thông minh! Em hãy thực hiện bước chuẩn bị an toàn cho từng món thực phẩm rồi chọn đúng khoang tủ lạnh nhé!',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Xử lí tình huống thực tế tại gia đình',
+                        subtitle: 'Vận dụng tổng hợp kiến thức đã học để tư vấn cho người thân trong gia đình.',
+                        voiceText: 'Tình huống thực tế tại gia đình: Cuối tuần, em cùng mẹ kiểm tra tủ lạnh thì thấy bên trong có mùi thức ăn lẫn lộn và có nhiều hộp thức ăn đã để quá lâu. Em sẽ đề xuất với mẹ cách làm nào dưới đây?',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Tổng kết bài học & Trao Huy hiệu Chuyên Gia Tủ Lạnh Nhí (Trang 30)',
+                        subtitle: 'Cùng nhìn lại kiến thức cốt lõi của Bài 6 và nhận huy hiệu khen thưởng!',
+                        voiceText: 'Chúc mừng các em đã hoàn thành xuất sắc Bài 6: Sử dụng tủ lạnh! Các em hãy chia sẻ với người thân trong gia đình về cách sắp xếp, bảo quản thực phẩm trong tủ lạnh đúng cách, an toàn nhé!',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 4. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI (CHỮ TO RÕ)
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-950', 'bg-rose-100', 'border-rose-500', 'text-rose-950');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shrink-0">✓</span>
+                        <span class="tv-body text-emerald-950">${message}</span>
+                    </div>
+                    <span class="tv-badge bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full shrink-0 border-2 border-amber-500">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-black text-2xl shrink-0">!</span>
+                        <span class="tv-body text-rose-950">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 5. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC TÁCH BIỆT)
+         **************************************************************/
+        // Bước 1/3: Mở khóa 4 mục tiêu bài học (Trang 26)
+        function renderStep1_1(container) {
+            const goals = [
+                { icon: '❄️', title: 'Mục tiêu 1', text: 'Trình bày được tác dụng của tủ lạnh trong gia đình.' },
+                { icon: '🧊', title: 'Mục tiêu 2', text: 'Nhận biết được vị trí, vai trò các khoang khác nhau trong tủ lạnh.' },
+                { icon: '🥗', title: 'Mục tiêu 3', text: 'Thực hiện được việc sắp xếp, bảo quản thực phẩm trong tủ lạnh đúng cách, an toàn.' },
+                { icon: '🔍', title: 'Mục tiêu 4', text: 'Nhận ra được một số biểu hiện bất thường của tủ lạnh trong quá trình sử dụng.' }
+            ];
+            const allDone = state.goalsUnlocked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-cyan-100 to-emerald-100 border-3 border-cyan-400 rounded-3xl p-4 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-600 text-white flex items-center justify-center text-3xl shrink-0 shadow">🎯</div>
+                        <div>
+                            <div class="tv-badge uppercase text-cyan-900">Học xong bài này, em sẽ đạt được 4 mục tiêu:</div>
+                            <p class="tv-body text-slate-800">👉 Em hãy bấm vào từng thẻ mục tiêu dưới đây để mở khóa bài học nhé!</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${goals.map((g, i) => {
+                            const unlocked = state.goalsUnlocked[i];
+                            return `
+                                <button onclick="unlockGoal6(${i})"
+                                    class="btn-kid text-left p-5 rounded-3xl border-4 flex items-start gap-4 transition-all ${
+                                        unlocked
+                                            ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
+                                            : 'bg-white hover:bg-cyan-50 border-slate-300 text-slate-900'
+                                    }">
+                                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 ${
+                                        unlocked ? 'bg-emerald-600 text-white font-black' : 'bg-cyan-100 border-2 border-cyan-300'
+                                    }">
+                                        ${unlocked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="tv-badge uppercase ${unlocked ? 'text-emerald-700' : 'text-cyan-700'}">
+                                            ${g.title} ${unlocked ? '• ĐÃ MỞ KHÓA' : '• BẤM ĐỂ MỞ'}
+                                        </div>
+                                        <div class="tv-card-title text-slate-900 mt-1">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Tuyệt vời! Em đã mở khóa đủ 4 mục tiêu của Bài 6: Sử dụng tủ lạnh!');
+            }
+        }
+
+        function unlockGoal6(idx) {
+            state.goalsUnlocked[idx] = true;
+            playSound('ice');
+            rewardStar('b6_goal_' + idx, 1);
+            if (state.goalsUnlocked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Tình huống mở đầu (Trang 26)
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    text: 'A. Vì mỗi loại thực phẩm cần nhiệt độ và vị trí bảo quản khác nhau trong các khoang, ngăn của tủ lạnh.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Mỗi khoang, ngăn trong tủ lạnh có mức nhiệt độ khác nhau nên cần xếp thực phẩm đúng vị trí để tươi ngon và an toàn.'
+                },
+                {
+                    text: 'B. Vì tất cả các ngăn trong tủ lạnh đều đóng đá cứng dưới 0°C nên để ngăn nào cũng giống hệt nhau.',
+                    correct: false,
+                    explain: 'Chưa đúng! Tủ lạnh có khoang cấp đông (dưới 0°C) và khoang làm lạnh (1°C đến 7°C), không phải ngăn nào cũng đóng đá.'
+                },
+                {
+                    text: 'C. Vì tủ lạnh chỉ dùng để cất giữ rau củ quả, còn thịt và cá tươi sống thì không được cho vào tủ lạnh.',
+                    correct: false,
+                    explain: 'Chưa đúng! Thịt, cá tươi sống rất cần được bảo quản trong tủ lạnh để không bị ôi thiu.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Tranh tình huống mẹ nhờ bạn nhỏ cất đồ vào tủ lạnh (Trang 26) -->
+                    <div class="lg:col-span-6 bg-gradient-to-br from-amber-50 via-cyan-50 to-sky-100 border-4 border-cyan-300 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="bg-white border-3 border-amber-400 rounded-2xl p-4 shadow-sm">
+                            <div class="tv-badge text-amber-800 uppercase mb-1">👩🏻 Mẹ đi chợ về nói với bạn nhỏ:</div>
+                            <p class="tv-card-title text-slate-900 italic">
+                                “Con cất đồ vào tủ lạnh giúp mẹ.”
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-around py-2">
+                            <div class="flex flex-col items-center">
+                                <div class="text-6xl">👩🏻🧺👦🏻</div>
+                                <span class="tv-badge bg-amber-100 text-amber-950 px-3 py-1 rounded-full mt-2 border border-amber-300">Giỏ thực phẩm mới mua</span>
+                            </div>
+                            <div class="text-4xl font-black text-cyan-600">➔ ❓ ➔</div>
+                            <div class="flex flex-col items-center">
+                                <div class="text-6xl">🧊🚪</div>
+                                <span class="tv-badge bg-cyan-200 text-cyan-950 px-3 py-1 rounded-full mt-2 border border-cyan-400">Tủ lạnh gia đình</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border-3 border-cyan-400 rounded-2xl p-4 shadow-sm">
+                            <div class="tv-badge text-cyan-800 uppercase mb-1">👦🏻 Bạn nhỏ băn khoăn suy nghĩ:</div>
+                            <p class="tv-card-title text-slate-900 italic">
+                                “Mình nên sắp xếp vào ngăn nào được nhỉ?”
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Câu hỏi tương tác -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Theo em, vì sao bạn nhỏ cần tìm hiểu để xếp từng loại thực phẩm vào đúng ngăn của tủ lạnh?
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerIntroScene6(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.introSceneDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.introSceneDone) {
+                showFeedback(true, 'Chính xác! Hiểu rõ các khoang, ngăn của tủ lạnh sẽ giúp chúng ta bảo quản thức ăn tươi ngon, an toàn.');
+            }
+        }
+
+        function answerIntroScene6(isCorrect, explain) {
+            if (isCorrect) {
+                state.introSceneDone = true;
+                playSound('correct');
+                rewardStar('intro_scene_6', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Câu hỏi mở màn so sánh bảo quản thực phẩm
+        function renderStep1_3(container) {
+            const options = [
+                {
+                    text: 'A. Thịt, cá sẽ bị ôi thiu, biến chất, có mùi hôi và không thể sử dụng được nữa do vi khuẩn phát triển nhanh ở nhiệt độ thường.',
+                    correct: true,
+                    explain: 'Đúng rồi! Ở nhiệt độ thường bên ngoài, thịt cá rất nhanh bị hỏng. Nhờ có tủ lạnh giữ nhiệt độ thấp mà thực phẩm giữ tươi lâu hơn!'
+                },
+                {
+                    text: 'B. Thịt, cá vẫn giữ nguyên độ tươi ngon suốt nhiều tuần mà không cần bất kỳ biện pháp bảo quản nào.',
+                    correct: false,
+                    explain: 'Chưa đúng! Thịt, cá tươi sống để ở ngoài nhiệt độ phòng mùa hè chỉ sau vài giờ là bắt đầu bị ôi thiu.'
+                },
+                {
+                    text: 'C. Thịt, cá sẽ tự động đông cứng lại thành đá giống như khi đặt trong ngăn đá tủ lạnh.',
+                    correct: false,
+                    explain: 'Chưa đúng! Nhiệt độ phòng bình thường không thể làm đông đá thực phẩm.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-rose-50 border-4 border-rose-300 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">🥩☀️🦠</div>
+                            <div>
+                                <div class="tv-badge uppercase text-rose-800">Để ngoài bàn bếp (Nhiệt độ phòng ~30°C)</div>
+                                <div class="tv-card-title text-slate-900">Không bảo quản lạnh suốt 2 ngày</div>
+                            </div>
+                        </div>
+                        <div class="bg-cyan-50 border-4 border-cyan-300 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">🥩❄️🧊</div>
+                            <div>
+                                <div class="tv-badge uppercase text-cyan-800">Đặt trong Tủ lạnh (Nhiệt độ thấp)</div>
+                                <div class="tv-card-title text-slate-900">Bảo quản lạnh hoặc đông lạnh</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Nếu để thịt, cá tươi sống ở ngoài nhiệt độ phòng suốt 2 ngày mùa hè mà không cho vào tủ lạnh thì điều gì sẽ xảy ra?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerWarmCompare6(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.warmCompareDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.warmCompareDone) {
+                showFeedback(true, 'Chính xác! Hãy sang Chặng 2: Khám phá để tìm hiểu kỹ hơn về tác dụng và cách sử dụng tủ lạnh nhé!');
+            }
+        }
+
+        function answerWarmCompare6(isCorrect, explain) {
+            if (isCorrect) {
+                state.warmCompareDone = true;
+                playSound('correct');
+                rewardStar('warm_compare_6', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 2: KHÁM PHÁ (9 BƯỚC TÁCH NHỎ TỪNG MỤC SGK)
+         **************************************************************/
+        // Bước 1/9: 1. Tác dụng của tủ lạnh (Trang 26)
+        function renderStep2_1(container) {
+            const isChill = state.tempMode === 'chill';
+            const bothSeen = state.tempTested.chill && state.tempTested.freeze;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-emerald-50 border-3 border-emerald-400 rounded-2xl p-3.5 text-center tv-body text-emerald-950">
+                        🌡️ <b>Mục 1 (Trang 26):</b> Bấm vào cả 2 phương pháp bảo quản dưới đây để so sánh nhiệt độ và thời gian bảo quản <b>thịt, cá</b>:
+                    </div>
+
+                    <!-- 2 Nút chọn phương pháp bảo quản -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="switchTempMode6('chill')"
+                            class="btn-kid p-5 rounded-3xl border-4 text-left flex items-center gap-4 ${
+                                isChill
+                                    ? 'bg-sky-100 border-sky-600 ring-4 ring-sky-300'
+                                    : 'bg-white hover:bg-sky-50 border-slate-300'
+                            }">
+                            <div class="w-16 h-16 rounded-2xl bg-sky-600 text-white flex items-center justify-center text-4xl shrink-0">💧</div>
+                            <div>
+                                <span class="tv-badge uppercase text-sky-800">Phương pháp 1 ${state.tempTested.chill ? '✓' : ''}</span>
+                                <h3 class="tv-card-title text-slate-900">Làm lạnh thực phẩm</h3>
+                                <div class="tv-body text-sky-900 mt-0.5">Nhiệt độ: <b>Từ 1 °C đến 7 °C</b></div>
+                            </div>
+                        </button>
+
+                        <button onclick="switchTempMode6('freeze')"
+                            class="btn-kid p-5 rounded-3xl border-4 text-left flex items-center gap-4 ${
+                                !isChill
+                                    ? 'bg-indigo-100 border-indigo-600 ring-4 ring-indigo-300'
+                                    : 'bg-white hover:bg-indigo-50 border-slate-300'
+                            }">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-4xl shrink-0">❄️</div>
+                            <div>
+                                <span class="tv-badge uppercase text-indigo-800">Phương pháp 2 ${state.tempTested.freeze ? '✓' : ''}</span>
+                                <h3 class="tv-card-title text-slate-900">Đông lạnh thực phẩm</h3>
+                                <div class="tv-body text-indigo-900 mt-0.5">Nhiệt độ: <b>Dưới 0 °C</b></div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Màn hình kết quả hiển thị trực quan chữ cực to -->
+                    <div class="bg-white border-4 ${isChill ? 'border-sky-500' : 'border-indigo-500'} rounded-3xl p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 rounded-2xl ${isChill ? 'bg-sky-50' : 'bg-indigo-50'} border-2 ${isChill ? 'border-sky-300' : 'border-indigo-300'}">
+                            <div class="text-6xl mb-2">${isChill ? '🥩🐟💧' : '🥩🐟🧊'}</div>
+                            <div class="px-5 py-2 rounded-2xl font-black text-2xl sm:text-3xl text-white ${isChill ? 'bg-sky-600' : 'bg-indigo-600'}">
+                                🌡️ ${isChill ? '1 °C đến 7 °C' : 'Dưới 0 °C'}
+                            </div>
+                        </div>
+                        <div class="lg:col-span-7 flex flex-col gap-2">
+                            <div class="tv-badge uppercase ${isChill ? 'text-sky-700' : 'text-indigo-700'}">
+                                Thời gian bảo quản thịt, cá:
+                            </div>
+                            <div class="tv-title ${isChill ? 'text-sky-900' : 'text-indigo-900'}">
+                                ⏳ ${isChill ? 'Từ 3 ngày đến 5 ngày' : 'Từ vài tuần tới vài tháng'}
+                            </div>
+                            <p class="tv-body text-slate-700 mt-1">
+                                ${isChill
+                                    ? 'Thực phẩm được giữ mát ở nhiệt độ từ 1 °C đến 7 °C, phù hợp để chế biến trong vài ngày gần nhất mà không cần rã đông lâu.'
+                                    : 'Thực phẩm được cấp đông ở nhiệt độ dưới 0 °C, giúp giữ thịt cá lâu dài từ vài tuần tới vài tháng.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Hộp Ghi nhớ trang 26 -->
+                    <div class="bg-cyan-100 border-3 border-cyan-500 rounded-3xl p-4 flex items-center gap-4">
+                        <span class="text-4xl shrink-0">🤖</span>
+                        <p class="tv-body text-cyan-950">
+                            <b>Ghi nhớ (Trang 26):</b> Tủ lạnh là thiết bị điện phổ biến trong gia đình. Tủ lạnh có chức năng chính là <b>bảo quản thực phẩm ở nhiệt độ thấp</b>, giúp <b>kéo dài thời gian sử dụng</b>.
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (bothSeen) {
+                rewardStar('step2_1_temp', 1);
+                showFeedback(true, 'Xuất sắc! Em đã nắm rõ 2 mức nhiệt độ làm lạnh (1°C đến 7°C) và đông lạnh (dưới 0°C) của tủ lạnh!');
+            }
+        }
+
+        function switchTempMode6(mode) {
+            playSound('ice');
+            state.tempMode = mode;
+            state.tempTested[mode] = true;
+            renderApp();
+        }
+
+        // Bước 2/9: 2. Vị trí, vai trò các khoang trong tủ lạnh (Hình 1 - Trang 27)
+        function renderStep2_2(container) {
+            const bothDone = state.fig1Compartment1Done && state.fig1Compartment2Done;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Sơ đồ Hình 1 (Tủ lạnh 2 khoang mở cửa) -->
+                    <div class="lg:col-span-5 bg-slate-50 border-4 border-cyan-300 rounded-3xl p-4 flex flex-col items-center">
+                        <div class="tv-badge text-cyan-900 uppercase mb-2">Hình 1 (Trang 27) – Sơ đồ các khoang tủ lạnh</div>
+                        <svg viewBox="0 0 360 320" class="w-full max-w-[350px] h-auto">
+                            <!-- Thân tủ chính -->
+                            <rect x="65" y="12" width="165" height="295" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="4"/>
+                            <!-- Khoang 1 (Trên) -->
+                            <rect x="73" y="20" width="149" height="86" rx="4" fill="#cffafe" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5 3"/>
+                            <line x1="73" y1="64" x2="222" y2="64" stroke="#94a3b8" stroke-width="3"/>
+                            <!-- Hộp thực phẩm & khay đá trong Khoang 1 -->
+                            <rect x="85" y="42" width="24" height="18" rx="2" fill="#a3e635" stroke="#365314" stroke-width="1.5"/>
+                            <rect x="118" y="42" width="24" height="18" rx="2" fill="#facc15" stroke="#713f12" stroke-width="1.5"/>
+                            <rect x="85" y="75" width="38" height="22" rx="3" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+                            <ellipse cx="155" cy="90" rx="24" ry="10" fill="#fb7185"/>
+
+                            <!-- Khoang 2 (Dưới) -->
+                            <rect x="73" y="114" width="149" height="185" rx="4" fill="#f0f9ff" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5 3"/>
+                            <line x1="73" y1="155" x2="222" y2="155" stroke="#94a3b8" stroke-width="2.5"/>
+                            <line x1="73" y1="198" x2="222" y2="198" stroke="#94a3b8" stroke-width="2.5"/>
+                            <line x1="73" y1="242" x2="222" y2="242" stroke="#94a3b8" stroke-width="2.5"/>
+                            <!-- Rau củ quả ở ngăn dưới cùng -->
+                            <rect x="80" y="250" width="64" height="42" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+                            <circle cx="98" cy="272" r="10" fill="#a855f7"/><circle cx="122" cy="272" r="10" fill="#15803d"/>
+                            <rect x="150" y="250" width="64" height="42" rx="4" fill="#fef9c3" stroke="#eab308" stroke-width="1.5"/>
+                            <circle cx="168" cy="272" r="9" fill="#f97316"/><circle cx="192" cy="272" r="9" fill="#ef4444"/>
+
+                            <!-- Cánh cửa tủ mở bên phải -->
+                            <polygon points="230,20 335,10 335,102 230,106" fill="#dbeafe" stroke="#475569" stroke-width="3"/>
+                            <polygon points="230,114 335,108 335,308 230,299" fill="#e0f2fe" stroke="#475569" stroke-width="3"/>
+                            <!-- Chai nước ở cánh cửa -->
+                            <rect x="255" y="242" width="18" height="45" rx="4" fill="#38bdf8"/>
+                            <rect x="280" y="242" width="18" height="45" rx="4" fill="#38bdf8"/>
+                            <rect x="305" y="242" width="18" height="45" rx="4" fill="#38bdf8"/>
+
+                            <!-- Nhãn số (1) và (2) -->
+                            <line x1="36" y1="62" x2="73" y2="62" stroke="#ef4444" stroke-width="3" stroke-dasharray="4 3"/>
+                            <circle cx="24" cy="62" r="16" fill="#ffffff" stroke="#ef4444" stroke-width="3"/>
+                            <text x="24" y="68" text-anchor="middle" font-size="18" font-weight="900" fill="#0f172a">1</text>
+
+                            <line x1="36" y1="198" x2="73" y2="198" stroke="#ef4444" stroke-width="3" stroke-dasharray="4 3"/>
+                            <circle cx="24" cy="198" r="16" fill="#ffffff" stroke="#ef4444" stroke-width="3"/>
+                            <text x="24" y="204" text-anchor="middle" font-size="18" font-weight="900" fill="#0f172a">2</text>
+                        </svg>
+                    </div>
+
+                    <!-- Cột phải: Bài tập ghép thẻ cho Vị trí (1) và Vị trí (2) -->
+                    <div class="lg:col-span-7 flex flex-col gap-4">
+                        <!-- Hộp Vị trí (1) -->
+                        <div class="bg-white border-4 ${state.fig1Compartment1Done ? 'border-emerald-500 bg-emerald-50/40' : 'border-cyan-400'} rounded-3xl p-4 flex flex-col gap-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="tv-badge bg-rose-600 text-white px-3.5 py-1 rounded-full">Vị trí số (1) – Khoang phía trên</span>
+                                <span class="tv-badge text-emerald-700">${state.fig1Compartment1Done ? '✓ Đã ghép đúng' : 'Chọn thẻ phù hợp:'}</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <button onclick="matchFig1Compartment(1, true)"
+                                    ${state.fig1Compartment1Done ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.fig1Compartment1Done
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-cyan-50 hover:bg-cyan-100 text-slate-900 border-cyan-300'
+                                    }">
+                                    <b>A. Khoang cấp đông</b> — <i>b) Để làm đá và bảo quản đông lạnh thực phẩm</i>
+                                </button>
+                                <button onclick="matchFig1Compartment(1, false)"
+                                    ${state.fig1Compartment1Done ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300">
+                                    <b>B. Khoang làm lạnh</b> — <i>a) Để bảo quản lạnh thực phẩm</i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hộp Vị trí (2) -->
+                        <div class="bg-white border-4 ${state.fig1Compartment2Done ? 'border-emerald-500 bg-emerald-50/40' : 'border-sky-400'} rounded-3xl p-4 flex flex-col gap-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="tv-badge bg-sky-700 text-white px-3.5 py-1 rounded-full">Vị trí số (2) – Khoang phía dưới</span>
+                                <span class="tv-badge text-emerald-700">${state.fig1Compartment2Done ? '✓ Đã ghép đúng' : 'Chọn thẻ phù hợp:'}</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <button onclick="matchFig1Compartment(2, false)"
+                                    ${state.fig1Compartment2Done ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300">
+                                    <b>A. Khoang cấp đông</b> — <i>b) Để làm đá và bảo quản đông lạnh thực phẩm</i>
+                                </button>
+                                <button onclick="matchFig1Compartment(2, true)"
+                                    ${state.fig1Compartment2Done ? 'disabled' : ''}
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.fig1Compartment2Done
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-sky-50 hover:bg-sky-100 text-slate-900 border-sky-300'
+                                    }">
+                                    <b>B. Khoang làm lạnh</b> — <i>a) Để bảo quản lạnh thực phẩm</i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hộp Ghi nhớ trang 27 -->
+                        <div class="bg-cyan-100 border-3 border-cyan-500 rounded-2xl p-3.5 flex items-center gap-3">
+                            <span class="text-3xl shrink-0">🤖</span>
+                            <p class="tv-body text-cyan-950">
+                                <b>Ghi nhớ (Trang 27):</b> Tủ lạnh thường gồm hai khoang: <b>khoang làm lạnh</b> và <b>khoang cấp đông</b>. Trong mỗi khoang thường có các ngăn để thuận tiện sắp xếp và bảo quản thực phẩm.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (bothDone) {
+                showFeedback(true, 'Hoàn toàn chính xác! Số (1) là Khoang cấp đông (B - b) và Số (2) là Khoang làm lạnh (A - a).');
+            }
+        }
+
+        function matchFig1Compartment(posNum, isRight) {
+            if (isRight) {
+                if (posNum === 1) state.fig1Compartment1Done = true;
+                if (posNum === 2) state.fig1Compartment2Done = true;
+                playSound('door');
+                rewardStar('fig1_comp_' + posNum, 1);
+                if (state.fig1Compartment1Done && state.fig1Compartment2Done) playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa đúng với Vị trí số (${posNum})! Em hãy quan sát khay làm đá ở ngăn trên và rau củ quả ở ngăn dưới trong Hình 1 nhé.`);
+            }
+        }
+
+        // Bước 3/9: 3. Sắp xếp thực phẩm Hình 2 (Phần 1: a, d, b - Trang 28)
+        const FIG2_PART1_ITEMS = [
+            {
+                key: 'a',
+                name: 'Hình 2a: Khay thịt tươi sống (đã bọc màng bọc)',
+                emoji: '🥩',
+                correctZone: 'Khoang cấp đông (nếu bảo quản lâu ngày) hoặc ngăn thịt cá tươi',
+                options: [
+                    'Khoang cấp đông (nếu bảo quản lâu ngày) hoặc ngăn thịt cá tươi',
+                    'Cánh cửa tủ lạnh (nơi để chai nước)',
+                    'Hộc đựng rau củ quả tươi ở dưới cùng'
+                ]
+            },
+            {
+                key: 'd',
+                name: 'Hình 2d: Khay làm đá viên màu xanh',
+                emoji: '🧊',
+                correctZone: 'Khoang cấp đông (ngăn trên cùng dưới 0 °C)',
+                options: [
+                    'Ngăn đựng rau củ quả tươi',
+                    'Khoang cấp đông (ngăn trên cùng dưới 0 °C)',
+                    'Ngăn kệ dưới của cánh cửa tủ lạnh'
+                ]
+            },
+            {
+                key: 'b',
+                name: 'Hình 2b: Vỉ trứng gà tươi',
+                emoji: '🥚',
+                correctZone: 'Khoang làm lạnh (ngăn mát / khay đựng trứng)',
+                options: [
+                    'Khoang cấp đông để trứng đông cứng thành đá',
+                    'Khoang làm lạnh (ngăn mát / khay đựng trứng)',
+                    'Đặt sát dàn làm đá của ngăn cấp đông'
+                ]
+            }
+        ];
+
+        function renderStep2_3(container) {
+            const doneCount = Object.keys(state.fig2Part1Sorted).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3 text-center tv-body text-sky-950">
+                        ❄️ <b>Mục 3 – Sắp xếp thực phẩm Hình 2 (Phần 1/2):</b> Em hãy chọn đúng vị trí bảo quản cho 3 thực phẩm dưới đây (${doneCount}/3):
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        ${FIG2_PART1_ITEMS.map(item => {
+                            const matched = state.fig2Part1Sorted[item.key];
+                            return `
+                                <div class="bg-white rounded-3xl border-4 p-4 flex flex-col justify-between gap-3 ${
+                                    matched ? 'border-emerald-500 bg-emerald-50/40' : 'border-cyan-300'
+                                }">
+                                    <div>
+                                        <span class="tv-badge bg-cyan-700 text-white px-3 py-1 rounded-xl">Hình 2${item.key}</span>
+                                        <div class="text-6xl text-center my-3 py-3 bg-cyan-50 rounded-2xl border border-cyan-200">${item.emoji}</div>
+                                        <h4 class="tv-card-title text-slate-900">${item.name}</h4>
+                                    </div>
+
+                                    <div class="flex flex-col gap-2">
+                                        <div class="text-xs sm:text-sm font-black text-cyan-800 uppercase">👇 Xếp vào vị trí nào của tủ lạnh?</div>
+                                        ${item.options.map(opt => {
+                                            const isRightSelected = matched === opt;
+                                            return `
+                                                <button onclick="checkFig2Part1('${item.key}', '${opt}')"
+                                                    ${matched ? 'disabled' : ''}
+                                                    class="btn-kid text-left p-3 rounded-2xl border-2 text-sm sm:text-lg font-extrabold ${
+                                                        isRightSelected
+                                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                                            : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                                    }">
+                                                    ${isRightSelected ? '✓ ' : ''}${opt}
+                                                </button>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (doneCount === 3) {
+                showFeedback(true, 'Tuyệt vời! Em đã xếp đúng vị trí cho Khay thịt (2a), Khay làm đá (2d) và Vỉ trứng (2b)!');
+            }
+        }
+
+        function checkFig2Part1(key, chosenOpt) {
+            const item = FIG2_PART1_ITEMS.find(x => x.key === key);
+            if (item && item.correctZone === chosenOpt) {
+                state.fig2Part1Sorted[key] = chosenOpt;
+                playSound('door');
+                rewardStar('fig2_p1_' + key, 1);
+                if (Object.keys(state.fig2Part1Sorted).length === 3) playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Vị trí đó chưa phù hợp với Hình 2${key}! Em hãy suy nghĩ về nhiệt độ bảo quản của món đồ này nhé.`);
+            }
+        }
+
+        // Bước 4/9: 3. Sắp xếp thực phẩm Hình 2 (Phần 2: c, e, g - Trang 28)
+        const FIG2_PART2_ITEMS = [
+            {
+                key: 'c',
+                name: 'Hình 2c: Rau, củ, quả tươi (súp lơ, bắp cải, dưa chuột)',
+                emoji: '🥦🥬🥒',
+                correctZone: 'Ngăn (hộc) đựng rau củ quả ở dưới cùng của Khoang làm lạnh',
+                options: [
+                    'Khoang cấp đông để rau củ đông thành đá',
+                    'Ngăn (hộc) đựng rau củ quả ở dưới cùng của Khoang làm lạnh',
+                    'Khay làm đá viên trên cùng'
+                ]
+            },
+            {
+                key: 'e',
+                name: 'Hình 2e: Khay rau củ cắt sẵn đã bọc màng bọc thực phẩm',
+                emoji: '🌽🥕🫛',
+                correctZone: 'Ngăn kệ trong Khoang làm lạnh (ngăn mát 1 °C đến 7 °C)',
+                options: [
+                    'Ngăn kệ trong Khoang làm lạnh (ngăn mát 1 °C đến 7 °C)',
+                    'Để bên ngoài nóc tủ lạnh',
+                    'Đổ trực tiếp vào khay làm đá viên'
+                ]
+            },
+            {
+                key: 'g',
+                name: 'Hình 2g: Hộp sữa tươi tiệt trùng',
+                emoji: '🥛',
+                correctZone: 'Khoang làm lạnh (kệ cánh cửa tủ hoặc ngăn mát)',
+                options: [
+                    'Khoang cấp đông để hộp sữa đóng băng phồng rách',
+                    'Khoang làm lạnh (kệ cánh cửa tủ hoặc ngăn mát)',
+                    'Ngăn làm đá viên dưới 0 °C'
+                ]
+            }
+        ];
+
+        function renderStep2_4(container) {
+            const doneCount = Object.keys(state.fig2Part2Sorted).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3 text-center tv-body text-sky-950">
+                        🥗 <b>Mục 3 – Sắp xếp thực phẩm Hình 2 (Phần 2/2):</b> Em hãy chọn đúng vị trí bảo quản cho 3 thực phẩm tiếp theo (${doneCount}/3):
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        ${FIG2_PART2_ITEMS.map(item => {
+                            const matched = state.fig2Part2Sorted[item.key];
+                            return `
+                                <div class="bg-white rounded-3xl border-4 p-4 flex flex-col justify-between gap-3 ${
+                                    matched ? 'border-emerald-500 bg-emerald-50/40' : 'border-cyan-300'
+                                }">
+                                    <div>
+                                        <span class="tv-badge bg-cyan-700 text-white px-3 py-1 rounded-xl">Hình 2${item.key}</span>
+                                        <div class="text-6xl text-center my-3 py-3 bg-cyan-50 rounded-2xl border border-cyan-200">${item.emoji}</div>
+                                        <h4 class="tv-card-title text-slate-900">${item.name}</h4>
+                                    </div>
+
+                                    <div class="flex flex-col gap-2">
+                                        <div class="text-xs sm:text-sm font-black text-cyan-800 uppercase">👇 Xếp vào vị trí nào của tủ lạnh?</div>
+                                        ${item.options.map(opt => {
+                                            const isRightSelected = matched === opt;
+                                            return `
+                                                <button onclick="checkFig2Part2('${item.key}', '${opt}')"
+                                                    ${matched ? 'disabled' : ''}
+                                                    class="btn-kid text-left p-3 rounded-2xl border-2 text-sm sm:text-lg font-extrabold ${
+                                                        isRightSelected
+                                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                                            : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                                    }">
+                                                    ${isRightSelected ? '✓ ' : ''}${opt}
+                                                </button>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (doneCount === 3) {
+                showFeedback(true, 'Xuất sắc! Em đã hoàn thành việc sắp xếp cả 6 loại thực phẩm trong Hình 2 vào tủ lạnh đúng cách!');
+            }
+        }
+
+        function checkFig2Part2(key, chosenOpt) {
+            const item = FIG2_PART2_ITEMS.find(x => x.key === key);
+            if (item && item.correctZone === chosenOpt) {
+                state.fig2Part2Sorted[key] = chosenOpt;
+                playSound('door');
+                rewardStar('fig2_p2_' + key, 1);
+                if (Object.keys(state.fig2Part2Sorted).length === 3) playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Vị trí đó chưa đúng với Hình 2${key}! Rau củ và sữa tươi cần bảo quản ở Khoang làm lạnh (ngăn mát) nhé.`);
+            }
+        }
+
+        // Bước 5/9: Quan sát Hình 3a & Hình 3b (Trang 28)
+        function renderStep2_5(container) {
+            const aDone = state.fig3abChecked['a'];
+            const bDone = state.fig3abChecked['b'];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                    <!-- Hình 3a -->
+                    <div class="bg-white border-4 ${aDone ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300'} rounded-3xl p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="tv-badge bg-slate-800 text-white px-3.5 py-1 rounded-full">Hình 3a (Trang 28)</span>
+                                <span class="tv-badge ${aDone ? 'text-rose-700' : 'text-slate-500'}">${aDone ? '⚠️ KHÔNG ĐÚNG CÁCH' : 'Hãy đánh giá:'}</span>
+                            </div>
+                            <!-- Minh họa Hình 3a: Tủ lạnh nhồi nhét quá đầy -->
+                            <div class="my-3 p-4 bg-slate-100 rounded-2xl border-3 border-slate-400 text-center">
+                                <div class="text-5xl tracking-tighter">🥩🍞🧀🥫🍱🥟🍖📦</div>
+                                <div class="tv-body text-slate-800 mt-2">
+                                    Thực phẩm chất chồng chật cứng không còn khe hở trong ngăn tủ lạnh.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="checkFig3ab('a', true)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                    aDone ? 'bg-rose-600 text-white border-rose-800' : 'bg-white hover:bg-rose-50 text-slate-900 border-slate-300'
+                                }">
+                                ❌ <b>Không đúng cách:</b> Chứa quá nhiều thực phẩm chật kín tủ lạnh làm khí lạnh không lưu thông được, thực phẩm nhanh hỏng và tốn điện.
+                            </button>
+                            <button onclick="checkFig3ab('a', false)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-white hover:bg-sky-50 text-slate-900 border-slate-300">
+                                ✅ <b>Đúng cách:</b> Nhồi càng đầy thực phẩm thì tủ lạnh càng giữ nhiệt tốt hơn.
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hình 3b -->
+                    <div class="bg-white border-4 ${bDone ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300'} rounded-3xl p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="tv-badge bg-slate-800 text-white px-3.5 py-1 rounded-full">Hình 3b (Trang 28)</span>
+                                <span class="tv-badge ${bDone ? 'text-rose-700' : 'text-slate-500'}">${bDone ? '⚠️ KHÔNG ĐÚNG CÁCH' : 'Hãy đánh giá:'}</span>
+                            </div>
+                            <!-- Minh họa Hình 3b: Thịt sống, gà, bánh ngọt để trần không bọc -->
+                            <div class="my-3 p-4 bg-slate-100 rounded-2xl border-3 border-slate-400 text-center">
+                                <div class="text-5xl">🥩 🍗 🍰 🍎 🍊</div>
+                                <div class="tv-body text-slate-800 mt-2">
+                                    Đĩa thịt tươi sống, gà và miếng bánh kem để chung ngăn mà không có màng bọc hay hộp đậy kín.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="checkFig3ab('b', false)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-white hover:bg-sky-50 text-slate-900 border-slate-300">
+                                ✅ <b>Đúng cách:</b> Để trần không cần bọc giúp thịt sống và bánh kem nhanh lạnh hơn.
+                            </button>
+                            <button onclick="checkFig3ab('b', true)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                    bDone ? 'bg-rose-600 text-white border-rose-800' : 'bg-white hover:bg-rose-50 text-slate-900 border-slate-300'
+                                }">
+                                ❌ <b>Không đúng cách:</b> Không dùng màng bọc hoặc hộp đựng kín khiến vi khuẩn và mùi từ thịt sống lây nhiễm chéo sang bánh và hoa quả.
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (aDone && bDone) {
+                showFeedback(true, 'Chính xác! Cả Hình 3a (chứa quá nhiều thực phẩm) và Hình 3b (không dùng màng bọc/hộp kín) đều KHÔNG đúng cách!');
+            }
+        }
+
+        function checkFig3ab(key, isRightChoice) {
+            if (isRightChoice) {
+                state.fig3abChecked[key] = true;
+                playSound('correct');
+                rewardStar('fig3ab_' + key, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa đúng! Em hãy quan sát kỹ Hình 3${key} xem cách để thực phẩm như vậy có hợp vệ sinh và thông thoáng không nhé.`);
+            }
+        }
+
+        // Bước 6/9: Quan sát Hình 3c & Hình 3d + Hộp Ghi nhớ 4 lưu ý (Trang 28, 29)
+        function renderStep2_6(container) {
+            const cDone = state.fig3cdChecked['c'];
+            const dDone = state.fig3cdChecked['d'];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Hình 3c -->
+                        <div class="bg-white border-4 ${cDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-300'} rounded-3xl p-4 flex flex-col justify-between gap-2.5">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="tv-badge bg-slate-800 text-white px-3.5 py-1 rounded-full">Hình 3c (Trang 28)</span>
+                                    <span class="tv-badge ${cDone ? 'text-emerald-700' : 'text-slate-500'}">${cDone ? '✓ ĐÚNG CÁCH' : 'Hãy đánh giá:'}</span>
+                                </div>
+                                <div class="my-2 p-3 bg-emerald-50 rounded-2xl border-2 border-emerald-300 text-center">
+                                    <div class="text-4xl">🥡 🥗 🥛 🥚 (Đậy hộp kín & ngăn nắp)</div>
+                                    <div class="tv-body text-slate-800 mt-1">
+                                        Thực phẩm được đựng trong hộp đậy nắp kín hoặc bọc màng bọc, xếp gọn gàng, vừa phải.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button onclick="checkFig3cd('c', true)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left text-sm sm:text-base font-extrabold ${
+                                        cDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white hover:bg-emerald-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ✅ <b>Đúng cách:</b> Có hộp đựng/màng bọc kín và xếp thông thoáng.
+                                </button>
+                                <button onclick="checkFig3cd('c', false)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left text-sm sm:text-base font-extrabold bg-white hover:bg-rose-50 text-slate-900 border-slate-300">
+                                    ❌ <b>Không đúng cách:</b> Không nên đậy nắp hộp trong tủ lạnh.
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hình 3d -->
+                        <div class="bg-white border-4 ${dDone ? 'border-rose-500 bg-rose-50/30' : 'border-slate-300'} rounded-3xl p-4 flex flex-col justify-between gap-2.5">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="tv-badge bg-slate-800 text-white px-3.5 py-1 rounded-full">Hình 3d (Trang 28)</span>
+                                    <span class="tv-badge ${dDone ? 'text-rose-700' : 'text-slate-500'}">${dDone ? '⚠️ KHÔNG ĐÚNG CÁCH' : 'Hãy đánh giá:'}</span>
+                                </div>
+                                <div class="my-2 p-3 bg-rose-50 rounded-2xl border-2 border-rose-300 text-center">
+                                    <div class="text-4xl">🍲♨️💨 (Đĩa thức ăn đang bốc khói nóng)</div>
+                                    <div class="tv-body text-slate-800 mt-1">
+                                        Đặt ngay đĩa thức ăn vừa nấu xong còn đang bốc hơi nóng vào bên trong tủ lạnh.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button onclick="checkFig3cd('d', false)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left text-sm sm:text-base font-extrabold bg-white hover:bg-emerald-50 text-slate-900 border-slate-300">
+                                    ✅ <b>Đúng cách:</b> Cho đồ nóng vào tủ lạnh để làm nguội nhanh.
+                                </button>
+                                <button onclick="checkFig3cd('d', true)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left text-sm sm:text-base font-extrabold ${
+                                        dDone ? 'bg-rose-600 text-white border-rose-800' : 'bg-white hover:bg-rose-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ❌ <b>Không đúng cách:</b> Không để thực phẩm còn nóng vào tủ lạnh.
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hộp Ghi nhớ 4 lưu ý vàng Trang 29 SGK -->
+                    <div class="bg-cyan-100 border-3 border-cyan-500 rounded-3xl p-4">
+                        <div class="tv-badge uppercase text-cyan-900 mb-1">🤖 Ghi nhớ 4 lưu ý khi sắp xếp, bảo quản thực phẩm (Trang 29):</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 tv-body text-cyan-950">
+                            <div><b>1.</b> Dùng khoang cấp đông để làm đá, đông lạnh; khoang làm lạnh để bảo quản lạnh.</div>
+                            <div><b>2.</b> Không để thực phẩm còn nóng vào bên trong tủ lạnh.</div>
+                            <div><b>3.</b> Không chứa quá nhiều thực phẩm trong tủ lạnh.</div>
+                            <div><b>4.</b> Sử dụng màng bọc hoặc hộp đựng để bảo quản thực phẩm trong tủ lạnh.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (cDone && dDone) {
+                showFeedback(true, 'Tổng kết Hình 3: Các hình KHÔNG đúng cách là Hình 3a, Hình 3b và Hình 3d. Chỉ có Hình 3c là đúng cách!');
+            }
+        }
+
+        function checkFig3cd(key, isRightChoice) {
+            if (isRightChoice) {
+                state.fig3cdChecked[key] = true;
+                playSound('correct');
+                rewardStar('fig3cd_' + key, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa chính xác! Em hãy xem lại đĩa thức ăn đang bốc khói nóng ở Hình 3d và các hộp đậy kín ở Hình 3c nhé.`);
+            }
+        }
+
+        // Bước 7/9: 4. Một số biểu hiện bất thường của tủ lạnh - Phần 1 (Hình 4a & 4b - Trang 29)
+        function renderStep2_7(container) {
+            const aDone = state.fig4abSolved['a'];
+            const bDone = state.fig4abSolved['b'];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                    <!-- Tình huống Hình 4a -->
+                    <div class="bg-white border-4 ${aDone ? 'border-emerald-500' : 'border-amber-400'} rounded-3xl p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="tv-badge bg-amber-600 text-white px-3.5 py-1 rounded-full">Hình 4a (Trang 29)</span>
+                                <button onclick="playSound('buzz')" class="tv-badge bg-amber-100 text-amber-900 px-3 py-1 rounded-xl border border-amber-400">🔊 Nghe tiếng ù ù</button>
+                            </div>
+                            <div class="my-3 p-4 bg-amber-50 rounded-2xl border-2 border-amber-300 flex items-center justify-around">
+                                <div class="text-6xl fridge-shake">🧊🔊⚡</div>
+                                <div class="text-6xl">👦🏻🙉</div>
+                            </div>
+                            <p class="tv-body text-slate-800">
+                                Bạn nam phải lấy hai tay bịt chặt hai tai khi đứng gần chiếc tủ lạnh đang rung lắc. Biểu hiện bất thường ở Hình 4a là gì?
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="solveFig4('ab', 'a', true)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                    aDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                }">
+                                ${aDone ? '✓ ' : ''}A. Tủ lạnh phát ra tiếng ồn lớn, kêu to bất thường khi hoạt động.
+                            </button>
+                            <button onclick="solveFig4('ab', 'a', false)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300">
+                                B. Tủ lạnh đang phát nhạc giải trí cho gia đình nghe.
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tình huống Hình 4b -->
+                    <div class="bg-white border-4 ${bDone ? 'border-emerald-500' : 'border-amber-400'} rounded-3xl p-5 flex flex-col justify-between gap-3">
+                        <div>
+                            <span class="tv-badge bg-amber-600 text-white px-3.5 py-1 rounded-full">Hình 4b (Trang 29)</span>
+                            <div class="my-3 p-4 bg-amber-50 rounded-2xl border-2 border-amber-300 flex items-center justify-around">
+                                <div class="text-6xl">🚪🤢💨</div>
+                                <div class="text-6xl">👧🏻🤏👃</div>
+                            </div>
+                            <p class="tv-body text-slate-800">
+                                Khi mở cánh cửa tủ lạnh ra, bạn nữ phải lấy tay bịt mũi vì khó chịu. Biểu hiện bất thường ở Hình 4b là gì?
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            <button onclick="solveFig4('ab', 'b', false)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300">
+                                A. Tủ lạnh tỏa ra mùi hương thơm mát của hoa quả tươi.
+                            </button>
+                            <button onclick="solveFig4('ab', 'b', true)"
+                                class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                    bDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-amber-50 text-slate-900 border-slate-300'
+                                }">
+                                ${bDone ? '✓ ' : ''}B. Tủ lạnh bốc mùi hôi khó chịu do thực phẩm hỏng hoặc không bọc kín.
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (aDone && bDone) {
+                showFeedback(true, 'Chính xác! Hình 4a là tủ lạnh phát tiếng ồn lớn bất thường; Hình 4b là tủ lạnh có mùi hôi khó chịu.');
+            }
+        }
+
+        // Bước 8/9: 4. Một số biểu hiện bất thường của tủ lạnh - Phần 2 (Hình 4c & 4d - Trang 29, 30)
+        function renderStep2_8(container) {
+            const cDone = state.fig4cdSolved['c'];
+            const dDone = state.fig4cdSolved['d'];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Hình 4c -->
+                        <div class="bg-white border-4 ${cDone ? 'border-emerald-500' : 'border-cyan-400'} rounded-3xl p-4 flex flex-col justify-between gap-2.5">
+                            <div>
+                                <span class="tv-badge bg-cyan-700 text-white px-3.5 py-1 rounded-full">Hình 4c (Trang 29)</span>
+                                <div class="my-2 p-3 bg-cyan-50 rounded-2xl border-2 border-cyan-300 flex items-center justify-around">
+                                    <div class="text-5xl">🧊❄️🥶</div>
+                                    <div class="tv-body text-slate-800 max-w-md">
+                                        Trong khoang cấp đông xuất hiện lớp băng tuyết và nhũ đá bám dày đặc kín cả ngăn tủ.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button onclick="solveFig4('cd', 'c', true)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left tv-option ${
+                                        cDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${cDone ? '✓ ' : ''}A. Khoang cấp đông bị đóng tuyết dày bất thường.
+                                </button>
+                                <button onclick="solveFig4('cd', 'c', false)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300">
+                                    B. Khoang cấp đông hoạt động tốt vì càng nhiều tuyết càng tiết kiệm điện.
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hình 4d -->
+                        <div class="bg-white border-4 ${dDone ? 'border-emerald-500' : 'border-cyan-400'} rounded-3xl p-4 flex flex-col justify-between gap-2.5">
+                            <div>
+                                <span class="tv-badge bg-cyan-700 text-white px-3.5 py-1 rounded-full">Hình 4d (Trang 29)</span>
+                                <div class="my-2 p-3 bg-cyan-50 rounded-2xl border-2 border-cyan-300 flex items-center justify-around">
+                                    <div class="text-5xl">🧊💧👦🏻😓</div>
+                                    <div class="tv-body text-slate-800 max-w-md">
+                                        Nước chảy tràn ra sàn nhà ngay dưới chân tủ lạnh khiến bạn nam lo lắng gãi đầu.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button onclick="solveFig4('cd', 'd', false)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300">
+                                    A. Tủ lạnh tự động lau nhà giúp gia đình.
+                                </button>
+                                <button onclick="solveFig4('cd', 'd', true)"
+                                    class="btn-kid p-3 rounded-2xl border-3 text-left tv-option ${
+                                        dDone ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-cyan-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${dDone ? '✓ ' : ''}B. Tủ lạnh bị rò rỉ, chảy nước ra sàn nhà (hoặc mất lạnh làm đá tan chảy).
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hộp Ghi nhớ trang 30 -->
+                    <div class="bg-rose-100 border-3 border-rose-500 rounded-3xl p-4 flex items-center gap-4">
+                        <span class="text-4xl shrink-0">🚨</span>
+                        <p class="tv-body text-rose-950">
+                            <b>Ghi nhớ an toàn (Trang 30):</b> Khi phát hiện tủ lạnh có dấu hiệu bất thường (kêu to, có mùi hôi, đóng tuyết dày, chảy nước,...), em <b>cần thông báo ngay cho người lớn để giải quyết</b>, tuyệt đối không tự ý tháo lắp hay sửa chữa điện!
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (cDone && dDone) {
+                showFeedback(true, 'Giỏi lắm! Em đã nhận biết đầy đủ cả 4 biểu hiện bất thường của tủ lạnh trong Hình 4 và cách xử lí an toàn!');
+            }
+        }
+
+        function solveFig4(group, key, isRight) {
+            if (isRight) {
+                if (group === 'ab') state.fig4abSolved[key] = true;
+                if (group === 'cd') state.fig4cdSolved[key] = true;
+                playSound('correct');
+                rewardStar('fig4_' + key, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Chưa đúng với Hình 4${key}! Em hãy quan sát kỹ biểu cảm của bạn nhỏ và hiện tượng ở tủ lạnh nhé.`);
+            }
+        }
+
+        // Bước 9/9: Mẹo khử mùi cho tủ lạnh & Vệ sinh tủ lạnh (Trang 30)
+        const DEODOR_ITEMS = [
+            {
+                key: 'orange',
+                name: '1. Vỏ cam, quýt tươi',
+                emoji: '🍊',
+                desc: 'Vỏ cam, quýt chứa tinh dầu thơm tự nhiên giúp hấp thụ mùi hôi của thực phẩm và mang lại hương thơm dịu mát cho tủ lạnh.'
+            },
+            {
+                key: 'lemon',
+                name: '2. Quả chanh tươi cắt lát',
+                emoji: '🍋',
+                desc: 'Đặt vài lát chanh tươi vào đĩa nhỏ trong các ngăn tủ lạnh giúp khử mùi tanh, mùi thức ăn và giữ không khí trong tủ thanh sạch.'
+            },
+            {
+                key: 'coffee',
+                name: '3. Bã cà phê (đựng trong bát nhỏ)',
+                emoji: '☕🤎',
+                desc: 'Bã cà phê có khả năng hút ẩm và hút mùi hôi cực kỳ hiệu quả, an toàn tuyệt đối cho thực phẩm bảo quản bên trong tủ.'
+            }
+        ];
+
+        function renderStep2_9(container) {
+            const cur = DEODOR_ITEMS.find(d => d.key === state.selectedDeodor) || DEODOR_ITEMS[0];
+            const seenCount = Object.keys(state.deodorItemsSeen).length;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-emerald-50 border-3 border-emerald-400 rounded-2xl p-3.5 text-center tv-body text-emerald-950">
+                        🍋 <b>Khử mùi & Vệ sinh tủ lạnh (Trang 30):</b> Bấm vào cả 3 nguyên liệu tự nhiên dưới đây để tìm hiểu cách khử mùi hôi tủ lạnh (${seenCount}/3):
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        ${DEODOR_ITEMS.map(item => {
+                            const active = state.selectedDeodor === item.key;
+                            const seen = state.deodorItemsSeen[item.key];
+                            return `
+                                <button onclick="selectDeodorItem6('${item.key}')"
+                                    class="btn-kid p-4 rounded-3xl border-4 flex flex-col items-center gap-2 ${
+                                        active
+                                            ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-300 scale-105'
+                                            : seen
+                                            ? 'bg-emerald-50 border-emerald-400'
+                                            : 'bg-white border-slate-300'
+                                    }">
+                                    <div class="text-6xl my-1">${item.emoji}</div>
+                                    <div class="tv-card-title text-slate-900 text-center">${item.name}</div>
+                                    <span class="tv-badge ${seen ? 'text-emerald-700' : 'text-slate-500'}">
+                                        ${seen ? '✓ Đã tìm hiểu' : 'Bấm để xem'}
+                                    </span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-amber-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center gap-5">
+                        <div class="text-6xl bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 shrink-0">${cur.emoji}</div>
+                        <div>
+                            <h3 class="tv-card-title text-slate-900">${cur.name}</h3>
+                            <p class="tv-body text-slate-700 mt-1">${cur.desc}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-sky-100 border-3 border-sky-400 rounded-3xl p-4 flex items-center gap-4">
+                        <span class="text-4xl shrink-0">🧽✨</span>
+                        <p class="tv-body text-sky-950">
+                            <b>Lưu ý quan trọng (Trang 30):</b> Vệ sinh tủ lạnh thường xuyên giúp <b>loại bỏ mùi hôi</b>, <b>tiết kiệm điện</b> và <b>kéo dài thời gian sử dụng</b> của tủ lạnh.
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (seenCount === 3) {
+                rewardStar('deodor_all_6', 1);
+                showFeedback(true, 'Tuyệt vời! Em đã hoàn thành toàn bộ Chặng 2: Khám phá. Hãy sang Chặng 3: Luyện tập nhé!');
+            }
+        }
+
+        function selectDeodorItem6(key) {
+            playSound('pop');
+            state.selectedDeodor = key;
+            state.deodorItemsSeen[key] = true;
+            renderApp();
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 3: LUYỆN TẬP (6 CÂU TRẮC NGHIỆM PHƯƠNG ÁN NHIỄU HỢP LÍ)
+         **************************************************************/
+        function renderPracticeMCQ6(container, flagName, badgeTitle, questionText, options) {
+            const isDone = state[flagName];
+            container.innerHTML = `
+                <div class="step-enter max-w-[1460px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-emerald-100 to-cyan-100 border-4 border-emerald-400 rounded-3xl p-5">
+                        <span class="inline-block bg-emerald-700 text-white tv-badge uppercase px-4 py-1 rounded-full mb-2">
+                            ${badgeTitle}
+                        </span>
+                        <h3 class="tv-card-title text-slate-900 leading-snug">
+                            ${questionText}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        ${options.map(opt => `
+                            <button onclick="selectPrac6Answer('${flagName}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 sm:p-5 rounded-3xl border-3 tv-option flex items-center justify-between gap-4 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white hover:bg-cyan-50 text-slate-900 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ ĐÚNG' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function selectPrac6Answer(flagName, isCorrect, explain) {
+            if (isCorrect) {
+                state[flagName] = true;
+                playSound('correct');
+                rewardStar('prac6_' + flagName, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Câu 1/6
+        function renderStep3_1(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac1Done',
+                'Câu hỏi luyện tập 1 / 6',
+                'Gia đình Lan mua một lượng cá thu tươi và muốn bảo quản để dùng dần trong khoảng 1 tháng. Theo thông tin ở trang 26 SGK, Lan nên bảo quản số cá thu này ở khoang nào và mức nhiệt độ bao nhiêu?',
+                [
+                    {
+                        text: 'A. Đặt ở khoang làm lạnh (nhiệt độ từ 1 °C đến 7 °C) vì mức nhiệt độ này giúp cá không bị đông cứng và giữ tươi được vài tháng.',
+                        correct: false,
+                        explain: 'Chưa đúng! Ở nhiệt độ làm lạnh (1 °C đến 7 °C), thịt cá chỉ bảo quản được từ 3 đến 5 ngày chứ không để được 1 tháng.'
+                    },
+                    {
+                        text: 'B. Đặt ở khoang cấp đông (nhiệt độ dưới 0 °C) sau khi đã bọc kín, vì phương pháp đông lạnh bảo quản được thịt, cá từ vài tuần tới vài tháng.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Phương pháp đông lạnh ở nhiệt độ dưới 0 °C trong khoang cấp đông giúp bảo quản thịt, cá từ vài tuần tới vài tháng.'
+                    },
+                    {
+                        text: 'C. Đặt ở ngăn đựng rau củ quả dưới cùng của khoang làm lạnh để giữ độ ẩm tự nhiên cho cá suốt nhiều tuần.',
+                        correct: false,
+                        explain: 'Chưa đúng! Ngăn rau củ quả có nhiệt độ dương và độ ẩm cao chỉ dành cho rau củ, để cá tươi sống ở đó sẽ nhanh hỏng và gây mùi tanh.'
+                    },
+                    {
+                        text: 'D. Đặt ở kệ cánh cửa tủ lạnh vì đây là vị trí thuận tiện lấy ra nhất và có nhiệt độ thấp nhất trong tủ lạnh.',
+                        correct: false,
+                        explain: 'Chưa đúng! Kệ cánh cửa tủ lạnh là nơi có nhiệt độ thay đổi nhiều nhất mỗi khi mở tủ, không dùng để cấp đông cá dài ngày.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 2/6
+        function renderStep3_2(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac2Done',
+                'Câu hỏi luyện tập 2 / 6',
+                'Vì sao khi sắp xếp, bảo quản thực phẩm, chúng ta KHÔNG được để thực phẩm còn đang nóng vào bên trong tủ lạnh (như Hình 3d trang 28)?',
+                [
+                    {
+                        text: 'A. Vì hơi nóng từ thức ăn làm tăng nhiệt độ trong tủ, khiến tủ lạnh phải hoạt động quá tải gây tốn điện và dễ làm hỏng các thực phẩm xung quanh.',
+                        correct: true,
+                        explain: 'Rất chính xác! Đồ ăn còn nóng tỏa nhiệt lớn làm tăng nhiệt độ khoang tủ, gây tốn điện, giảm tuổi thọ tủ và làm thực phẩm cạnh đó dễ bị hỏng.'
+                    },
+                    {
+                        text: 'B. Vì thực phẩm còn nóng khi gặp hơi lạnh sẽ ngay lập tức biến thành đá cứng không thể hâm nóng lại được nữa.',
+                        correct: false,
+                        explain: 'Chưa đúng! Thực phẩm nóng trong khoang mát không biến thành đá không hâm lại được, mà tác hại chính là làm tăng nhiệt độ tủ và tốn điện.'
+                    },
+                    {
+                        text: 'C. Vì hơi nóng của thức ăn sẽ làm đèn chiếu sáng bên trong tủ lạnh tự động tắt vĩnh viễn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đèn tủ lạnh bật/tắt theo công tắc cửa tủ chứ không phải tắt vĩnh viễn do thức ăn ấm.'
+                    },
+                    {
+                        text: 'D. Vì chỉ có khoang cấp đông mới cho phép đặt nồi canh đang sôi vào, còn khoang làm lạnh thì không được phép.',
+                        correct: false,
+                        explain: 'Chưa đúng! Không được đặt thực phẩm còn nóng vào bất kỳ khoang nào của tủ lạnh; cần đợi thực phẩm nguội hẳn rồi mới bọc kín cho vào tủ.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 3/6
+        function renderStep3_3(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac3Done',
+                'Câu hỏi luyện tập 3 / 6',
+                'Một bạn học sinh cho rằng: "Xếp càng nhiều thực phẩm chật kín hết mọi khoảng trống trong tủ lạnh (như Hình 3a) thì các thực phẩm sẽ truyền hơi lạnh cho nhau tốt hơn và tiết kiệm điện hơn". Nhận định này đúng hay sai? Vì sao?',
+                [
+                    {
+                        text: 'A. Đúng, vì khi không còn khoảng trống nào thì không khí ấm bên ngoài không thể lọt vào trong tủ lạnh mỗi khi mở cửa.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nếu nhồi nhét kín mít, luồng khí lạnh từ quạt gió của tủ sẽ bị chắn lại, không thể đi tới các thực phẩm ở giữa.'
+                    },
+                    {
+                        text: 'B. Sai, vì chứa quá nhiều thực phẩm làm cản trở luồng khí lạnh lưu thông, khiến thực phẩm không đủ độ lạnh dễ bị hỏng và làm tủ tiêu tốn nhiều điện năng hơn.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Theo lưu ý số 3 trang 29 SGK: Không chứa quá nhiều thực phẩm trong tủ lạnh để khí lạnh lưu thông đều khắp các ngăn.'
+                    },
+                    {
+                        text: 'C. Đúng, nhưng chỉ áp dụng khi chúng ta xếp đầy kín khoang cấp đông, còn khoang làm lạnh thì phải để trống hoàn toàn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Cả khoang cấp đông và khoang làm lạnh đều cần có khoảng thoáng hợp lí để khí lạnh lưu thông.'
+                    },
+                    {
+                        text: 'D. Sai, vì tủ lạnh chỉ cho phép bảo quản tối đa đúng 3 món thực phẩm trong mỗi khoang ở cùng một thời điểm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tủ lạnh bảo quản được nhiều món thực phẩm miễn là sắp xếp gọn gàng, vừa phải với dung tích tủ.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 4/6
+        function renderStep3_4(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac4Done',
+                'Câu hỏi luyện tập 4 / 6',
+                'Theo lưu ý số 4 (trang 29 SGK), việc sử dụng màng bọc thực phẩm hoặc hộp có nắp đậy kín khi bảo quản thức ăn trong tủ lạnh có tác dụng chính là gì?',
+                [
+                    {
+                        text: 'A. Giúp thực phẩm giữ được độ ẩm tươi ngon, ngăn mùi thức ăn lan ra tủ lạnh và tránh vi khuẩn lây nhiễm chéo giữa đồ sống và đồ chín.',
+                        correct: true,
+                        explain: 'Xuất sắc! Dùng màng bọc hoặc hộp đậy kín (như Hình 3c) giúp ngăn mùi hôi, giữ vệ sinh an toàn thực phẩm và tránh nhiễm khuẩn chéo.'
+                    },
+                    {
+                        text: 'B. Giúp thức ăn bên trong hộp tự động chín mềm mà không cần phải nấu lại trên bếp trước khi ăn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tủ lạnh chỉ bảo quản ở nhiệt độ thấp chứ không làm chín thức ăn.'
+                    },
+                    {
+                        text: 'C. Giúp ngăn cản hoàn toàn hơi lạnh tiếp xúc với thực phẩm để thực phẩm luôn giữ ở mức nhiệt độ phòng.',
+                        correct: false,
+                        explain: 'Chưa đúng! Hơi lạnh vẫn truyền qua thành hộp/màng bọc để làm lạnh thực phẩm, đồng thời lớp bọc giúp giữ ẩm và ngăn mùi.'
+                    },
+                    {
+                        text: 'D. Giúp bảo quản mọi loại thức ăn đã nấu chín sử dụng được mãi mãi mà không bao giờ bị hết hạn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Tủ lạnh chỉ giúp kéo dài thời gian sử dụng chứ không bảo quản được mãi mãi.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 5/6
+        function renderStep3_5(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac5Done',
+                'Câu hỏi luyện tập 5 / 6',
+                'Khi mở tủ lạnh, Nam phát hiện khoang cấp đông bị đóng một lớp băng tuyết rất dày (giống Hình 4c) và dưới chân tủ có nước chảy ra sàn nhà (giống Hình 4d). Cách xử lí nào dưới đây là ĐÚNG và AN TOÀN nhất?',
+                [
+                    {
+                        text: 'A. Tự lấy dao nhọn hoặc kéo bằng sắt đục mạnh vào thành khoang cấp đông để cạy hết lớp băng tuyết ra ngay lập tức.',
+                        correct: false,
+                        explain: 'Rất nguy hiểm! Dùng vật sắc nhọn cạy đá rất dễ làm thủng dàn lạnh, rò rỉ khí ga, hỏng tủ và gây mất an toàn.'
+                    },
+                    {
+                        text: 'B. Đun một ấm nước thật sôi rồi dội trực tiếp vào bên trong khoang cấp đông đang cắm điện để làm tan băng tuyết nhanh.',
+                        correct: false,
+                        explain: 'Tuyệt đối không làm! Dội nước sôi vào tủ lạnh đang cắm điện dễ gây chập cháy điện và làm nứt vỡ các khay nhựa.'
+                    },
+                    {
+                        text: 'C. Thông báo ngay cho bố mẹ hoặc người lớn trong gia đình biết biểu hiện bất thường của tủ lạnh để kiểm tra, xử lí an toàn.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Theo Ghi nhớ trang 30 SGK: Khi phát hiện tủ lạnh có dấu hiệu bất thường, cần thông báo cho người lớn để giải quyết.'
+                    },
+                    {
+                        text: 'D. Mở toang cả hai cánh cửa tủ lạnh suốt cả ngày mà vẫn cắm điện để hơi nóng trong phòng tự làm tan lớp tuyết.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mở cửa tủ khi vẫn cắm điện làm máy nén chạy quá tải liên tục, tốn điện và chảy nước nhiều hơn.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 6/6
+        function renderStep3_6(container) {
+            renderPracticeMCQ6(
+                container,
+                'prac6Done',
+                'Câu hỏi luyện tập 6 / 6',
+                'Theo hướng dẫn ở trang 30 SGK, biện pháp nào dưới đây vừa giúp khử mùi hôi cho tủ lạnh an toàn, vừa giúp tiết kiệm điện và kéo dài thời gian sử dụng của tủ lạnh?',
+                [
+                    {
+                        text: 'A. Xịt thật nhiều nước hoa hoặc thuốc xịt côn trùng vào các ngăn chứa thức ăn mỗi khi thấy tủ lạnh có mùi.',
+                        correct: false,
+                        explain: 'Rất độc hại! Không được xịt hóa chất hay thuốc xịt côn trùng vào tủ lạnh vì sẽ bám vào thức ăn gây ngộ độc.'
+                    },
+                    {
+                        text: 'B. Đặt quả chanh, vỏ cam quýt hoặc bã cà phê vào trong tủ lạnh để khử mùi và kết hợp vệ sinh tủ lạnh thường xuyên.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Các nguyên liệu tự nhiên (chanh, vỏ cam quýt, bã cà phê) kết hợp vệ sinh tủ thường xuyên giúp loại bỏ mùi hôi, tiết kiệm điện và bền tủ.'
+                    },
+                    {
+                        text: 'C. Tắt nguồn điện của tủ lạnh vào mỗi buổi tối và bật lại vào buổi sáng hôm sau để mùi hôi tự bay hết.',
+                        correct: false,
+                        explain: 'Chưa đúng! Ngắt điện tủ lạnh mỗi đêm sẽ làm đá tan chảy và thức ăn bên trong nhanh chóng bị ôi thiu, hư hỏng.'
+                    },
+                    {
+                        text: 'D. Chỉ cần lau bên ngoài vỏ cánh cửa tủ lạnh bằng khăn ướt, còn bên trong các khoang chứa đồ ăn thì không bao giờ cần lau dọn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Cần vệ sinh cả các ngăn bên trong tủ lạnh định kỳ để loại bỏ vết bẩn và mùi hôi thực phẩm.'
+                    }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 4: VẬN DỤNG (3 BƯỚC - TRÒ CHƠI ĐẦU BẾP NHÍ & TỔNG KẾT)
+         **************************************************************/
+        const CHEF_TASKS = [
+            {
+                name: 'Món 1/4: Bát canh xương hầm vừa nấu xong còn đang bốc khói nóng (85 °C)',
+                emoji: '🍲♨️',
+                preActionRight: 'Đợi canh nguội hẳn rồi cho vào hộp đậy nắp kín',
+                preActionWrong: 'Bưng ngay bát canh đang bốc khói nóng đặt thẳng vào tủ',
+                targetCompartment: 'chill',
+                compartmentLabel: 'Khoang làm lạnh (Ngăn mát 1 °C – 7 °C)',
+                explain: 'Chính xác! Thực phẩm còn nóng phải đợi nguội hẳn, đậy nắp kín rồi mới xếp vào Khoang làm lạnh.'
+            },
+            {
+                name: 'Món 2/4: Khay nước lọc muốn làm đá viên để uống giải khát',
+                emoji: '💧🟦',
+                preActionRight: 'Đổ nước vừa vặn vào khay làm đá sạch sẽ',
+                preActionWrong: 'Đổ nước sôi 100 °C tràn ra ngoài khay làm đá',
+                targetCompartment: 'freeze',
+                compartmentLabel: 'Khoang cấp đông (Ngăn trên dưới 0 °C)',
+                explain: 'Tuyệt vời! Khay làm đá viên cần đặt vào Khoang cấp đông (nhiệt độ dưới 0 °C).'
+            },
+            {
+                name: 'Món 3/4: Đĩa cá thu tươi sống muốn cất trữ ăn dần trong 3 tuần tới',
+                emoji: '🐟🥩',
+                preActionRight: 'Rửa sạch, để ráo và bọc kín bằng màng bọc hoặc hộp kín',
+                preActionWrong: 'Để nguyên đĩa cá trần không bọc gì cả cho vào tủ',
+                targetCompartment: 'freeze',
+                compartmentLabel: 'Khoang cấp đông (Ngăn trên dưới 0 °C)',
+                explain: 'Rất chuẩn! Cá tươi muốn bảo quản dài ngày (vài tuần tới vài tháng) cần bọc kín và đặt ở Khoang cấp đông.'
+            },
+            {
+                name: 'Món 4/4: Bó rau cải ngọt và mấy quả táo tươi dùng cho bữa ăn ngày mai',
+                emoji: '🥬🍎',
+                preActionRight: 'Nhặt bỏ lá hỏng, lau khô và cho vào túi/hộp bảo quản thực phẩm',
+                preActionWrong: 'Ngâm ngập rau củ trong chậu nước nóng rồi bê vào tủ',
+                targetCompartment: 'chill',
+                compartmentLabel: 'Khoang làm lạnh (Hộc đựng rau củ quả)',
+                explain: 'Xuất sắc! Rau củ quả tươi được bảo quản ở hộc rau củ thuộc Khoang làm lạnh.'
+            }
+        ];
+
+        // Bước 1/3: Trò chơi Siêu đầu bếp nhí sắp xếp tủ lạnh
+        function renderStep4_1(container) {
+            const task = CHEF_TASKS[state.chefIdx];
+            const isCurrentDone = state.chefStepDone[state.chefIdx];
+            const allDone = state.chefStepDone.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <!-- Thanh chọn 4 món thực phẩm -->
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap gap-2">
+                            ${CHEF_TASKS.map((t, idx) => `
+                                <button onclick="switchChefTask(${idx})"
+                                    class="btn-kid px-4 py-2 rounded-2xl border-3 font-black text-base ${
+                                        state.chefIdx === idx
+                                            ? 'bg-purple-600 text-white border-purple-800'
+                                            : state.chefStepDone[idx]
+                                            ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                                            : 'bg-white text-slate-800 border-slate-300'
+                                    }">
+                                    Món ${idx + 1} ${state.chefStepDone[idx] ? '✓' : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <span class="tv-badge bg-amber-100 text-amber-900 border-2 border-amber-400 px-4 py-1 rounded-full">
+                            Hoàn thành: ${state.chefStepDone.filter(Boolean).length}/4 món
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                        <!-- Cột trái: Bước 1 - Xử lí thực phẩm trước khi cho vào tủ -->
+                        <div class="lg:col-span-7 bg-white border-4 border-purple-300 rounded-3xl p-5 flex flex-col justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-5xl bg-purple-50 p-3 rounded-2xl border-2 border-purple-200">${task.emoji}</span>
+                                    <h3 class="tv-card-title text-slate-900">${task.name}</h3>
+                                </div>
+                                <div class="tv-badge uppercase text-purple-800 mt-3 mb-2">
+                                    👉 Bước A: Em hãy chọn cách chuẩn bị đúng trước khi đưa vào tủ lạnh:
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2.5">
+                                <button onclick="chooseChefPreAction(true)"
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.chefPreTreated || isCurrentDone
+                                            ? 'bg-emerald-600 text-white border-emerald-800'
+                                            : 'bg-slate-50 hover:bg-purple-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${state.chefPreTreated || isCurrentDone ? '✓ ' : ''}1. ${task.preActionRight}
+                                </button>
+                                <button onclick="chooseChefPreAction(false)"
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option bg-slate-50 hover:bg-rose-50 text-slate-900 border-slate-300">
+                                    2. ${task.preActionWrong}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Cột phải: Bước 2 - Chọn đúng Khoang tủ lạnh -->
+                        <div class="lg:col-span-5 bg-cyan-50 border-4 border-cyan-400 rounded-3xl p-5 flex flex-col justify-between gap-3">
+                            <div class="tv-badge uppercase text-cyan-900 text-center">
+                                👉 Bước B: Bấm chọn Khoang tủ lạnh để cất món này:
+                            </div>
+
+                            <button onclick="placeFoodInFridge('freeze')"
+                                class="btn-kid p-4 rounded-2xl border-4 flex items-center gap-3.5 ${
+                                    isCurrentDone && task.targetCompartment === 'freeze'
+                                        ? 'bg-emerald-600 text-white border-emerald-800'
+                                        : 'bg-white hover:bg-cyan-100 text-slate-900 border-cyan-500'
+                                }">
+                                <span class="text-4xl">🧊</span>
+                                <div class="text-left">
+                                    <div class="tv-card-title">1. Khoang cấp đông</div>
+                                    <div class="text-sm sm:text-base font-bold opacity-90">Ngăn trên • Dưới 0 °C (Làm đá & đông lạnh)</div>
+                                </div>
+                            </button>
+
+                            <button onclick="placeFoodInFridge('chill')"
+                                class="btn-kid p-4 rounded-2xl border-4 flex items-center gap-3.5 ${
+                                    isCurrentDone && task.targetCompartment === 'chill'
+                                        ? 'bg-emerald-600 text-white border-emerald-800'
+                                        : 'bg-white hover:bg-sky-100 text-slate-900 border-sky-500'
+                                }">
+                                <span class="text-4xl">🥗</span>
+                                <div class="text-left">
+                                    <div class="tv-card-title">2. Khoang làm lạnh</div>
+                                    <div class="text-sm sm:text-base font-bold opacity-90">Ngăn dưới • 1 °C đến 7 °C (Bảo quản lạnh)</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Xuất sắc! Siêu đầu bếp nhí đã xử lí và sắp xếp đúng cách cả 4 món thực phẩm vào tủ lạnh!');
+            }
+        }
+
+        function switchChefTask(idx) {
+            playSound('click');
+            state.chefIdx = idx;
+            state.chefPreTreated = state.chefStepDone[idx];
+            hideFeedback();
+            renderApp();
+        }
+
+        function chooseChefPreAction(isRight) {
+            if (isRight) {
+                state.chefPreTreated = true;
+                playSound('pop');
+                showFeedback(true, 'Bước chuẩn bị rất chuẩn! Bây giờ em hãy bấm chọn Khoang tủ lạnh ở bên phải (Bước B) để cất vào nhé!');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Cách chuẩn bị đó chưa an toàn! Em nhớ không để đồ nóng vào tủ và phải bọc kín thực phẩm nhé.');
+            }
+        }
+
+        function placeFoodInFridge(compartment) {
+            const task = CHEF_TASKS[state.chefIdx];
+            if (!state.chefPreTreated && !state.chefStepDone[state.chefIdx]) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy hoàn thành Bước A (chọn cách chuẩn bị thực phẩm ở bên trái) trước khi đưa vào tủ lạnh nhé!');
+                return;
+            }
+            if (compartment === task.targetCompartment) {
+                state.chefStepDone[state.chefIdx] = true;
+                playSound('door');
+                rewardStar('chef_task_' + state.chefIdx, 1);
+                showFeedback(true, task.explain);
+                setTimeout(() => {
+                    if (state.chefIdx < CHEF_TASKS.length - 1 && !state.chefStepDone[state.chefIdx + 1]) {
+                        state.chefIdx++;
+                        state.chefPreTreated = state.chefStepDone[state.chefIdx];
+                    }
+                    renderApp();
+                }, 1150);
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Chưa đúng khoang rồi! Em hãy xem món này cần làm đông đá (< 0 °C) hay chỉ cần giữ mát (1 °C – 7 °C) nhé.');
+            }
+        }
+
+        // Bước 2/3: Tình huống thực tế tại gia đình
+        function renderStep4_2(container) {
+            renderPracticeMCQ6(
+                container,
+                'doctorDone',
+                'Tình huống vận dụng thực tế tại gia đình',
+                'Cuối tuần, em cùng bố mẹ kiểm tra tủ lạnh của gia đình thì thấy: trong tủ có nhiều hộp đồ ăn xếp chồng chật kín, có vài lát dưa hấu để trần không bọc màng bọc nên tủ bắt đầu có mùi hôi. Em sẽ đề xuất với bố mẹ cách làm nào dưới đây?',
+                [
+                    {
+                        text: 'A. Cùng bố mẹ bỏ bớt thực phẩm đã hỏng, dùng màng bọc hoặc hộp kín cho thức ăn còn tốt, lau vệ sinh sạch các ngăn tủ và đặt thêm vài lát chanh tươi hoặc vỏ cam quýt để khử mùi.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Đó là cách làm khoa học giúp tủ lạnh sạch thơm, an toàn vệ sinh thực phẩm và tiết kiệm điện năng.'
+                    },
+                    {
+                        text: 'B. Vặn nhiệt độ khoang làm lạnh xuống mức thấp nhất để đóng băng toàn bộ dưa hấu và các hộp thức ăn cho hết mùi hôi.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đóng băng khoang làm lạnh sẽ làm hỏng rau quả và không giải quyết được nguyên nhân gây mùi hôi.'
+                    },
+                    {
+                        text: 'C. Mua thêm thật nhiều túi thức ăn mới nhét kín vào các khe hở còn lại để đè bẹp mùi hôi xuống dưới đáy tủ.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nhét thêm đồ càng làm tủ quá tải, khí lạnh không lưu thông được và thực phẩm càng nhanh hỏng hơn.'
+                    }
+                ]
+            );
+        }
+
+        // Bước 3/3: Tổng kết bài học & Trao Huy hiệu (Trang 30)
+        function renderStep4_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-cyan-100 via-emerald-50 to-amber-100 border-4 border-cyan-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl sm:text-6xl">🏆🧊</div>
+                            <div>
+                                <div class="tv-badge uppercase text-cyan-900">Hoàn thành xuất sắc Bài 6: Sử dụng tủ lạnh</div>
+                                <h2 class="tv-title text-slate-900">
+                                    Huy Hiệu: Chuyên Gia Sử Dụng Tủ Lạnh An Toàn!
+                                </h2>
+                                <p class="tv-body text-slate-800 mt-1">
+                                    Tổng số Sao lớp mình đạt được: <span class="text-amber-600 font-black text-3xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="celebrateFinishLesson6()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-5 py-3 rounded-2xl text-lg">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-cyan-50 text-cyan-950 border-3 border-cyan-400 font-black px-5 py-3 rounded-2xl text-lg">
+                                🔄 Học lại từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng kết kiến thức cốt lõi Bài 6 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-cyan-50 border-4 border-cyan-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-cyan-950 mb-2">❄️ 1. Tác dụng & Các khoang tủ lạnh:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li>Bảo quản thực phẩm ở <b>nhiệt độ thấp</b>, kéo dài thời gian sử dụng.</li>
+                                <li><b>Khoang cấp đông (dưới 0 °C):</b> Làm đá & đông lạnh (vài tuần – vài tháng).</li>
+                                <li><b>Khoang làm lạnh (1 °C – 7 °C):</b> Bảo quản lạnh (thịt cá từ 3 – 5 ngày, rau củ, sữa,...).</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-50 border-4 border-emerald-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-emerald-950 mb-2">🛡️ 2. Lưu ý bảo quản & Xử lí bất thường:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Không</b> để đồ còn nóng; <b>không</b> chứa quá nhiều thực phẩm.</li>
+                                <li>Dùng <b>màng bọc hoặc hộp đựng</b> kín thực phẩm.</li>
+                                <li>Khi tủ có dấu hiệu bất thường (kêu to, mùi hôi, đóng tuyết, chảy nước): <b>Báo ngay cho người lớn</b>.</li>
+                                <li>Khử mùi bằng <b>chanh, vỏ cam quýt, bã cà phê</b> & vệ sinh thường xuyên.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showFeedback(true, 'Em hãy chia sẻ với người thân trong gia đình về cách sắp xếp, bảo quản thực phẩm trong tủ lạnh đúng cách, an toàn nhé!');
+        }
+
+        function celebrateFinishLesson6() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng các em đã nắm vững toàn bộ kiến thức Bài 6: Sử dụng tủ lạnh!');
+        }
+
+        /**************************************************************
+         * 9. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson6();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-4 py-1.5 rounded-xl font-black text-base sm:text-lg transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-700 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại (Chữ cực to rõ cho Tivi)
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-0.5 rounded-xl tv-badge uppercase border-2 ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="tv-title text-slate-900 mt-1">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="tv-subtitle text-slate-700 mt-0.5">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-4 rounded-full transition-all ${
+                            active ? 'w-10 bg-cyan-600' : 'w-4 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>

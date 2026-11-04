@@ -1,0 +1,2988 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 8: Mô Hình Máy Phát Điện Gió - Công Nghệ 5</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito & Quicksand (Chữ không chân, tròn đều, đậm nét, hỗ trợ Tiếng Việt hoàn hảo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,700;0,800;0,900;1,700&family=Quicksand:wght@700&display=swap&subset=vietnamese" rel="stylesheet">
+    <style>
+        :root {
+            --font-primary: 'Nunito', 'Quicksand', system-ui, -apple-system, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 55%, #fefce8 100%);
+            color: #0f172a;
+        }
+        /* Hệ thống cỡ chữ tối ưu trình chiếu Tivi lớp học để học sinh bàn cuối nhìn rõ */
+        body.tv-normal {
+            --title-size: clamp(1.42rem, 2.15vw, 2.02rem);
+            --subtitle-size: clamp(1.04rem, 1.38vw, 1.3rem);
+            --card-title: clamp(1.18rem, 1.65vw, 1.55rem);
+            --body-size: clamp(1.06rem, 1.45vw, 1.38rem);
+            --option-size: clamp(1.08rem, 1.5vw, 1.4rem);
+            --badge-size: clamp(0.9rem, 1.1vw, 1.06rem);
+        }
+        body.tv-large {
+            --title-size: clamp(1.6rem, 2.4vw, 2.28rem);
+            --subtitle-size: clamp(1.14rem, 1.56vw, 1.46rem);
+            --card-title: clamp(1.3rem, 1.85vw, 1.75rem);
+            --body-size: clamp(1.18rem, 1.62vw, 1.54rem);
+            --option-size: clamp(1.2rem, 1.66vw, 1.58rem);
+            --badge-size: clamp(0.96rem, 1.2vw, 1.16rem);
+        }
+        body.tv-xlarge {
+            --title-size: clamp(1.76rem, 2.68vw, 2.52rem);
+            --subtitle-size: clamp(1.24rem, 1.72vw, 1.6rem);
+            --card-title: clamp(1.42rem, 2.05vw, 1.92rem);
+            --body-size: clamp(1.28rem, 1.8vw, 1.68rem);
+            --option-size: clamp(1.3rem, 1.85vw, 1.72rem);
+            --badge-size: clamp(1.04rem, 1.28vw, 1.24rem);
+        }
+        .tv-title { font-size: var(--title-size); line-height: 1.22; font-weight: 900; }
+        .tv-subtitle { font-size: var(--subtitle-size); line-height: 1.34; font-weight: 800; }
+        .tv-card-title { font-size: var(--card-title); line-height: 1.28; font-weight: 900; }
+        .tv-body { font-size: var(--body-size); line-height: 1.38; font-weight: 800; }
+        .tv-option { font-size: var(--option-size); line-height: 1.35; font-weight: 800; }
+        .tv-badge { font-size: var(--badge-size); line-height: 1.2; font-weight: 900; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 9999px;
+        }
+        .btn-kid {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(15, 23, 42, 0.22);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(15, 23, 42, 0.18);
+        }
+        .card-kid {
+            box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.1), 0 8px 14px -6px rgba(15, 23, 42, 0.06);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.98) translateY(4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .step-enter {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* Không sử dụng bất kỳ hiệu ứng CSS rotate/translate nào làm lệch tâm chi tiết kĩ thuật */
+    </style>
+</head>
+<body class="tv-large flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- MODAL NẠP ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN CHO GIÁO VIÊN) -->
+    <div id="sgk-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-4 border-sky-500 rounded-3xl max-w-4xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto custom-scroll">
+            <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📷</span>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900">Nạp ảnh trang sách giáo khoa gốc (Trang 38 – 43)</h3>
+                        <p class="text-base font-bold text-slate-600">Ứng dụng đã vẽ sẵn đầy đủ hình kĩ thuật chuẩn SGK. Nếu muốn hiển thị trực tiếp ảnh chụp trang sách, thầy/cô có thể chọn 4 ảnh dưới đây:</p>
+                    </div>
+                </div>
+                <button onclick="closeSgkModal()" class="btn-kid bg-rose-100 hover:bg-rose-200 text-rose-900 font-black px-4 py-2 rounded-2xl text-lg">✕ Đóng</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 1. Ảnh Trang 38 (Tình huống & Hình 1)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(1, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-1" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 2. Ảnh Trang 39–40 (Hình 2, Hình 3 & Bảng STT 1–10)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(2, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-2" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 3. Ảnh Trang 41–42 (Bảng STT 11–14, Hình 4, Hình 5, Hình 6)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(3, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-3" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+
+                <label class="border-3 border-dashed border-sky-400 bg-sky-50/70 hover:bg-sky-100 rounded-2xl p-4 cursor-pointer flex flex-col gap-2">
+                    <span class="font-black text-lg text-sky-950">📄 4. Ảnh Trang 43 (Bước 4, Phiếu đánh giá & Hình 7)</span>
+                    <input type="file" accept="image/*" onchange="loadSgkPage(4, this)" class="text-sm font-bold text-slate-700"/>
+                    <span id="status-page-4" class="text-sm font-extrabold text-emerald-700">Đang dùng hình vẽ kĩ thuật chuẩn SGK</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5">
+                <span class="text-base font-extrabold text-amber-950">💡 Mẹo: Bạn có thể chọn cả 4 file ảnh cùng lúc ở nút bên phải:</span>
+                <label class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl cursor-pointer">
+                    📂 Chọn nhanh 4 ảnh
+                    <input type="file" accept="image/*" multiple onchange="loadMultipleSgkPages(this)" class="hidden"/>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- THANH HEADER CỐ ĐỊNH PHÍA TRÊN -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-300 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+        <!-- Logo & Tên Bài Học -->
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex flex-col items-center justify-center text-white shadow-md border-2 border-white shrink-0">
+                <span class="text-xs font-black uppercase tracking-wider leading-none">Bài</span>
+                <span class="text-2xl sm:text-3xl font-black leading-none">8</span>
+            </div>
+            <div>
+                <div class="text-xs sm:text-sm font-black text-sky-700 uppercase tracking-wider">Công nghệ 5 • Kết nối tri thức</div>
+                <h1 class="text-lg sm:text-2xl xl:text-3xl font-black text-slate-900 tracking-tight leading-tight">Mô hình máy phát điện gió</h1>
+            </div>
+        </div>
+
+        <!-- 4 Nút Chuyển Chặng Lớn -->
+        <nav class="hidden xl:flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-300" id="stage-tabs">
+        </nav>
+
+        <!-- Cụm công cụ: Ảnh SGK, Chỉnh cỡ chữ Tivi, Điểm Sao, Đọc bài, Âm thanh, Toàn màn hình -->
+        <div class="flex items-center gap-2">
+            <!-- Nút nạp ảnh SGK gốc -->
+            <button onclick="openSgkModal()" title="Nạp ảnh chụp trang sách giáo khoa gốc"
+                class="btn-kid flex items-center gap-1.5 bg-sky-100 hover:bg-sky-200 border-2 border-sky-400 text-sky-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>📷 Ảnh SGK</span>
+            </button>
+
+            <!-- Nút chỉnh cỡ chữ Tivi cho học sinh bàn cuối -->
+            <button onclick="cycleFontSize()" title="Thay đổi cỡ chữ cho màn hình Tivi"
+                class="btn-kid flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 border-2 border-violet-400 text-violet-950 font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <span>🔍 Cỡ chữ:</span>
+                <span id="font-size-label" class="bg-violet-600 text-white px-2 py-0.5 rounded-lg">To (TV)</span>
+            </button>
+
+            <!-- Điểm Sao -->
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3 py-1.5 rounded-2xl transition-transform" id="star-badge">
+                <svg class="w-7 h-7 text-amber-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="star-count" class="text-xl sm:text-2xl font-black text-amber-900">0</span>
+            </div>
+
+            <!-- Nút Đọc bài tự động (Web Speech API) -->
+            <button id="btn-tts" onclick="speakCurrentStep()" title="Đọc to nội dung màn hình này"
+                class="btn-kid flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3 py-2 rounded-2xl text-sm sm:text-base">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span class="hidden md:inline" id="tts-label">Đọc bài</span>
+            </button>
+
+            <!-- Nút Bật/Tắt hiệu ứng âm thanh -->
+            <button id="btn-sound" onclick="toggleSound()" title="Bật/Tắt hiệu ứng âm thanh"
+                class="btn-kid bg-sky-600 hover:bg-sky-700 text-white p-2.5 rounded-2xl">
+                <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+
+            <!-- Nút Toàn màn hình -->
+            <button onclick="toggleFullScreen()" title="Phóng to toàn màn hình"
+                class="btn-kid bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-2xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- THANH CHUYỂN CHẶNG TRÊN MÀN HÌNH NHỎ -->
+    <div class="xl:hidden bg-white/90 border-b-2 border-sky-200 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0" id="stage-tabs-mobile">
+    </div>
+
+    <!-- VÙNG NỘI DUNG CHÍNH (MAIN STAGE - RỘNG RÃI, CHỮ TO RÕ CHO TIVI) -->
+    <main class="flex-1 w-full max-w-[1620px] mx-auto px-3 sm:px-6 py-2.5 flex flex-col justify-center overflow-hidden">
+        <div id="stage-container" class="w-full h-full bg-white/95 backdrop-blur rounded-3xl border-4 border-sky-300 card-kid flex flex-col overflow-hidden relative">
+            
+            <!-- Tiêu đề của bước hiện tại -->
+            <div id="step-header" class="px-5 sm:px-8 py-3 bg-gradient-to-r from-sky-100/90 via-emerald-50 to-amber-100/80 border-b-2 border-sky-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            </div>
+
+            <!-- Thân nội dung tương tác của bước hiện tại -->
+            <div id="step-body" class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scroll flex flex-col justify-center">
+            </div>
+
+            <!-- Thanh phản hồi kết quả Đúng / Sai -->
+            <div id="feedback-banner" class="hidden px-6 py-3 border-t-4 items-center justify-between gap-4 shrink-0 transition-all">
+            </div>
+        </div>
+    </main>
+
+    <!-- THANH FOOTER CỐ ĐỊNH PHÍA DƯỚI -->
+    <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-300 px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 shrink-0 z-20">
+        <!-- Nút Quay lại -->
+        <button id="btn-prev" onclick="prevStep()"
+            class="btn-kid flex items-center gap-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-800 font-black px-5 sm:px-7 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Quay lại</span>
+        </button>
+
+        <!-- Thanh chấm tiến trình (Progress Dots) -->
+        <div class="flex flex-col items-center gap-1">
+            <div id="step-dots" class="flex items-center gap-2 flex-wrap justify-center">
+            </div>
+            <div id="step-counter-text" class="text-sm sm:text-base font-black text-slate-700">
+                1. Khởi động — Bước 1 / 3
+            </div>
+        </div>
+
+        <!-- Nút Tiếp theo -->
+        <button id="btn-next" onclick="nextStep()"
+            class="btn-kid flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-black px-6 sm:px-9 py-2.5 rounded-2xl text-lg sm:text-xl">
+            <span id="btn-next-text">Tiếp theo</span>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </footer>
+
+    <!-- MÃ NGUỒN JAVASCRIPT XỬ LÝ TOÀN BỘ TƯƠNG TÁC BÀI 8: MÔ HÌNH MÁY PHÁT ĐIỆN GIÓ -->
+    <script>
+        /**************************************************************
+         * 1. CHẾ ĐỘ CỠ CHỮ TIVI & HỆ THỐNG ÂM THANH KĨ THUẬT SINH ĐỘNG
+         **************************************************************/
+        const fontModes = [
+            { cls: 'tv-normal', label: 'Chuẩn TV' },
+            { cls: 'tv-large', label: 'To (TV)' },
+            { cls: 'tv-xlarge', label: 'Siêu to' }
+        ];
+        let currentFontModeIdx = 1; // Mặc định chọn "To (TV)" cho học sinh bàn cuối nhìn rõ
+
+        function cycleFontSize() {
+            playSound('click');
+            document.body.classList.remove(fontModes[currentFontModeIdx].cls);
+            currentFontModeIdx = (currentFontModeIdx + 1) % fontModes.length;
+            document.body.classList.add(fontModes[currentFontModeIdx].cls);
+            document.getElementById('font-size-label').textContent = fontModes[currentFontModeIdx].label;
+        }
+
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(580, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.065);
+                    gain.gain.setValueAtTime(0.16, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(460, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.1);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'wrench') {
+                    // Tiếng vặn ốc vít / cờ-lê lách cách cơ khí
+                    [620, 780, 960].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.055);
+                        gain.gain.setValueAtTime(0.12, now + i * 0.055);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.05);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.055);
+                        osc.stop(now + i * 0.055 + 0.055);
+                    });
+                } else if (type === 'wind_low' || type === 'wind_high') {
+                    // Tiếng gió thổi vi vu kết hợp tiếng máy phát điện tạo dòng điện
+                    const isStrong = type === 'wind_high';
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(isStrong ? 240 : 150, now);
+                    osc.frequency.exponentialRampToValueAtTime(isStrong ? 480 : 260, now + 0.35);
+                    osc.frequency.exponentialRampToValueAtTime(isStrong ? 380 : 200, now + 0.65);
+                    gain.gain.setValueAtTime(isStrong ? 0.22 : 0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.68);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.7);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+                        gain.gain.setValueAtTime(0.24, now + idx * 0.075);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.075);
+                        osc.stop(now + idx * 0.075 + 0.26);
+                    });
+                } else if (type === 'wrong') {
+                    const notes = [300, 230];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.13);
+                        gain.gain.setValueAtTime(0.13, now + idx * 0.13);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.13 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.13);
+                        osc.stop(now + idx * 0.13 + 0.21);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+                    const times = [0, 0.11, 0.22, 0.33, 0.47, 0.62];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[idx]);
+                        gain.gain.setValueAtTime(0.25, now + times[idx]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[idx] + 0.32);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[idx]);
+                        osc.stop(now + times[idx] + 0.33);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('icon-sound-on').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playSound('pop');
+        }
+
+        function toggleFullScreen() {
+            playSound('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95;
+            utter.pitch = 1.04;
+            const ttsBtn = document.getElementById('tts-label');
+            utter.onstart = () => { if (ttsBtn) ttsBtn.textContent = 'Đang đọc...'; };
+            utter.onend = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            utter.onerror = () => { if (ttsBtn) ttsBtn.textContent = 'Đọc bài'; };
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speakCurrentStep() {
+            playSound('pop');
+            const currentStepObj = STAGES[state.stageIdx].steps[state.stepIdx];
+            if (currentStepObj && currentStepObj.voiceText) {
+                speakText(currentStepObj.voiceText);
+            }
+        }
+
+        /**************************************************************
+         * 1B. HỆ THỐNG NẠP & CẮT ẢNH TRANG SÁCH GIÁO KHOA GỐC (TÙY CHỌN)
+         **************************************************************/
+        const sgkPages = { 1: null, 2: null, 3: null, 4: null };
+
+        function openSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeSgkModal() {
+            playSound('click');
+            const m = document.getElementById('sgk-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function loadSgkPage(pageIndex, inputEl) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                sgkPages[pageIndex] = evt.target.result;
+                const st = document.getElementById('status-page-' + pageIndex);
+                if (st) {
+                    st.textContent = '✓ Đã nạp ảnh gốc từ máy (' + file.name + ')';
+                    st.className = 'text-sm font-black text-sky-700';
+                }
+                playSound('correct');
+                renderApp();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadMultipleSgkPages(inputEl) {
+            if (!inputEl.files || !inputEl.files.length) return;
+            const files = Array.from(inputEl.files).slice(0, 4);
+            files.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const pIdx = idx + 1;
+                    sgkPages[pIdx] = evt.target.result;
+                    const st = document.getElementById('status-page-' + pIdx);
+                    if (st) {
+                        st.textContent = '✓ Đã nạp ảnh gốc (' + file.name + ')';
+                        st.className = 'text-sm font-black text-sky-700';
+                    }
+                    if (idx === files.length - 1) {
+                        playSound('correct');
+                        renderApp();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderSgkCropOrSVG(pageNo, cropBox, fallbackSvgHtml, captionText = '') {
+            const pageUrl = sgkPages[pageNo];
+            if (pageUrl && cropBox) {
+                const bgWidth = (100 / cropBox.w) * 100;
+                const bgPosX = cropBox.w >= 100 ? 0 : (cropBox.x / (100 - cropBox.w)) * 100;
+                const bgPosY = cropBox.h >= 100 ? 0 : (cropBox.y / (100 - cropBox.h)) * 100;
+                const aspect = (cropBox.w / cropBox.h).toFixed(2);
+                return `
+                    <div class="w-full flex flex-col items-center">
+                        <div class="w-full max-w-[500px] rounded-2xl border-2 border-slate-300 shadow-inner bg-white overflow-hidden"
+                             style="aspect-ratio: ${aspect}; background-image: url('${pageUrl}'); background-size: ${bgWidth}% auto; background-position: ${bgPosX}% ${bgPosY}%; background-repeat: no-repeat;">
+                        </div>
+                        ${captionText ? `<div class="text-sm font-black text-slate-600 mt-1">${captionText}</div>` : ''}
+                    </div>
+                `;
+            }
+            return fallbackSvgHtml;
+        }
+
+        /**************************************************************
+         * 2. HIỆU ỨNG PHÁO HOA CHÚC MỪNG (CONFETTI)
+         **************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#10b981', '#0284c7', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 320,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 16 - 5,
+                    size: Math.random() * 11 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 12
+                });
+            }
+
+            let frame = 0;
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.42;
+                    p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 95) {
+                    requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+        }
+
+        /**************************************************************
+         * 3. TRẠNG THÁI ỨNG DỤNG & CẤU TRÚC 4 CHẶNG (21 BƯỚC TÁCH NHỎ)
+         **************************************************************/
+        const state = {
+            stageIdx: 0,
+            stepIdx: 0,
+            stars: 0,
+            rewardedKeys: {},
+
+            // Chặng 1: Khởi động (3 bước)
+            goalsUnlocked: [false, false, false, false, false, false], // 4 mục tiêu + 2 nhóm yêu cầu sản phẩm
+            introDialogSolved: false,
+            windFarmExploreDone: false,
+
+            // Chặng 2: Khám phá (9 bước tách biệt)
+            fillBlanks: { b1: null, b2: null, b3: null }, // (1) cánh quạt, (2) chuyển động, (3) điện
+            selectedWord: null,
+            compareFanDone: false,
+            samplePartsMatched: { a: null, b: null, c: null, d: null }, // a: Khung giá đỡ, b: Máy phát điện cánh quạt, c: Đèn LED, d: Dây dẫn điện
+            selectedPartDesc: 'a',
+            tableGroup1Done: false,
+            tableGroup2Done: false,
+            step1StandBuilt: false,
+            step2RedWireDone: false,
+            step2BlackWireDone: false,
+            step2TapeDone: false,
+            step3GeneratorMounted: false,
+            step3LedMounted: false,
+            step4WindLevel: 0, // 0: Không có gió, 1: Ít gió, 2: Gió mạnh
+            step4Recorded: { w0: false, w1: false, w2: false },
+
+            // Chặng 3: Luyện tập (6 câu hỏi trắc nghiệm có phương án nhiễu hợp lí)
+            prac1Done: false,
+            prac2Done: false,
+            prac3Done: false,
+            prac4Done: false,
+            prac5Done: false,
+            prac6Done: false,
+
+            // Chặng 4: Vận dụng (3 bước)
+            evalCriteria: { c1: null, c2: null, c3: null, c4: null, c5: null, c6: null },
+            upgradeOption: 'two_leds', // 'two_leds', 'tall_tower', 'house_light'
+            upgradeTested: false
+        };
+
+        const STAGES = [
+            {
+                id: 'khoi-dong',
+                title: '1. Khởi động',
+                color: 'from-amber-500 to-orange-500',
+                badgeBg: 'bg-amber-100 text-amber-900 border-amber-400',
+                steps: [
+                    {
+                        title: 'Mục tiêu bài học & Yêu cầu sản phẩm (Trang 38 – 39)',
+                        subtitle: 'Bấm vào từng thẻ dưới đây để mở khóa 4 mục tiêu bài học và các yêu cầu sản phẩm!',
+                        voiceText: 'Chào mừng các em đến với Bài 8: Mô hình máy phát điện gió. Học xong bài này, em sẽ: Một, mô tả được cách tạo ra điện từ gió. Hai, nhận biết và mô tả được các bộ phận chính của mô hình máy phát điện gió. Ba, lắp ráp được mô hình máy phát điện gió. Bốn, kiểm tra được hoạt động của mô hình với các tốc độ gió khác nhau.',
+                        render: renderStep1_1
+                    },
+                    {
+                        title: 'Tình huống khởi động trên cánh đồng điện gió (Trang 38)',
+                        subtitle: 'Cùng lắng nghe cuộc trò chuyện của hai bạn học sinh và giải đáp thắc mắc của bạn nam!',
+                        voiceText: 'Bạn nữ nói: Bạn biết không, gió cũng có thể tạo ra điện đấy! Bạn nam hỏi: Gió có thể tạo ra điện bằng cách nào nhỉ? Em hãy chọn câu trả lời đúng nhất giúp bạn nam nhé!',
+                        render: renderStep1_2
+                    },
+                    {
+                        title: 'Khám phá nguồn năng lượng gió và Trang trại điện gió (Hình 2 – Trang 39)',
+                        subtitle: 'Tìm hiểu vì sao năng lượng gió được gọi là nguồn năng lượng sạch của tương lai.',
+                        voiceText: 'Gió là nguồn năng lượng mạnh, sạch, có sẵn trong tự nhiên và không giới hạn. Quá trình tạo ra điện từ gió không tạo ra bất kì khí thải nào, giúp giảm thiểu ô nhiễm môi trường. Các trang trại điện gió với nhiều máy phát điện gió có thể tạo ra đủ điện cho sinh hoạt và sản xuất của một địa phương.',
+                        render: renderStep1_3
+                    }
+                ]
+            },
+            {
+                id: 'kham-pha',
+                title: '2. Khám phá',
+                color: 'from-sky-600 to-blue-700',
+                badgeBg: 'bg-sky-100 text-sky-900 border-sky-400',
+                steps: [
+                    {
+                        title: '1. Điện được tạo ra từ máy phát điện gió (Hình 1 – Trang 38)',
+                        subtitle: 'Quan sát Hình 1 và sắp xếp 3 từ (điện, cánh quạt, chuyển động) vào chỗ trống (1), (2), (3).',
+                        voiceText: 'Mục 1: Điện được tạo ra từ máy phát điện gió. Quan sát Hình 1, đọc thông tin và sắp xếp các từ điện, cánh quạt, chuyển động vào chỗ trống thích hợp để mô tả cách tạo ra điện từ gió.',
+                        render: renderStep2_1
+                    },
+                    {
+                        title: '1. So sánh chức năng: Máy phát điện gió và Quạt điện (Trang 38)',
+                        subtitle: 'Hãy cho biết sự khác nhau về chức năng giữa máy phát điện gió và quạt điện.',
+                        voiceText: 'Hãy cho biết sự khác nhau về chức năng giữa máy phát điện gió và quạt điện. Ghi nhớ: Máy phát điện gió được dùng để biến đổi năng lượng gió thành năng lượng điện.',
+                        render: renderStep2_2
+                    },
+                    {
+                        title: '2a. Tìm hiểu sản phẩm mẫu – Các bộ phận chính (Hình 3 – Trang 39)',
+                        subtitle: 'Quan sát Hình 3 và ghép mỗi mô tả (a, b, c, d) với đúng bộ phận của mô hình máy phát điện gió.',
+                        voiceText: 'Mục 2a: Tìm hiểu sản phẩm mẫu. Mô hình máy phát điện gió gồm các bộ phận chính: máy phát điện cánh quạt, khung giá đỡ, dây dẫn điện và thiết bị tiêu thụ điện là đèn LED. Em hãy ghép mỗi mô tả a, b, c, d với tên bộ phận phù hợp.',
+                        render: renderStep2_3
+                    },
+                    {
+                        title: '2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 7 – Trang 40)',
+                        subtitle: 'Quan sát tên gọi, hình minh họa và số lượng của 7 chi tiết đầu tiên rồi trả lời câu hỏi.',
+                        voiceText: 'Mục 2b: Bảng chi tiết, vật liệu và dụng cụ. Nhóm 1 gồm: 1 tấm lớn, 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ, 1 máy phát điện cánh quạt và dây dẫn điện, và 1 đèn LED.',
+                        render: renderStep2_4
+                    },
+                    {
+                        title: '2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 8 đến 14 – Trang 40, 41)',
+                        subtitle: 'Quan sát các chi tiết ghép nối và dụng cụ (STT 8 đến 14) và kiểm tra số lượng ốc vít.',
+                        voiceText: 'Nhóm 2 gồm: 12 đai ốc, 12 vít ngắn, 1 tua-vít, 1 cờ-lê, 1 cuộn băng dính 2 mặt, 1 cuộn băng dính điện, và 1 chiếc kéo.',
+                        render: renderStep2_5
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 1 – Lắp khung giá đỡ (Hình 4 – Trang 41)',
+                        subtitle: 'Dùng 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài và 2 thanh thẳng 3 lỗ lắp vào tấm lớn.',
+                        voiceText: 'Mục 2c: Thực hành. Bước 1: Lắp khung giá đỡ. Dùng hai thanh chữ U dài, hai thanh chữ U ngắn, hai thanh chữ L dài và hai thanh thẳng 3 lỗ lắp vào tấm lớn để tạo thành khung giá đỡ như Hình 4. Lưu ý: Sử dụng dụng cụ lắp ghép an toàn, các mối ghép chắc chắn.',
+                        render: renderStep2_6
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 2 – Lắp đèn LED với dây dẫn điện (Hình 5 – Trang 42)',
+                        subtitle: 'Nối đúng chân dài, chân ngắn của đèn LED với dây dẫn điện và cố định bằng băng dính điện.',
+                        voiceText: 'Bước 2: Lắp đèn LED với dây dẫn điện và dùng băng dính điện để cố định đèn LED với đầu dây dẫn điện như Hình 5. Lưu ý: Dây dẫn điện màu đỏ nối với chân dài của đèn LED, dây dẫn điện màu đen nối với chân ngắn của đèn LED.',
+                        render: renderStep2_7
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 3 – Gắn máy phát điện và đèn LED vào khung giá đỡ (Hình 6 – Trang 42)',
+                        subtitle: 'Gắn cố định máy phát điện lên đỉnh trụ cao và dùng băng dính 2 mặt gắn đèn LED lên khung giá đỡ.',
+                        voiceText: 'Bước 3: Gắn máy phát điện và đèn LED vào khung giá đỡ. Gắn cố định máy phát điện lên khung giá đỡ và dùng băng dính 2 mặt để gắn đèn LED lên khung giá đỡ như Hình 6.',
+                        render: renderStep2_8
+                    },
+                    {
+                        title: '2c. Thực hành: Bước 4 – Kiểm tra hoạt động của mô hình với các tốc độ gió (Trang 43)',
+                        subtitle: 'Thử nghiệm 3 mức tốc độ gió (Không có gió, Ít gió, Gió mạnh) và ghi chép trạng thái của đèn LED!',
+                        voiceText: 'Bước 4: Kiểm tra hoạt động của mô hình. Quan sát các trạng thái của đèn LED tương ứng với sự thay đổi của tốc độ gió: Không có gió, Ít gió, Gió mạnh và ghi chép lại vào bảng.',
+                        render: renderStep2_9
+                    }
+                ]
+            },
+            {
+                id: 'luyen-tap',
+                title: '3. Luyện tập',
+                color: 'from-emerald-600 to-teal-700',
+                badgeBg: 'bg-emerald-100 text-emerald-900 border-emerald-400',
+                steps: [
+                    {
+                        title: 'Câu hỏi 1/6 – Nguyên lí tạo ra điện và chức năng bộ phận',
+                        subtitle: 'Vận dụng kiến thức Mục 1 (Trang 38) và Mục 2a (Trang 39).',
+                        voiceText: 'Câu hỏi 1: Trong mô hình máy phát điện gió, quá trình biến đổi năng lượng và truyền điện diễn ra theo trình tự nào dưới đây khi có gió thổi?',
+                        render: renderStep3_1
+                    },
+                    {
+                        title: 'Câu hỏi 2/6 – Số lượng chi tiết trong Bảng chi tiết, vật liệu và dụng cụ',
+                        subtitle: 'Vận dụng Bảng chi tiết, vật liệu và dụng cụ (Trang 40 – 41 SGK).',
+                        voiceText: 'Câu hỏi 2: Để lắp ráp khung giá đỡ của mô hình máy phát điện gió theo đúng bảng gợi ý ở trang 40, em cần chuẩn bị số lượng các thanh và chi tiết ghép nối như thế nào?',
+                        render: renderStep3_2
+                    },
+                    {
+                        title: 'Câu hỏi 3/6 – Quy tắc kĩ thuật khi nối đèn LED với dây dẫn điện',
+                        subtitle: 'Vận dụng lưu ý quan trọng ở Bước 2 (Hình 5 – Trang 42 SGK).',
+                        voiceText: 'Câu hỏi 3: Khi thực hiện Bước 2: Lắp đèn LED với dây dẫn điện, thao tác nào dưới đây là ĐÚNG quy tắc kĩ thuật để đèn LED có thể phát sáng và không bị tuột?',
+                        render: renderStep3_3
+                    },
+                    {
+                        title: 'Câu hỏi 4/6 – Phân biệt công dụng của Băng dính điện và Băng dính 2 mặt',
+                        subtitle: 'So sánh vật liệu sử dụng ở Bước 2 và Bước 3 (Trang 42 SGK).',
+                        voiceText: 'Câu hỏi 4: Vì sao trong bộ lắp ghép mô hình máy phát điện gió lại cần chuẩn bị cả băng dính điện và băng dính 2 mặt cho hai công việc khác nhau?',
+                        render: renderStep3_4
+                    },
+                    {
+                        title: 'Câu hỏi 5/6 – Mối quan hệ giữa tốc độ gió và độ sáng của đèn LED',
+                        subtitle: 'Vận dụng kết quả thí nghiệm ở Bước 4 (Trang 43 SGK).',
+                        voiceText: 'Câu hỏi 5: Khi kiểm tra hoạt động của mô hình máy phát điện gió với các tốc độ gió khác nhau ở Bước 4, nhận xét nào dưới đây phản ánh ĐÚNG trạng thái của đèn LED?',
+                        render: renderStep3_5
+                    },
+                    {
+                        title: 'Câu hỏi 6/6 – Xử lí tình huống khi kiểm tra và điều chỉnh mô hình',
+                        subtitle: 'Vận dụng kiến thức Bước 4: Kiểm tra và điều chỉnh lại mô hình (Trang 43).',
+                        voiceText: 'Câu hỏi 6: Sau khi lắp xong mô hình, bạn Lan dùng quạt thổi gió mạnh làm cánh quạt quay tít nhưng đèn LED vẫn không sáng. Nguyên nhân hợp lí nhất cần kiểm tra và điều chỉnh là gì?',
+                        render: renderStep3_6
+                    }
+                ]
+            },
+            {
+                id: 'van-dung',
+                title: '4. Vận dụng',
+                color: 'from-purple-600 to-indigo-700',
+                badgeBg: 'bg-purple-100 text-purple-900 border-purple-400',
+                steps: [
+                    {
+                        title: '2d. Giới thiệu, đánh giá và hoàn thiện sản phẩm (Trang 43)',
+                        subtitle: 'Cùng bạn đánh giá sản phẩm mô hình máy phát điện gió theo 6 tiêu chí trong Phiếu đánh giá.',
+                        voiceText: 'Mục 2d: Giới thiệu, đánh giá và hoàn thiện sản phẩm. Em hãy cùng bạn đánh giá sản phẩm theo 6 tiêu chí trong Phiếu đánh giá sản phẩm ở trang 43.',
+                        render: renderStep4_1
+                    },
+                    {
+                        title: 'Xưởng sáng tạo: Cải tiến mô hình máy phát điện gió (Hình 7 – Trang 43)',
+                        subtitle: 'Sử dụng các chi tiết trong bộ lắp ghép để cải tiến mô hình máy phát điện gió theo ý tưởng sáng tạo của em!',
+                        voiceText: 'Em hãy sử dụng các chi tiết trong bộ lắp ghép mô hình kĩ thuật để cải tiến mô hình máy phát điện gió đã lắp theo ý tưởng sáng tạo của em như Hình 7 trang 43.',
+                        render: renderStep4_2
+                    },
+                    {
+                        title: 'Tổng kết bài học & Trao Huy hiệu Kĩ Sư Năng Lượng Xanh',
+                        subtitle: 'Cùng nhìn lại toàn bộ kiến thức Bài 8 và nhận huy hiệu khen thưởng!',
+                        voiceText: 'Chúc mừng các em đã hoàn thành xuất sắc Bài 8: Mô hình máy phát điện gió! Các em đã hiểu rõ nguyên lí biến đổi năng lượng gió thành năng lượng điện và nắm vững 4 bước lắp ráp, kiểm tra mô hình máy phát điện gió.',
+                        render: renderStep4_3
+                    }
+                ]
+            }
+        ];
+
+        /**************************************************************
+         * 4. HÀM THƯỞNG SAO & HIỂN THỊ PHẢN HỒI ĐÚNG / SAI (CHỮ TO RÕ)
+         **************************************************************/
+        function rewardStar(key, points = 1) {
+            if (!state.rewardedKeys[key]) {
+                state.rewardedKeys[key] = true;
+                state.stars += points;
+                const el = document.getElementById('star-count');
+                const badge = document.getElementById('star-badge');
+                if (el) el.textContent = state.stars;
+                if (badge) {
+                    badge.classList.add('scale-110');
+                    setTimeout(() => badge.classList.remove('scale-110'), 280);
+                }
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.remove('hidden', 'bg-emerald-100', 'border-emerald-500', 'text-emerald-950', 'bg-rose-100', 'border-rose-500', 'text-rose-950');
+            banner.classList.add('flex');
+            if (isCorrect) {
+                banner.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-2xl shrink-0">✓</span>
+                        <span class="tv-body text-emerald-950">${message}</span>
+                    </div>
+                    <span class="tv-badge bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full shrink-0 border-2 border-amber-500">+1 Sao ⭐</span>
+                `;
+            } else {
+                banner.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-950');
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center font-black text-2xl shrink-0">!</span>
+                        <span class="tv-body text-rose-950">${message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function hideFeedback() {
+            const banner = document.getElementById('feedback-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**************************************************************
+         * 5. THƯ VIỆN HÌNH VẼ KĨ THUẬT CHÍNH XÁC 100% THEO SGK TRANG 38–43
+         *    (Cố định đúng tâm trục, tuyệt đối không làm bay lệch cánh quạt)
+         **************************************************************/
+        // Vẽ cánh quạt 4 cánh màu xanh dương chuẩn bộ lắp ghép lớp 5 (Hình 3a, 3b, 6)
+        function drawBluePropeller(cx, cy, r = 44) {
+            return `
+                <g>
+                    <!-- 4 cánh quạt bản rộng bo tròn màu xanh dương giống hệt Hình 3a -->
+                    <path d="M${cx},${cy} C${cx - 18},${cy - r} ${cx + 22},${cy - r} ${cx + 6},${cy - 6} Z" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+                    <path d="M${cx},${cy} C${cx + r},${cy - 18} ${cx + r},${cy + 22} ${cx + 6},${cy + 6} Z" fill="#0ea5e9" stroke="#0369a1" stroke-width="2"/>
+                    <path d="M${cx},${cy} C${cx + 18},${cy + r} ${cx - 22},${cy + r} ${cx - 6},${cy + 6} Z" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+                    <path d="M${cx},${cy} C${cx - r},${cy + 18} ${cx - r},${cy - 22} ${cx - 6},${cy - 6} Z" fill="#0ea5e9" stroke="#0369a1" stroke-width="2"/>
+                    <!-- Tâm cánh quạt -->
+                    <circle cx="${cx}" cy="${cy}" r="10" fill="#0369a1" stroke="#e0f2fe" stroke-width="2"/>
+                    <circle cx="${cx}" cy="${cy}" r="4" fill="#94a3b8"/>
+                </g>
+            `;
+        }
+
+        // Vẽ Hình 1 (Trang 38): Sơ đồ nguyên lí Gió -> Cánh quạt -> Máy phát điện -> Điện
+        function getHinh1WindPrincipleSVG() {
+            return `
+                <svg viewBox="0 0 320 260" class="w-full max-w-[300px] h-auto mx-auto">
+                    <!-- Mũi tên Gió bên trái -->
+                    <text x="54" y="96" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">Gió</text>
+                    <line x1="25" y1="74" x2="78" y2="74" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="78,70 86,74 78,78" fill="#e11d48"/>
+                    <line x1="25" y1="80" x2="78" y2="80" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="78,76 86,80 78,84" fill="#e11d48"/>
+
+                    <line x1="25" y1="108" x2="78" y2="108" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="78,104 86,108 78,112" fill="#e11d48"/>
+                    <line x1="25" y1="114" x2="78" y2="114" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="78,110 86,114 78,118" fill="#e11d48"/>
+
+                    <!-- Trụ tua-bin điện gió màu trắng xám xanh -->
+                    <polygon points="144,96 156,96 164,235 136,235" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="150" cy="236" rx="22" ry="6" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+
+                    <!-- Buồng máy phát (Nacelle) -->
+                    <rect x="132" y="80" width="48" height="18" rx="5" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+
+                    <!-- Cánh quạt tua-bin thẳng đứng như Hình 1 SGK -->
+                    <path d="M132,89 C125,45 128,15 133,12 C137,15 138,45 135,89 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                    <path d="M132,89 C125,135 128,165 133,168 C137,165 138,135 135,89 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="130" cy="89" rx="5" ry="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+
+                    <!-- Mũi tên vòng tròn màu đỏ chỉ chiều quay trên trục -->
+                    <path d="M145,74 A16,16 0 1,1 145,104" fill="none" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="145,100 139,105 147,108" fill="#e11d48"/>
+
+                    <!-- Mũi tên Điện bên phải -->
+                    <line x1="186" y1="89" x2="222" y2="89" stroke="#e11d48" stroke-width="2.5"/>
+                    <polygon points="222,85 230,89 222,93" fill="#e11d48"/>
+                    <text x="260" y="95" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="900">Điện</text>
+                </svg>
+            `;
+        }
+
+        // Vẽ Mô hình máy phát điện gió hoàn chỉnh (Hình 3a & Hình 6 - Gồm Tấm lớn, trụ cao 2 thanh chữ U dài, giá chữ L đỏ, cánh quạt 4 cánh xanh, trụ ngắn đỡ đèn LED)
+        function getWindModelSVG(windLevel = 0) {
+            // windLevel: 0 = tắt, 1 = sáng yếu, 2 = sáng mạnh
+            const ledFill = windLevel === 2 ? '#ff1e1e' : (windLevel === 1 ? '#f87171' : '#991b1b');
+            const ledStroke = windLevel > 0 ? '#fef08a' : '#7f1d1d';
+
+            return `
+                <svg viewBox="0 0 380 265" class="w-full max-w-[370px] h-auto mx-auto">
+                    <!-- Bóng nền vàng nhạt dưới đế như Hình 6 -->
+                    <ellipse cx="190" cy="228" rx="145" ry="26" fill="#fef9c3" opacity="0.85"/>
+
+                    <!-- Hiệu ứng luồng gió thổi khi kiểm tra mô hình (Bước 4) -->
+                    ${windLevel > 0 ? `
+                        <g>
+                            <path d="M18,52 Q48,44 72,52" fill="none" stroke="#0284c7" stroke-width="${windLevel === 2 ? '4' : '2.5'}" stroke-linecap="round"/>
+                            <path d="M12,72 Q45,64 76,72" fill="none" stroke="#0284c7" stroke-width="${windLevel === 2 ? '4' : '2.5'}" stroke-linecap="round"/>
+                            ${windLevel === 2 ? `<path d="M22,92 Q52,84 78,92" fill="none" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>` : ''}
+                            <text x="45" y="36" text-anchor="middle" fill="#0369a1" font-size="13" font-weight="900">
+                                ${windLevel === 2 ? '💨 GIÓ MẠNH' : '🌬️ ÍT GIÓ'}
+                            </text>
+                        </g>
+                    ` : ''}
+
+                    <!-- Tấm lớn màu xanh lá cây nằm ngang làm chân đế (Hình 3a, 4b, 6) -->
+                    <polygon points="56,192 268,192 296,232 84,232" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="56,192 84,232 84,248 56,208" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                    <polygon points="84,232 296,232 296,248 84,248" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                    <!-- Lưới lỗ tròn trên mặt tấm lớn -->
+                    ${[0,1,2,3,4,5,6,7,8].map(c => [0,1,2].map(r => `
+                        <circle cx="${82 + c*21 + r*6}" cy="${202 + r*11}" r="2.6" fill="#064e3b"/>
+                    `).join('')).join('')}
+
+                    <!-- Thanh chữ U ngắn nằm ngang nối 2 chân trụ cao trên tấm lớn -->
+                    <rect x="112" y="198" width="58" height="12" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+
+                    <!-- 2 Thanh chữ U dài màu vàng dựng đứng song song làm trụ đỡ máy phát điện -->
+                    <rect x="116" y="88" width="16" height="116" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="148" y="88" width="16" height="116" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2,3,4].map(i => `
+                        <circle cx="124" cy="${104 + i*20}" r="2.8" fill="#713f12"/>
+                        <circle cx="156" cy="${104 + i*20}" r="2.8" fill="#713f12"/>
+                    `).join('')}
+
+                    <!-- Cụm giá đỡ trên đỉnh trụ: 2 Thanh thẳng 3 lỗ đỏ + 2 Thanh chữ L dài đỏ + Thanh chữ U ngắn vàng -->
+                    <rect x="112" y="84" width="56" height="12" rx="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="122" y="42" width="14" height="46" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="146" y="42" width="14" height="46" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <!-- Đai ốc & Vít ngắn bắt chặt cụm đỉnh trụ -->
+                    <circle cx="124" cy="90" r="4" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+                    <circle cx="156" cy="90" r="4" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+
+                    <!-- Máy phát điện hình trụ màu bạc gắn trên đỉnh trụ -->
+                    <rect x="126" y="54" width="38" height="28" rx="4" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <line x1="112" y1="68" x2="126" y2="68" stroke="#475569" stroke-width="5"/>
+
+                    <!-- Cánh quạt 4 cánh màu xanh dương gắn phía trước máy phát điện -->
+                    ${drawBluePropeller(114, 68, 42)}
+
+                    <!-- Trụ đỡ đèn LED bên phải (Thanh chữ U ngắn màu vàng dựng đứng) -->
+                    <rect x="218" y="132" width="16" height="78" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    ${[0,1,2].map(i => `<circle cx="226" cy="${148 + i*18}" r="2.8" fill="#713f12"/>`).join('')}
+                    <circle cx="226" cy="206" r="4.5" fill="#cbd5e1" stroke="#334155" stroke-width="1.5"/>
+
+                    <!-- Dây dẫn điện Đỏ & Đen nối từ đuôi máy phát điện sang Đèn LED trên trụ thấp -->
+                    <path d="M164,74 C195,95 255,112 236,134" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M164,78 C192,102 248,118 234,136" fill="none" stroke="#1e293b" stroke-width="3"/>
+
+                    <!-- Phần quấn băng dính điện màu đen và bóng Đèn LED đỏ trên đỉnh trụ ngắn -->
+                    <rect x="214" y="126" width="24" height="9" rx="2" fill="#0f172a"/>
+                    <!-- Quầng sáng khi có gió -->
+                    ${windLevel === 1 ? `
+                        <circle cx="206" cy="130" r="16" fill="#fef08a" opacity="0.65"/>
+                    ` : ''}
+                    ${windLevel === 2 ? `
+                        <circle cx="206" cy="130" r="28" fill="#fef08a" opacity="0.85"/>
+                        <circle cx="206" cy="130" r="18" fill="#fde047" opacity="0.95"/>
+                        <!-- Các tia sáng tỏa ra -->
+                        <line x1="206" y1="96" x2="206" y2="106" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="206" y1="154" x2="206" y2="164" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="172" y1="130" x2="182" y2="130" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="182" y1="106" x2="190" y2="114" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="182" y1="154" x2="190" y2="146" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                    ` : ''}
+                    <!-- Bóng đèn LED màu đỏ -->
+                    <path d="M214,125 L203,125 A5,5 0 0,0 203,135 L214,135 Z" fill="${ledFill}" stroke="${ledStroke}" stroke-width="2"/>
+                </svg>
+            `;
+        }
+
+        /**************************************************************
+         * 6. CHẶNG 1: KHỞI ĐỘNG (3 BƯỚC)
+         **************************************************************/
+        // Bước 1/3: Mở khóa 4 Mục tiêu bài học & Yêu cầu sản phẩm (Trang 38 - 39)
+        function renderStep1_1(container) {
+            const goals = [
+                {
+                    type: 'Mục tiêu 1',
+                    icon: '🌬️',
+                    text: 'Mô tả được cách tạo ra điện từ gió.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 2',
+                    icon: '🔍',
+                    text: 'Nhận biết và mô tả được các bộ phận chính của mô hình máy phát điện gió.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 3',
+                    icon: '🛠️',
+                    text: 'Lắp ráp được mô hình máy phát điện gió.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Mục tiêu 4',
+                    icon: '💡',
+                    text: 'Kiểm tra được hoạt động của mô hình với các tốc độ gió khác nhau.',
+                    badgeColor: 'bg-sky-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm (1–3)',
+                    icon: '🔩',
+                    text: 'Đúng và đủ các bộ phận; đúng hình dạng; mối ghép chắc chắn.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                },
+                {
+                    type: 'Yêu cầu sản phẩm (4–6)',
+                    icon: '⚡',
+                    text: 'Dây dẫn điện gọn gàng; đèn LED phát sáng khi cánh quạt quay; độ sáng đèn LED thay đổi khi tốc độ gió thay đổi.',
+                    badgeColor: 'bg-emerald-600 text-white'
+                }
+            ];
+
+            const allUnlocked = state.goalsUnlocked.every(Boolean);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-50 border-3 border-sky-300 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">🎯</span>
+                            <span class="tv-body text-sky-950">
+                                <b>Học xong bài này, em sẽ đạt 4 mục tiêu và các yêu cầu sản phẩm (Trang 38–39):</b> Bấm vào từng thẻ để mở khóa!
+                            </span>
+                        </div>
+                        <button onclick="unlockAllGoals8()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-4 py-2 rounded-xl text-base shrink-0">
+                            🔓 Mở nhanh tất cả
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        ${goals.map((g, idx) => {
+                            const unlocked = state.goalsUnlocked[idx];
+                            return `
+                                <button onclick="unlockGoal8(${idx})"
+                                    class="btn-kid text-left p-4 rounded-3xl border-4 flex items-center gap-4 transition-all ${
+                                        unlocked
+                                            ? 'bg-emerald-50 border-emerald-500 shadow-sm'
+                                            : 'bg-white hover:bg-sky-50 border-slate-300'
+                                    }">
+                                    <div class="w-14 h-14 rounded-2xl ${ unlocked ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700' } flex items-center justify-center text-3xl shrink-0 font-black">
+                                        ${unlocked ? '✓' : g.icon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="tv-badge px-3 py-0.5 rounded-full ${g.badgeColor}">${g.type}</span>
+                                            <span class="tv-badge ${unlocked ? 'text-emerald-700' : 'text-amber-700'}">
+                                                ${unlocked ? 'Đã mở khóa ⭐' : '👆 Bấm để mở'}
+                                            </span>
+                                        </div>
+                                        <div class="tv-body text-slate-900">${g.text}</div>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (allUnlocked) {
+                showFeedback(true, 'Tuyệt vời! Em đã nắm rõ 4 mục tiêu bài học và 6 yêu cầu sản phẩm của mô hình máy phát điện gió!');
+            }
+        }
+
+        function unlockAllGoals8() {
+            state.goalsUnlocked = [true, true, true, true, true, true];
+            playSound('correct');
+            rewardStar('b8_goal_all', 2);
+            renderApp();
+        }
+
+        function unlockGoal8(idx) {
+            state.goalsUnlocked[idx] = true;
+            playSound('wrench');
+            rewardStar('b8_goal_' + idx, 1);
+            if (state.goalsUnlocked.every(Boolean)) playSound('correct');
+            renderApp();
+        }
+
+        // Bước 2/3: Tình huống khởi động trên cánh đồng điện gió (Trang 38)
+        function renderStep1_2(container) {
+            const options = [
+                {
+                    text: 'A. Sức gió thổi làm quay cánh quạt của máy phát điện gió; khi cánh quạt quay sẽ làm máy phát điện tạo ra dòng điện.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Nhờ sức gió làm quay cánh quạt, máy phát điện gió biến đổi năng lượng gió thành năng lượng điện.'
+                },
+                {
+                    text: 'B. Các trụ điện gió hút ánh nắng mặt trời vào ban trưa rồi đun sôi nước bên trong cột trụ để tạo ra điện.',
+                    correct: false,
+                    explain: 'Chưa đúng! Máy phát điện gió hoạt động nhờ sức gió làm quay cánh quạt chứ không phải đun sôi nước bằng ánh nắng.'
+                },
+                {
+                    text: 'C. Người ta phải lắp hàng nghìn viên pin tiểu vào bên trong cánh quạt để cánh quạt thổi ra gió mát cho cánh đồng.',
+                    correct: false,
+                    explain: 'Chưa đúng! Đây là máy phát điện gió (tạo ra điện từ gió), không phải quạt máy dùng pin để thổi mát.'
+                }
+            ];
+
+            const windSceneSvg = `
+                <svg viewBox="0 0 420 210" class="w-full max-w-[420px] h-auto mx-auto">
+                    <defs>
+                        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#bae6fd"/>
+                            <stop offset="100%" stop-color="#f0f9ff"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="420" height="210" rx="16" fill="url(#skyGrad)"/>
+                    <!-- Đồi cỏ xanh -->
+                    <path d="M0,155 Q110,135 220,152 T420,148 L420,210 L0,210 Z" fill="#86efac"/>
+                    <path d="M0,175 Q140,158 280,175 T420,168 L420,210 L0,210 Z" fill="#22c55e"/>
+                    <!-- Các trụ điện gió trên cánh đồng -->
+                    ${[
+                        { x: 85, y: 72, s: 0.9 },
+                        { x: 215, y: 58, s: 1.05 },
+                        { x: 335, y: 78, s: 0.85 }
+                    ].map(t => `
+                        <g transform="translate(${t.x}, ${t.y}) scale(${t.s})">
+                            <line x1="0" y1="0" x2="0" y2="95" stroke="#f8fafc" stroke-width="6"/>
+                            <line x1="0" y1="0" x2="0" y2="95" stroke="#94a3b8" stroke-width="1.5"/>
+                            <line x1="0" y1="0" x2="-34" y2="-22" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="0" y1="0" x2="36" y2="-16" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+                            <line x1="0" y1="0" x2="4" y2="42" stroke="#f8fafc" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="0" cy="0" r="4.5" fill="#475569"/>
+                        </g>
+                    `).join('')}
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Tranh tình huống khởi động trang 38 -->
+                    <div class="lg:col-span-6 bg-gradient-to-br from-sky-50 via-emerald-50 to-amber-50 border-4 border-sky-300 rounded-3xl p-4 flex flex-col gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-white border-3 border-sky-400 rounded-2xl p-3.5 shadow-sm">
+                                <div class="tv-badge text-sky-800 uppercase">👧🏻 Bạn nữ chia sẻ:</div>
+                                <p class="tv-body text-slate-900 mt-1">“Bạn biết không, gió cũng có thể tạo ra điện đấy!”</p>
+                            </div>
+                            <div class="bg-white border-3 border-amber-400 rounded-2xl p-3.5 shadow-sm">
+                                <div class="tv-badge text-amber-800 uppercase">👦🏻 Bạn nam thắc mắc:</div>
+                                <p class="tv-body text-slate-900 mt-1">“Gió có thể tạo ra điện bằng cách nào nhỉ?”</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border-2 border-sky-200 p-2">
+                            ${renderSgkCropOrSVG(1, { x: 24, y: 31, w: 62, h: 20 }, windSceneSvg)}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Câu hỏi trả lời -->
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3.5">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Theo em, những chiếc cối xay gió khổng lồ (máy phát điện gió) trên cánh đồng tạo ra điện bằng cách nào?
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerIntro8(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.introDialogSolved && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.introDialogSolved) {
+                showFeedback(true, 'Chính xác! Gió làm quay cánh quạt của máy phát điện gió, từ đó biến đổi năng lượng gió thành năng lượng điện!');
+            }
+        }
+
+        function answerIntro8(isCorrect, explain) {
+            if (isCorrect) {
+                state.introDialogSolved = true;
+                playSound('wind_high');
+                rewardStar('intro_8', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/3: Khám phá nguồn năng lượng gió & Trang trại điện gió (Hình 2 – Trang 39)
+        function renderStep1_3(container) {
+            const options = [
+                {
+                    text: 'A. Vì gió là nguồn năng lượng mạnh, có sẵn trong tự nhiên, không giới hạn và quá trình tạo ra điện từ gió không tạo ra bất kì khí thải nào, giúp giảm thiểu ô nhiễm môi trường.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Theo thông tin ở trang 39 SGK, điện gió không sinh ra khí thải gây ô nhiễm môi trường.'
+                },
+                {
+                    text: 'B. Vì máy phát điện gió cần đốt rất nhiều than đá và xăng dầu để làm cánh quạt quay.',
+                    correct: false,
+                    explain: 'Chưa đúng! Máy phát điện gió sử dụng sức gió tự nhiên, hoàn toàn không đốt than đá hay xăng dầu.'
+                },
+                {
+                    text: 'C. Vì năng lượng gió chỉ dùng được một lần duy nhất rồi biến mất vĩnh viễn khỏi tự nhiên.',
+                    correct: false,
+                    explain: 'Chưa đúng! Gió là nguồn năng lượng tái tạo có sẵn trong tự nhiên và không giới hạn.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-sky-100/90 border-4 border-sky-400 rounded-3xl p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <div class="lg:col-span-8 flex flex-col gap-2">
+                            <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full w-fit">🌱 Thông tin khoa học (Trang 39 SGK)</span>
+                            <p class="tv-body text-slate-900 leading-relaxed">
+                                “Gió là nguồn năng lượng mạnh, sạch, có sẵn trong tự nhiên và không giới hạn. Quá trình tạo ra điện từ gió không tạo ra bất kì khí thải nào, giúp giảm thiểu ô nhiễm môi trường. Các <b>“trang trại điện gió”</b> với nhiều máy phát điện gió có thể tạo ra đủ điện cho sinh hoạt và sản xuất của một địa phương (Hình 2).”
+                            </p>
+                        </div>
+                        <div class="lg:col-span-4 bg-white rounded-2xl border-2 border-sky-300 p-3 text-center">
+                            <div class="text-5xl mb-1">🌬️🌾⚡</div>
+                            <div class="tv-card-title text-sky-900">Hình 2: Trang trại điện gió</div>
+                            <div class="tv-badge text-emerald-700 mt-1">Năng lượng sạch • Không khí thải</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Vì sao việc xây dựng các “trang trại điện gió” lại giúp bảo vệ môi trường sống của chúng ta?
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerWindFarm8(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.windFarmExploreDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.windFarmExploreDone) {
+                showFeedback(true, 'Xuất sắc! Em đã hiểu rõ lợi ích to lớn của nguồn năng lượng gió. Hãy sang Chặng 2: Khám phá nhé!');
+            }
+        }
+
+        function answerWindFarm8(isCorrect, explain) {
+            if (isCorrect) {
+                state.windFarmExploreDone = true;
+                playSound('correct');
+                rewardStar('wind_farm_8', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        /**************************************************************
+         * 7. CHẶNG 2: KHÁM PHÁ (9 BƯỚC TÁCH NHỎ TỪNG MỤC SGK)
+         **************************************************************/
+        // Bước 1/9: 1. Điện được tạo ra từ máy phát điện gió (Hình 1 – Điền từ vào chỗ trống (1), (2), (3) Trang 38)
+        function renderStep2_1(container) {
+            const words = [
+                { id: 'điện', label: 'điện', color: 'bg-sky-200 border-sky-500 text-sky-950' },
+                { id: 'cánh quạt', label: 'cánh quạt', color: 'bg-amber-200 border-amber-500 text-amber-950' },
+                { id: 'chuyển động', label: 'chuyển động', color: 'bg-pink-200 border-pink-500 text-pink-950' }
+            ];
+
+            const b1 = state.fillBlanks.b1;
+            const b2 = state.fillBlanks.b2;
+            const b3 = state.fillBlanks.b3;
+            const isComplete = (b1 === 'cánh quạt' && b2 === 'chuyển động' && b3 === 'điện');
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Bài tập điền từ trang 38 -->
+                    <div class="lg:col-span-8 bg-white border-4 border-sky-400 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <span class="tv-body text-slate-800">
+                                👆 <b>Bước 1:</b> Bấm chọn 1 thẻ từ màu ở dưới $\rightarrow$ <b>Bước 2:</b> Bấm vào ô trống <b>(1)</b>, <b>(2)</b> hoặc <b>(3)</b>:
+                            </span>
+                            <button onclick="fillQuickStep2_1()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-3.5 py-1.5 rounded-xl text-base">
+                                ✨ Điền mẫu nhanh
+                            </button>
+                        </div>
+
+                        <!-- 3 Thẻ từ như SGK trang 38 -->
+                        <div class="flex items-center justify-center gap-4 flex-wrap my-1">
+                            ${words.map(w => {
+                                const isSelected = state.selectedWord === w.id;
+                                return `
+                                    <button onclick="selectWord8('${w.id}')"
+                                        class="btn-kid px-7 py-3 rounded-2xl border-3 tv-card-title ${w.color} ${
+                                            isSelected ? 'ring-4 ring-sky-500 scale-105' : ''
+                                        }">
+                                        ${isSelected ? '👉 ' : ''}${w.label}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Đoạn văn nền xanh nhạt giống hệt trang 38 SGK -->
+                        <div class="bg-lime-100/90 border-3 border-lime-500 rounded-3xl p-5 tv-card-title text-slate-900 leading-loose">
+                            <div class="font-black text-lime-950 mb-2">Cách tạo ra điện từ gió:</div>
+                            <div>
+                                Gió làm quay
+                                <button onclick="placeWordInBlank8('b1')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[175px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b1 === 'cánh quạt' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b1 ? b1 : '...(1)...'}
+                                </button>
+                                của máy phát điện.
+                            </div>
+                            <div class="mt-2">
+                                Khi cánh quạt
+                                <button onclick="placeWordInBlank8('b2')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[195px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b2 === 'chuyển động' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b2 ? b2 : '...(2)...'}
+                                </button>,
+                                máy phát điện gió sẽ tạo ra
+                                <button onclick="placeWordInBlank8('b3')"
+                                    class="btn-kid inline-flex items-center justify-center min-w-[140px] px-4 py-1 mx-1 rounded-xl border-3 font-black ${
+                                        b3 === 'điện' ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-white text-sky-900 border-sky-500'
+                                    }">
+                                    ${b3 ? b3 : '...(3)...'}
+                                </button>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Hình 1 trang 38 -->
+                    <div class="lg:col-span-4 bg-slate-50 border-4 border-sky-300 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-lime-600 text-white px-4 py-1 rounded-full mb-2">Hình 1 (Trang 38)</span>
+                        ${renderSgkCropOrSVG(1, { x: 64, y: 52, w: 26, h: 30 }, getHinh1WindPrincipleSVG())}
+                    </div>
+                </div>
+            `;
+
+            if (isComplete) {
+                rewardStar('step2_1_blanks', 1);
+                showFeedback(true, 'Chính xác 100%! “Gió làm quay cánh quạt của máy phát điện. Khi cánh quạt chuyển động, máy phát điện gió sẽ tạo ra điện.”');
+            }
+        }
+
+        function selectWord8(wordId) {
+            playSound('pop');
+            state.selectedWord = wordId;
+            renderApp();
+        }
+
+        function placeWordInBlank8(blankKey) {
+            const expected = { b1: 'cánh quạt', b2: 'chuyển động', b3: 'điện' };
+            if (!state.selectedWord) {
+                playSound('wrong');
+                showFeedback(false, 'Em hãy bấm chọn 1 trong 3 thẻ từ (điện, cánh quạt, chuyển động) ở phía trên trước khi bấm vào ô trống nhé!');
+                return;
+            }
+            if (state.selectedWord === expected[blankKey]) {
+                state.fillBlanks[blankKey] = state.selectedWord;
+                state.selectedWord = null;
+                playSound('correct');
+                hideFeedback();
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Từ "${state.selectedWord}" chưa phù hợp với ô trống này. Em hãy đọc kĩ câu văn và chọn lại nhé!`);
+            }
+        }
+
+        function fillQuickStep2_1() {
+            state.fillBlanks = { b1: 'cánh quạt', b2: 'chuyển động', b3: 'điện' };
+            playSound('correct');
+            rewardStar('step2_1_blanks', 1);
+            renderApp();
+        }
+
+        // Bước 2/9: So sánh chức năng giữa Máy phát điện gió và Quạt điện & Ghi nhớ (Trang 38)
+        function renderStep2_2(container) {
+            const options = [
+                {
+                    text: 'A. Máy phát điện gió biến đổi năng lượng gió thành năng lượng điện; còn quạt điện thì ngược lại, sử dụng năng lượng điện để làm quay cánh quạt tạo ra gió làm mát.',
+                    correct: true,
+                    explain: 'Hoàn toàn chính xác! Hai thiết bị có chức năng chuyển hóa năng lượng trái ngược nhau: Máy phát điện gió (Gió ➔ Điện), còn Quạt điện (Điện ➔ Gió).'
+                },
+                {
+                    text: 'B. Cả máy phát điện gió và quạt điện đều có chức năng giống hệt nhau là tiêu thụ điện năng trong nhà để tạo ra gió mát.',
+                    correct: false,
+                    explain: 'Chưa đúng! Chỉ có quạt điện mới dùng điện để tạo ra gió mát, còn máy phát điện gió dùng sức gió để tạo ra điện.'
+                },
+                {
+                    text: 'C. Máy phát điện gió dùng để sưởi ấm vào mùa đông, còn quạt điện dùng để thắp sáng đường phố vào ban đêm.',
+                    correct: false,
+                    explain: 'Chưa đúng! Em hãy quan sát sơ đồ chuyển hóa giữa Năng lượng gió và Năng lượng điện ở trên nhé.'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <!-- Bảng đối chiếu trực quan -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-sky-50 border-4 border-sky-400 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">🌬️➔⚡</div>
+                            <div>
+                                <div class="tv-card-title text-sky-950">Máy phát điện gió</div>
+                                <div class="tv-body text-slate-800 mt-1">Nhận <b>năng lượng gió</b> làm quay cánh quạt để tạo ra <b>năng lượng điện</b>.</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-50 border-4 border-amber-400 rounded-3xl p-4 flex items-center gap-4">
+                            <div class="text-5xl shrink-0">⚡➔🌬️</div>
+                            <div>
+                                <div class="tv-card-title text-amber-950">Quạt điện gia đình</div>
+                                <div class="tv-body text-slate-800 mt-1">Tiêu thụ <b>năng lượng điện</b> làm quay cánh quạt để tạo ra <b>gió làm mát</b>.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Câu hỏi trang 38 -->
+                    <div class="bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Hãy cho biết sự khác nhau về chức năng giữa máy phát điện gió và quạt điện (Trang 38):
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${options.map(opt => `
+                                <button onclick="answerCompareFan8(${opt.correct}, '${opt.explain}')"
+                                    class="btn-kid text-left p-4 rounded-2xl border-3 tv-option ${
+                                        state.compareFanDone && opt.correct
+                                            ? 'bg-emerald-600 text-white border-emerald-700'
+                                            : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${opt.text}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Hộp Ghi nhớ cuối trang 38 -->
+                    <div class="bg-sky-100 border-3 border-sky-500 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="text-3xl">🤖</span>
+                        <span class="tv-body text-sky-950">
+                            <b>Ghi nhớ (Trang 38):</b> Máy phát điện gió được dùng để biến đổi năng lượng gió thành năng lượng điện.
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            if (state.compareFanDone) {
+                showFeedback(true, 'Rất giỏi! Em đã phân biệt cực kỳ rõ ràng sự khác nhau giữa Máy phát điện gió (Gió ➔ Điện) và Quạt điện (Điện ➔ Gió)!');
+            }
+        }
+
+        function answerCompareFan8(isCorrect, explain) {
+            if (isCorrect) {
+                state.compareFanDone = true;
+                playSound('correct');
+                rewardStar('compare_fan_8', 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 3/9: 2a. Tìm hiểu sản phẩm mẫu – Hình 3 & Ghép 4 mô tả (a, b, c, d) trang 39
+        const SAMPLE_DESCRIPTIONS = {
+            a: {
+                code: 'Mô tả a)',
+                text: 'a) Gồm có các trụ đỡ và giá đỡ, dùng để đỡ máy phát điện và đèn LED.',
+                correctPart: 'Khung giá đỡ'
+            },
+            b: {
+                code: 'Mô tả b)',
+                text: 'b) Là thiết bị biến đổi năng lượng gió thành năng lượng điện.',
+                correctPart: 'Máy phát điện cánh quạt'
+            },
+            c: {
+                code: 'Mô tả c)',
+                text: 'c) Là thiết bị tiêu thụ năng lượng điện.',
+                correctPart: 'Đèn LED'
+            },
+            d: {
+                code: 'Mô tả d)',
+                text: 'd) Dẫn điện từ máy phát điện đến thiết bị tiêu thụ năng lượng điện.',
+                correctPart: 'Dây dẫn điện'
+            }
+        };
+
+        function renderStep2_3(container) {
+            const allMatched = Object.keys(SAMPLE_DESCRIPTIONS).every(k => state.samplePartsMatched[k] === SAMPLE_DESCRIPTIONS[k].correctPart);
+            const curKey = state.selectedPartDesc;
+            const curObj = SAMPLE_DESCRIPTIONS[curKey];
+
+            const partChoices = [
+                { name: 'Khung giá đỡ', icon: '🟩🟨', sub: 'Hình 3d' },
+                { name: 'Máy phát điện cánh quạt', icon: '🌀⚙️', sub: 'Hình 3b' },
+                { name: 'Đèn LED', icon: '🔴💡', sub: 'Hình 3c' },
+                { name: 'Dây dẫn điện', icon: '🔌〰️', sub: 'Hình 3b' }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Minh họa Hình 3 (Trang 39) -->
+                    <div class="lg:col-span-5 bg-slate-50 border-4 border-sky-400 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">Hình 3 (Trang 39) – Sản phẩm mẫu</span>
+                        ${renderSgkCropOrSVG(2, { x: 7, y: 35, w: 39, h: 30 }, getWindModelSVG(allMatched ? 2 : 0))}
+                        <div class="bg-sky-100 border-2 border-sky-300 rounded-2xl p-2.5 mt-1 tv-badge text-sky-950">
+                            Bộ phận chính: Máy phát điện cánh quạt • Khung giá đỡ • Dây dẫn điện • Đèn LED
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bài tập ghép mô tả a, b, c, d trang 39 -->
+                    <div class="lg:col-span-7 bg-white border-4 border-slate-200 rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="tv-card-title text-slate-900">
+                                ❓ Hãy cho biết mỗi mô tả dưới đây nói về bộ phận nào trong Hình 3:
+                            </h3>
+                            <button onclick="matchAllPartsQuick8()" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-black px-3 py-1.5 rounded-xl text-sm shrink-0">
+                                ✨ Ghép nhanh
+                            </button>
+                        </div>
+
+                        <!-- Danh sách 4 câu mô tả a, b, c, d như trang 39 SGK -->
+                        <div class="flex flex-col gap-2.5">
+                            ${Object.keys(SAMPLE_DESCRIPTIONS).map(k => {
+                                const item = SAMPLE_DESCRIPTIONS[k];
+                                const matchedVal = state.samplePartsMatched[k];
+                                const isSelected = state.selectedPartDesc === k;
+                                return `
+                                    <button onclick="selectDescRow8('${k}')"
+                                        class="btn-kid text-left p-3.5 rounded-2xl border-3 flex items-center justify-between gap-3 ${
+                                            matchedVal
+                                                ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
+                                                : isSelected
+                                                ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-200 text-slate-900'
+                                                : 'bg-orange-50/70 border-orange-200 text-slate-900'
+                                        }">
+                                        <span class="tv-body flex-1">${item.text}</span>
+                                        <span class="tv-badge px-3.5 py-1.5 rounded-xl shrink-0 ${
+                                            matchedVal ? 'bg-emerald-600 text-white' : 'bg-white text-amber-900 border-2 border-amber-400'
+                                        }">
+                                            ${matchedVal ? '✓ ' + matchedVal : '👆 Chọn bộ phận'}
+                                        </span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- 4 nút bộ phận để ghép vào dòng đang chọn -->
+                        <div class="bg-sky-50 border-2 border-sky-300 rounded-2xl p-3">
+                            <div class="tv-badge text-sky-900 mb-2">
+                                👉 Bấm chọn bộ phận đúng cho <b>${curObj.code}</b>:
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                ${partChoices.map(p => `
+                                    <button onclick="assignPartToDesc8('${p.name}')"
+                                        class="btn-kid bg-white hover:bg-sky-100 border-2 border-sky-400 rounded-xl p-2.5 flex flex-col items-center text-center">
+                                        <span class="text-2xl">${p.icon}</span>
+                                        <span class="tv-badge text-slate-900 mt-1">${p.name}</span>
+                                        <span class="text-xs font-bold text-slate-500">${p.sub}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allMatched) {
+                rewardStar('step2_3_match', 1);
+                showFeedback(true, 'Hoàn toàn chính xác! Em đã nắm vững tên gọi và chức năng của cả 4 bộ phận chính trong mô hình máy phát điện gió!');
+            }
+        }
+
+        function selectDescRow8(key) {
+            playSound('click');
+            state.selectedPartDesc = key;
+            renderApp();
+        }
+
+        function assignPartToDesc8(partName) {
+            const key = state.selectedPartDesc;
+            const target = SAMPLE_DESCRIPTIONS[key];
+            if (partName === target.correctPart) {
+                state.samplePartsMatched[key] = partName;
+                playSound('wrench');
+                hideFeedback();
+                // Tự động chuyển sang câu chưa ghép tiếp theo
+                const nextKey = Object.keys(SAMPLE_DESCRIPTIONS).find(k => !state.samplePartsMatched[k]);
+                if (nextKey) state.selectedPartDesc = nextKey;
+                else playSound('correct');
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, `Bộ phận "${partName}" chưa khớp với ${target.code}. Em hãy đọc kĩ từ khóa trong câu mô tả nhé!`);
+            }
+        }
+
+        function matchAllPartsQuick8() {
+            state.samplePartsMatched = {
+                a: 'Khung giá đỡ',
+                b: 'Máy phát điện cánh quạt',
+                c: 'Đèn LED',
+                d: 'Dây dẫn điện'
+            };
+            playSound('correct');
+            rewardStar('step2_3_match', 1);
+            renderApp();
+        }
+
+        // Bước 4/9: 2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 1 (STT 1 đến 7 – Trang 40)
+        const TABLE8_GROUP_1 = [
+            {
+                stt: 1,
+                name: 'Tấm lớn',
+                qty: 1,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <polygon points="10,12 108,12 122,58 24,58" fill="#10b981" stroke="#047857" stroke-width="2"/>
+                    <polygon points="10,12 108,12 105,6 7,6" fill="#047857"/>
+                    <polygon points="24,58 122,58 125,65 21,65" fill="#059669"/>
+                    ${[0,1,2,3,4,5,6,7].map(c => [0,1,2].map(r => `<circle cx="${24 + c*11 + r*3}" cy="${22 + r*12}" r="2.1" fill="#ecfdf5"/>`).join('')).join('')}
+                `
+            },
+            {
+                stt: 2,
+                name: 'Thanh chữ U dài',
+                qty: 2,
+                color: 'bg-yellow-100 border-yellow-400',
+                svg: `
+                    <rect x="14" y="24" width="102" height="22" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <line x1="14" y1="27" x2="116" y2="27" stroke="#fef08a" stroke-width="2"/>
+                    <line x1="14" y1="43" x2="116" y2="43" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3,4,5].map(i => `<circle cx="${25 + i*16}" cy="35" r="3.2" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>`).join('')}
+                `
+            },
+            {
+                stt: 3,
+                name: 'Thanh chữ U ngắn',
+                qty: 2,
+                color: 'bg-amber-100 border-amber-400',
+                svg: `
+                    <rect x="28" y="24" width="74" height="22" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <line x1="28" y1="27" x2="102" y2="27" stroke="#fef08a" stroke-width="2"/>
+                    <line x1="28" y1="43" x2="102" y2="43" stroke="#a16207" stroke-width="2"/>
+                    ${[0,1,2,3].map(i => `<circle cx="${38 + i*18}" cy="35" r="3.2" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>`).join('')}
+                `
+            },
+            {
+                stt: 4,
+                name: 'Thanh chữ L dài',
+                qty: 2,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <path d="M54,10 L74,10 L74,44 L58,60 L40,52 L54,38 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <circle cx="64" cy="20" r="3.5" fill="#ffffff"/>
+                    <circle cx="64" cy="34" r="3.5" fill="#ffffff"/>
+                    <circle cx="52" cy="49" r="3.5" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 5,
+                name: 'Thanh thẳng 3 lỗ',
+                qty: 2,
+                color: 'bg-red-100 border-red-400',
+                svg: `
+                    <rect x="28" y="23" width="74" height="24" rx="12" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
+                    <circle cx="43" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                    <circle cx="65" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                    <circle cx="87" cy="35" r="4" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+                `
+            },
+            {
+                stt: 6,
+                name: 'Máy phát điện cánh quạt & dây điện',
+                qty: 1,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <rect x="34" y="16" width="22" height="18" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/>
+                    <line x1="56" y1="25" x2="66" y2="25" stroke="#475569" stroke-width="3"/>
+                    <ellipse cx="67" cy="25" rx="4" ry="20" fill="#0284c7" stroke="#0369a1" stroke-width="1.5"/>
+                    <path d="M42,34 C46,62 78,66 96,46" fill="none" stroke="#ef4444" stroke-width="2"/>
+                    <path d="M44,34 C50,64 80,68 98,48" fill="none" stroke="#0f172a" stroke-width="2"/>
+                    <rect x="94" y="40" width="9" height="8" rx="1" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+                `
+            },
+            {
+                stt: 7,
+                name: 'Đèn LED',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <!-- Chân dài và chân ngắn của đèn LED đỏ đúng như STT 7 trang 40 -->
+                    <line x1="25" y1="32" x2="76" y2="32" stroke="#64748b" stroke-width="2"/>
+                    <line x1="36" y1="38" x2="76" y2="38" stroke="#64748b" stroke-width="2"/>
+                    <path d="M76,26 L94,26 A9,9 0 0,1 94,44 L76,44 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                `
+            }
+        ];
+
+        function renderStep2_4(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        ${TABLE8_GROUP_1.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-2.5 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-24 h-14 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900 leading-tight">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-base ${item.color} border-2">
+                                    SL: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh Bảng chi tiết (STT 1 – 7): Để lắp phần khung giá đỡ, các loại thanh (Thanh chữ U dài, Thanh chữ U ngắn, Thanh chữ L dài, Thanh thẳng 3 lỗ) mỗi loại cần số lượng là bao nhiêu?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroup8Quiz('tableGroup1Done', false, 'Chưa đúng! Em hãy nhìn cột Số lượng của STT 2, 3, 4, 5 ở trên nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                A. Mỗi loại chỉ cần 1 thanh
+                            </button>
+                            <button onclick="answerGroup8Quiz('tableGroup1Done', true, 'Chính xác! Cả 4 loại thanh (U dài, U ngắn, L dài, thẳng 3 lỗ) đều có số lượng là 2!')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup1Done ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup1Done ? '✓ ' : ''}B. Mỗi loại cần đúng 2 thanh (2 U dài, 2 U ngắn, 2 L dài, 2 thẳng 3 lỗ)
+                            </button>
+                            <button onclick="answerGroup8Quiz('tableGroup1Done', false, 'Chưa đúng! Trong bài này chỉ cần 2 thanh thẳng 3 lỗ chứ không phải 4 thanh.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. Mỗi loại cần 4 thanh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup1Done) {
+                showFeedback(true, 'Tuyệt vời! Em rất dễ nhớ: 1 Tấm lớn + mỗi loại thanh lấy đúng 2 chiếc + 1 Máy phát điện cánh quạt + 1 Đèn LED!');
+            }
+        }
+
+        // Bước 5/9: 2b. Bảng chi tiết, vật liệu và dụng cụ – Nhóm 2 (STT 8 đến 14 – Trang 40, 41)
+        const TABLE8_GROUP_2 = [
+            {
+                stt: 8,
+                name: 'Đai ốc',
+                qty: 12,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <polygon points="65,14 85,24 85,46 65,56 45,46 45,24" fill="#cbd5e1" stroke="#475569" stroke-width="2.5"/>
+                    <circle cx="65" cy="35" r="8.5" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+                `
+            },
+            {
+                stt: 9,
+                name: 'Vít ngắn',
+                qty: 12,
+                color: 'bg-emerald-100 border-emerald-400',
+                svg: `
+                    <path d="M46,23 C38,23 38,47 46,47 Z" fill="#64748b" stroke="#334155" stroke-width="2"/>
+                    <rect x="46" y="29" width="32" height="12" rx="2" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+                    ${[52,58,64,70,74].map(x => `<line x1="${x}" y1="29" x2="${x}" y2="41" stroke="#334155" stroke-width="1.5"/>`).join('')}
+                `
+            },
+            {
+                stt: 10,
+                name: 'Tua-vít',
+                qty: 1,
+                color: 'bg-rose-100 border-rose-400',
+                svg: `
+                    <rect x="10" y="25" width="54" height="20" rx="7" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <line x1="64" y1="35" x2="114" y2="35" stroke="#64748b" stroke-width="4.5"/>
+                `
+            },
+            {
+                stt: 11,
+                name: 'Cờ-lê',
+                qty: 1,
+                color: 'bg-slate-100 border-slate-400',
+                svg: `
+                    <path d="M18,22 A13,13 0 1,0 18,48 L28,42 L98,42 L106,52 C116,48 118,26 104,24 L30,24 Z" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <circle cx="22" cy="35" r="5.5" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+                `
+            },
+            {
+                stt: 12,
+                name: 'Băng dính 2 mặt',
+                qty: 1,
+                color: 'bg-orange-100 border-orange-400',
+                svg: `
+                    <ellipse cx="65" cy="38" rx="38" ry="18" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="38" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <ellipse cx="65" cy="32" rx="27" ry="12" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+                    <ellipse cx="65" cy="35" rx="25" ry="9" fill="#ffffff"/>
+                `
+            },
+            {
+                stt: 13,
+                name: 'Băng dính điện',
+                qty: 1,
+                color: 'bg-indigo-100 border-indigo-400',
+                svg: `
+                    <!-- Cuộn băng dính điện màu đen đặc trưng STT 13 trang 41 -->
+                    <ellipse cx="65" cy="40" rx="38" ry="16" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+                    <ellipse cx="65" cy="28" rx="38" ry="16" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <rect x="27" y="28" width="76" height="12" fill="#0f172a"/>
+                    <ellipse cx="65" cy="28" rx="20" ry="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+                `
+            },
+            {
+                stt: 14,
+                name: 'Kéo',
+                qty: 1,
+                color: 'bg-sky-100 border-sky-400',
+                svg: `
+                    <!-- Chiếc kéo cán xanh dương có chốt vàng ở giữa đúng như STT 14 trang 41 -->
+                    <line x1="16" y1="24" x2="76" y2="38" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="16" y1="46" x2="76" y2="32" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
+                    <ellipse cx="94" cy="23" rx="16" ry="10" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                    <ellipse cx="94" cy="47" rx="16" ry="10" fill="none" stroke="#3b82f6" stroke-width="5"/>
+                    <circle cx="64" cy="35" r="4" fill="#facc15"/>
+                `
+            }
+        ];
+
+        function renderStep2_5(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        ${TABLE8_GROUP_2.map(item => `
+                            <div class="bg-white border-3 border-slate-300 rounded-2xl p-2.5 flex flex-col items-center text-center justify-between shadow-sm">
+                                <span class="tv-badge bg-slate-800 text-white px-2.5 py-0.5 rounded-lg">STT ${item.stt}</span>
+                                <svg viewBox="0 0 130 70" class="w-24 h-14 my-1">${item.svg}</svg>
+                                <div class="tv-body text-slate-900 leading-tight">${item.name}</div>
+                                <div class="mt-1 w-full py-1 rounded-xl font-black text-base ${item.color} border-2">
+                                    SL: ${item.qty}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-white border-4 border-sky-400 rounded-3xl p-4 flex flex-col gap-3">
+                        <h3 class="tv-card-title text-slate-900">
+                            ❓ Kiểm tra nhanh (STT 8 – 14): Để lắp ráp mô hình máy phát điện gió, em cần bao nhiêu <span class="text-sky-700">Đai ốc</span>, bao nhiêu <span class="text-emerald-700">Vít ngắn</span> và mấy loại <span class="text-indigo-700">Băng dính</span>?
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button onclick="answerGroup8Quiz('tableGroup2Done', true, 'Chính xác 100%! Cần 12 đai ốc, 12 vít ngắn và 2 loại băng dính (1 cuộn băng dính 2 mặt + 1 cuộn băng dính điện).')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option ${
+                                    state.tableGroup2Done ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                ${state.tableGroup2Done ? '✓ ' : ''}A. 12 đai ốc, 12 vít ngắn và 2 loại băng dính (băng dính 2 mặt & băng dính điện)
+                            </button>
+                            <button onclick="answerGroup8Quiz('tableGroup2Done', false, 'Chưa đúng! Trong bài 8 không dùng vít dài mà dùng 12 vít ngắn và 12 đai ốc.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                B. 8 đai ốc, 8 vít ngắn và 1 loại băng dính
+                            </button>
+                            <button onclick="answerGroup8Quiz('tableGroup2Done', false, 'Chưa đúng! Em hãy quan sát STT 8 (Đai ốc: 12) và STT 9 (Vít ngắn: 12) nhé.')"
+                                class="btn-kid p-3.5 rounded-2xl border-3 tv-option bg-slate-50 hover:bg-sky-50 text-slate-900 border-slate-300">
+                                C. 10 đai ốc, 10 vít dài và không dùng băng dính
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.tableGroup2Done) {
+                showFeedback(true, 'Xuất sắc! Em đã nắm vững toàn bộ 14 chi tiết, vật liệu và dụng cụ trong bảng trang 40–41 SGK!');
+            }
+        }
+
+        function answerGroup8Quiz(flag, isRight, explain) {
+            if (isRight) {
+                state[flag] = true;
+                playSound('correct');
+                rewardStar('quiz8_' + flag, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Bước 6/9: 2c. Thực hành Bước 1 – Lắp khung giá đỡ (Hình 4a, 4b – Trang 41)
+        function renderStep2_6(container) {
+            const built = state.step1StandBuilt;
+
+            // Vẽ chính xác Hình 4a (các chi tiết xếp rời: 1 tấm lớn, 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ, 12 vít ngắn, 12 đai ốc) và Hình 4b (Khung giá đỡ đã lắp) như Trang 41 SGK
+            const hinh4Svg = !built ? `
+                <svg viewBox="0 0 400 225" class="w-full max-w-[400px] h-auto">
+                    <text x="18" y="22" fill="#0284c7" font-size="15" font-weight="900">a)</text>
+                    <!-- Tấm lớn xanh lá -->
+                    <rect x="30" y="22" width="108" height="175" rx="4" fill="#10b981" stroke="#047857" stroke-width="3"/>
+                    <rect x="30" y="22" width="11" height="175" fill="#059669"/>
+                    <rect x="127" y="22" width="11" height="175" fill="#059669"/>
+                    ${[0,1,2,3,4].map(c => [0,1,2,3,4,5,6,7,8].map(r => `<circle cx="${50 + c*17}" cy="${34 + r*18}" r="2.8" fill="#ecfdf5"/>`).join('')).join('')}
+
+                    <!-- 2 Thanh chữ U dài vàng nằm ngang -->
+                    <rect x="155" y="26" width="108" height="18" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="155" y="50" width="108" height="18" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <!-- 2 Thanh chữ U ngắn vàng -->
+                    <rect x="155" y="76" width="76" height="18" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="155" y="100" width="76" height="18" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+
+                    <!-- 2 Thanh chữ L dài đỏ + 2 Thanh thẳng 3 lỗ đỏ -->
+                    <rect x="155" y="126" width="46" height="18" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="155" y="148" width="46" height="18" rx="4" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="155" y="170" width="56" height="16" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="155" y="190" width="56" height="16" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+
+                    <!-- 12 Vít ngắn & 12 Đai ốc xếp gọn bên phải giống Hình 4a -->
+                    ${[0,1,2,3].map(r => [0,1,2].map(c => `
+                        <circle cx="${255 + c*22}" cy="${128 + r*20}" r="5.5" fill="#94a3b8" stroke="#334155" stroke-width="1.8"/>
+                        <rect x="${322 + c*18}" y="${122 + r*20}" width="6" height="12" rx="1" fill="#64748b"/>
+                    `).join('')).join('')}
+                </svg>
+            ` : `
+                <svg viewBox="0 0 400 225" class="w-full max-w-[400px] h-auto">
+                    <text x="28" y="24" fill="#0284c7" font-size="15" font-weight="900">b)</text>
+                    <!-- Tấm lớn xanh lá nằm ngang làm đế -->
+                    <polygon points="65,155 275,155 315,195 105,195" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="65,155 105,195 105,212 65,172" fill="#059669" stroke="#064e3b" stroke-width="2"/>
+                    <polygon points="105,195 315,195 315,212 105,212" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+                    <!-- Thanh chữ U ngắn nối chân trụ cao -->
+                    <rect x="132" y="162" width="58" height="12" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <!-- 2 Thanh chữ U dài dựng đứng -->
+                    <rect x="136" y="58" width="15" height="110" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="168" y="58" width="15" height="110" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <!-- Đỉnh trụ: 2 Thanh thẳng 3 lỗ đỏ + 2 Thanh chữ L dài đỏ -->
+                    <rect x="132" y="54" width="55" height="12" rx="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="142" y="16" width="13" height="42" rx="3" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <rect x="164" y="16" width="13" height="42" rx="3" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <!-- Trụ thấp bên phải: Thanh chữ U ngắn dựng đứng đỡ đèn LED -->
+                    <rect x="242" y="106" width="15" height="72" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-slate-50 border-4 border-emerald-400 rounded-3xl p-4 flex flex-col items-center gap-2">
+                        <span class="tv-badge bg-emerald-700 text-white px-4 py-1 rounded-full">
+                            Hình 4 (Trang 41) – ${built ? 'Hình 4b: Khung giá đỡ đã lắp hoàn chỉnh' : 'Hình 4a: Các chi tiết chuẩn bị lắp khung giá đỡ'}
+                        </span>
+                        ${renderSgkCropOrSVG(3, { x: 6, y: 60, w: 40, h: 32 }, hinh4Svg)}
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="inline-block bg-sky-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 1: Lắp khung giá đỡ (Trang 41)
+                        </div>
+                        <p class="tv-card-title text-slate-900">
+                            Dùng <b>hai thanh chữ U dài</b>, <b>hai thanh chữ U ngắn</b>, <b>hai thanh chữ L dài</b> và <b>hai thanh thẳng 3 lỗ</b> lắp vào <b>tấm lớn</b> để tạo thành khung giá đỡ như Hình 4.
+                        </p>
+                        <div class="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 tv-body text-amber-950">
+                            ⚠️ <b>Lưu ý (Trang 41):</b> Sử dụng dụng cụ lắp ghép (tua-vít, cờ-lê) an toàn. Vặn đủ <b>12 vít ngắn</b> và <b>12 đai ốc</b> để các mối ghép chắc chắn.
+                        </div>
+
+                        <button onclick="buildStandStep1()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-3 ${
+                                built
+                                    ? 'bg-emerald-600 text-white border-4 border-emerald-800'
+                                    : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white'
+                            }">
+                            <span>${built ? '✓ Đã lắp xong Khung giá đỡ (Hình 4b)' : '🔩 Bấm để lắp Khung giá đỡ chắc chắn (Hình 4b)'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (built) {
+                showFeedback(true, 'Hoàn thành Bước 1 (Hình 4b)! Khung giá đỡ gồm trụ cao (đỡ máy phát điện) và trụ thấp (đỡ đèn LED) đã được lắp chắc chắn!');
+            }
+        }
+
+        function buildStandStep1() {
+            state.step1StandBuilt = true;
+            playSound('wrench');
+            setTimeout(() => playSound('correct'), 220);
+            rewardStar('step1_stand_8', 1);
+            renderApp();
+        }
+
+        // Bước 7/9: 2c. Thực hành Bước 2 – Lắp đèn LED với dây dẫn điện (Hình 5a, 5b – Trang 42)
+        function renderStep2_7(container) {
+            const allDone = state.step2RedWireDone && state.step2BlackWireDone && state.step2TapeDone;
+
+            const hinh5Svg = `
+                <svg viewBox="0 0 360 190" class="w-full max-w-[360px] h-auto mx-auto">
+                    <!-- Hình 5a: Đèn LED (chân dài, chân ngắn) & đầu dây dẫn điện đỏ/đen -->
+                    <text x="18" y="24" fill="#0284c7" font-size="14" font-weight="900">a)</text>
+                    <!-- Bóng đèn LED đỏ -->
+                    <path d="M72,42 L72,26 A10,10 0 0,1 92,26 L92,42 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <!-- Chân dài (bên trái - nối dây đỏ) & Chân ngắn (bên phải - nối dây đen) -->
+                    <line x1="78" y1="42" x2="78" y2="96" stroke="#64748b" stroke-width="2.5"/>
+                    <line x1="86" y1="42" x2="86" y2="78" stroke="#64748b" stroke-width="2.5"/>
+                    <text x="44" y="88" fill="#dc2626" font-size="11" font-weight="900">Chân dài</text>
+                    <text x="115" y="75" fill="#1e293b" font-size="11" font-weight="900">Chân ngắn</text>
+
+                    <!-- Giắc trắng + dây đỏ và dây đen bên dưới -->
+                    <rect x="70" y="110" width="22" height="22" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+                    <line x1="76" y1="132" x2="72" y2="178" stroke="#ef4444" stroke-width="3.5"/>
+                    <line x1="86" y1="132" x2="82" y2="178" stroke="#1e293b" stroke-width="3.5"/>
+
+                    <!-- Hình 5b: Đã cắm đèn LED vào dây và quấn băng dính điện đen cố định -->
+                    <text x="175" y="24" fill="#0284c7" font-size="14" font-weight="900">b)</text>
+                    <rect x="195" y="54" width="26" height="32" rx="4" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+                    <line x1="221" y1="70" x2="235" y2="70" stroke="#475569" stroke-width="4"/>
+                    <ellipse cx="236" cy="70" rx="6" ry="38" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+                    <path d="M202,86 C225,158 275,168 312,118" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M206,86 C228,162 278,172 315,120" fill="none" stroke="#1e293b" stroke-width="3"/>
+                    <!-- Băng dính điện màu đen quấn quanh mối nối như Hình 5b -->
+                    <polygon points="306,118 324,102 332,110 314,126" fill="${state.step2TapeDone ? '#0f172a' : '#cbd5e1'}" stroke="#0f172a" stroke-width="1.5"/>
+                    <circle cx="332" cy="100" r="8" fill="#dc2626"/>
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-amber-50 border-3 border-amber-400 rounded-2xl p-3.5 flex items-center gap-3 tv-body text-amber-950">
+                        <span>⚠️</span>
+                        <span><b>Lưu ý quan trọng (Trang 42):</b> <b>Dây dẫn điện màu đỏ</b> nối với <b>chân dài</b> của đèn LED, <b>dây dẫn điện màu đen</b> nối với <b>chân ngắn</b> của đèn LED.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                        <!-- Minh họa Hình 5a, 5b -->
+                        <div class="lg:col-span-5 bg-slate-50 border-4 border-sky-400 rounded-3xl p-3 flex flex-col items-center">
+                            <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">Hình 5a, 5b (Trang 42)</span>
+                            ${renderSgkCropOrSVG(3, { x: 54, y: 15, w: 38, h: 24 }, hinh5Svg)}
+                        </div>
+
+                        <!-- 3 Thao tác thực hành Bước 2 -->
+                        <div class="lg:col-span-7 grid grid-cols-1 gap-3">
+                            <!-- Thao tác 1: Dây đỏ -->
+                            <div class="bg-white border-3 ${state.step2RedWireDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-rose-300'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-rose-600 text-white px-3 py-0.5 rounded-full">Thao tác 1/3</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Nối dây dẫn điện MÀU ĐỎ vào chân nào của đèn LED?</div>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="doStep2Led8('red_long')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base ${
+                                            state.step2RedWireDone ? 'bg-emerald-600 text-white' : 'bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-rose-400'
+                                        }">
+                                        ${state.step2RedWireDone ? '✓ ' : ''}Chân dài
+                                    </button>
+                                    <button onclick="doStep2Led8('red_short')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300">
+                                        Chân ngắn
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thao tác 2: Dây đen -->
+                            <div class="bg-white border-3 ${state.step2BlackWireDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-400'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-slate-800 text-white px-3 py-0.5 rounded-full">Thao tác 2/3</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Nối dây dẫn điện MÀU ĐEN vào chân nào của đèn LED?</div>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="doStep2Led8('black_long')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300">
+                                        Chân dài
+                                    </button>
+                                    <button onclick="doStep2Led8('black_short')"
+                                        class="btn-kid px-4 py-2.5 rounded-xl font-black text-base ${
+                                            state.step2BlackWireDone ? 'bg-emerald-600 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-950 border-2 border-slate-500'
+                                        }">
+                                        ${state.step2BlackWireDone ? '✓ ' : ''}Chân ngắn
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thao tác 3: Quấn băng dính điện -->
+                            <div class="bg-white border-3 ${state.step2TapeDone ? 'border-emerald-500 bg-emerald-50/30' : 'border-indigo-300'} rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="tv-badge bg-indigo-700 text-white px-3 py-0.5 rounded-full">Thao tác 3/3 (Hình 5b)</span>
+                                    <div class="tv-card-title text-slate-900 mt-1">Dùng băng dính điện cố định đèn LED với đầu dây dẫn điện</div>
+                                </div>
+                                <button onclick="doStep2Led8('tape')"
+                                    class="btn-kid px-5 py-2.5 rounded-xl font-black text-base shrink-0 ${
+                                        state.step2TapeDone ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                    }">
+                                    ${state.step2TapeDone ? '✓ Đã quấn băng dính điện' : '🖤 Quấn băng dính điện'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allDone) {
+                showFeedback(true, 'Hoàn thành xuất sắc Bước 2 (Hình 5)! Dây đỏ đã nối với chân dài, dây đen nối với chân ngắn của đèn LED và được cố định chắc chắn bằng băng dính điện!');
+            }
+        }
+
+        function doStep2Led8(action) {
+            if (action === 'red_long') {
+                state.step2RedWireDone = true;
+                playSound('wrench');
+                rewardStar('s2_red8', 1);
+            } else if (action === 'black_short') {
+                state.step2BlackWireDone = true;
+                playSound('wrench');
+                rewardStar('s2_black8', 1);
+            } else if (action === 'tape') {
+                if (!state.step2RedWireDone || !state.step2BlackWireDone) {
+                    playSound('wrong');
+                    showFeedback(false, 'Em hãy nối đúng dây điện màu đỏ (vào chân dài) và dây điện màu đen (vào chân ngắn) trước khi quấn băng dính điện cố định nhé!');
+                    return;
+                }
+                state.step2TapeDone = true;
+                playSound('correct');
+                rewardStar('s2_tape8', 1);
+            } else {
+                playSound('wrong');
+                showFeedback(false, 'Nhầm chân đèn LED rồi! Em hãy nhớ lưu ý ở trang 42: Dây dẫn điện màu đỏ nối với CHÂN DÀI, dây dẫn điện màu đen nối với CHÂN NGẮN của đèn LED.');
+                return;
+            }
+            renderApp();
+        }
+
+        // Bước 8/9: 2c. Thực hành Bước 3 – Gắn máy phát điện và đèn LED vào khung giá đỡ (Hình 6 – Trang 42)
+        function renderStep2_8(container) {
+            const bothDone = state.step3GeneratorMounted && state.step3LedMounted;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-5 bg-slate-50 border-4 border-sky-400 rounded-3xl p-4 flex flex-col items-center">
+                        <span class="tv-badge bg-sky-700 text-white px-4 py-1 rounded-full mb-1">
+                            Hình 6 (Trang 42) – Gắn máy phát điện và đèn LED
+                        </span>
+                        ${renderSgkCropOrSVG(3, { x: 58, y: 56, w: 32, h: 36 }, getWindModelSVG(bothDone ? 1 : 0))}
+                    </div>
+
+                    <div class="lg:col-span-7 flex flex-col gap-4">
+                        <div class="inline-block bg-sky-600 text-white tv-badge uppercase px-4 py-1.5 rounded-xl w-fit">
+                            Bước 3: Gắn máy phát điện và đèn LED vào khung giá đỡ (Trang 42)
+                        </div>
+
+                        <!-- Thao tác 1: Gắn cố định máy phát điện -->
+                        <div class="bg-white border-4 ${state.step3GeneratorMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-sky-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-sky-800">Công việc 1 / 2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                1. Gắn cố định <b>máy phát điện cánh quạt</b> lên đỉnh trụ cao của khung giá đỡ (giữa 2 thanh chữ L dài màu đỏ).
+                            </div>
+                            <button onclick="doStep3Mount8('generator')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3GeneratorMounted ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-700 text-white'
+                                }">
+                                ${state.step3GeneratorMounted ? '✓ Đã gắn cố định Máy phát điện cánh quạt' : '🌀 Bấm để gắn Máy phát điện lên đỉnh khung giá đỡ'}
+                            </button>
+                        </div>
+
+                        <!-- Thao tác 2: Dùng băng dính 2 mặt gắn đèn LED -->
+                        <div class="bg-white border-4 ${state.step3LedMounted ? 'border-emerald-500 bg-emerald-50/30' : 'border-amber-400'} rounded-3xl p-4 flex flex-col gap-3">
+                            <div class="tv-badge uppercase text-amber-800">Công việc 2 / 2:</div>
+                            <div class="tv-card-title text-slate-900">
+                                2. Dùng <b>băng dính 2 mặt</b> để gắn <b>đèn LED</b> lên thanh chữ U ngắn của khung giá đỡ và thu gọn dây dẫn điện như Hình 6.
+                            </div>
+                            <button onclick="doStep3Mount8('led')"
+                                class="btn-kid py-3.5 px-5 rounded-2xl tv-option ${
+                                    state.step3LedMounted ? 'bg-emerald-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                }">
+                                ${state.step3LedMounted ? '✓ Đã dán Băng dính 2 mặt gắn Đèn LED lên giá đỡ' : '🎗️ Bấm dùng Băng dính 2 mặt gắn Đèn LED (Hình 6)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (bothDone) {
+                showFeedback(true, 'Hoàn thành Bước 3 (Hình 6)! Máy phát điện cánh quạt và đèn LED đã được gắn chắc chắn, gọn gàng trên khung giá đỡ!');
+            }
+        }
+
+        function doStep3Mount8(part) {
+            playSound('wrench');
+            if (part === 'generator') {
+                state.step3GeneratorMounted = true;
+                rewardStar('s3_gen8', 1);
+            } else {
+                state.step3LedMounted = true;
+                rewardStar('s3_led8', 1);
+            }
+            if (state.step3GeneratorMounted && state.step3LedMounted) {
+                setTimeout(() => playSound('correct'), 200);
+            }
+            renderApp();
+        }
+
+        // Bước 9/9: 2c. Thực hành Bước 4 – Kiểm tra hoạt động của mô hình với các tốc độ gió khác nhau (Trang 43)
+        function renderStep2_9(container) {
+            const wLevel = state.step4WindLevel;
+            const allTested = state.step4Recorded.w0 && state.step4Recorded.w1 && state.step4Recorded.w2;
+
+            const windRows = [
+                {
+                    stt: 1,
+                    level: 0,
+                    key: 'w0',
+                    condition: 'Không có gió',
+                    btnLabel: '🛑 1. Thử: Không có gió',
+                    ledStatus: 'Đèn LED không sáng (Tắt)',
+                    fanSpeedText: 'Cánh quạt đứng yên'
+                },
+                {
+                    stt: 2,
+                    level: 1,
+                    key: 'w1',
+                    condition: 'Ít gió',
+                    btnLabel: '🌬️ 2. Thử: Ít gió (Gió nhẹ)',
+                    ledStatus: 'Đèn LED sáng yếu (Sáng mờ)',
+                    fanSpeedText: 'Cánh quạt quay chậm'
+                },
+                {
+                    stt: 3,
+                    level: 2,
+                    key: 'w2',
+                    condition: 'Gió mạnh',
+                    btnLabel: '💨 3. Thử: Gió mạnh',
+                    ledStatus: 'Đèn LED sáng rõ (Sáng mạnh)',
+                    fanSpeedText: 'Cánh quạt quay nhanh'
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Mô hình thực nghiệm với 3 tốc độ gió -->
+                    <div class="lg:col-span-5 bg-slate-50 border-4 ${wLevel === 2 ? 'border-amber-500 bg-amber-50/40' : wLevel === 1 ? 'border-sky-400' : 'border-slate-300'} rounded-3xl p-4 flex flex-col items-center">
+                        <div class="flex items-center justify-between w-full px-2 mb-1">
+                            <span class="tv-badge bg-sky-700 text-white px-3.5 py-1 rounded-full">Bước 4 (Trang 43)</span>
+                            <span class="tv-badge px-3.5 py-1 rounded-full ${
+                                wLevel === 2 ? 'bg-red-600 text-white' : wLevel === 1 ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-800'
+                            }">
+                                ${wLevel === 2 ? '💡 ĐÈN LED: SÁNG MẠNH' : wLevel === 1 ? '💡 ĐÈN LED: SÁNG YẾU' : '⚫ ĐÈN LED: KHÔNG SÁNG'}
+                            </span>
+                        </div>
+
+                        ${getWindModelSVG(wLevel)}
+
+                        <!-- 3 Nút điều khiển tốc độ gió -->
+                        <div class="grid grid-cols-3 gap-2 w-full mt-2">
+                            ${windRows.map(r => `
+                                <button onclick="testWindSpeed8(${r.level}, '${r.key}')"
+                                    class="btn-kid py-2.5 px-2 rounded-2xl font-black text-sm sm:text-base border-2 ${
+                                        wLevel === r.level
+                                            ? 'bg-sky-700 text-white border-sky-900 scale-105'
+                                            : 'bg-white hover:bg-sky-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${r.btnLabel}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Bảng ghi chép hoạt động của mô hình (Trang 43 SGK) -->
+                    <div class="lg:col-span-7 bg-white border-4 border-sky-400 rounded-3xl overflow-hidden shadow">
+                        <div class="bg-sky-600 text-white py-3 px-5 tv-card-title">
+                            📋 BẢNG GHI CHÉP HOẠT ĐỘNG CỦA MÔ HÌNH (TRANG 43)
+                        </div>
+                        <div class="p-4 flex flex-col gap-3">
+                            <p class="tv-body text-slate-700">
+                                👉 Em hãy bấm thử cả <b>3 nút tốc độ gió</b> bên dưới hoặc bên trái để quan sát và ghi chép trạng thái của đèn LED vào bảng:
+                            </p>
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-sky-100 text-slate-900 border-b-3 border-sky-300">
+                                        <th class="p-3 text-center tv-body w-20">STT</th>
+                                        <th class="p-3 text-left tv-body">Điều kiện tốc độ gió</th>
+                                        <th class="p-3 text-left tv-body">Trạng thái của đèn LED</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${windRows.map(r => {
+                                        const recorded = state.step4Recorded[r.key];
+                                        return `
+                                            <tr class="border-b-2 border-slate-200 ${wLevel === r.level ? 'bg-amber-50/70' : ''}">
+                                                <td class="p-3 text-center tv-body text-slate-900">${r.stt}</td>
+                                                <td class="p-3 tv-body text-slate-900">
+                                                    <div>${r.condition}</div>
+                                                    <div class="text-sm font-bold text-slate-500">(${r.fanSpeedText})</div>
+                                                </td>
+                                                <td class="p-3">
+                                                    <button onclick="testWindSpeed8(${r.level}, '${r.key}')"
+                                                        class="btn-kid w-full text-left px-4 py-2.5 rounded-xl font-black tv-body ${
+                                                            recorded
+                                                                ? 'bg-emerald-600 text-white'
+                                                                : 'bg-slate-100 hover:bg-sky-100 text-sky-900 border-2 border-sky-300'
+                                                        }">
+                                                        ${recorded ? '✓ ' + r.ledStatus : '❓ Bấm thử gió để ghi chép'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allTested) {
+                showFeedback(true, 'Xuất sắc! Em đã kiểm tra đủ 3 tốc độ gió và rút ra kết luận: Gió càng mạnh thì cánh quạt quay càng nhanh và đèn LED càng sáng rõ!');
+            }
+        }
+
+        function testWindSpeed8(level, key) {
+            state.step4WindLevel = level;
+            state.step4Recorded[key] = true;
+            if (level === 0) playSound('click');
+            else if (level === 1) playSound('wind_low');
+            else playSound('wind_high');
+
+            rewardStar('s4_wind_' + key, 1);
+            renderApp();
+        }
+
+        /**************************************************************
+         * 8. CHẶNG 3: LUYỆN TẬP (6 CÂU HỎI TRẮC NGHIỆM CÓ ĐỘ NHIỄU HỢP LÍ)
+         **************************************************************/
+        function renderPracticeMCQ8(container, flagName, badgeTitle, questionText, options) {
+            const isDone = state[flagName];
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-emerald-100 to-sky-100 border-4 border-emerald-400 rounded-3xl p-5">
+                        <span class="inline-block bg-emerald-700 text-white tv-badge uppercase px-4 py-1 rounded-full mb-2">
+                            ${badgeTitle}
+                        </span>
+                        <h3 class="tv-card-title text-slate-900 leading-snug">
+                            ${questionText}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        ${options.map(opt => `
+                            <button onclick="selectPrac8Answer('${flagName}', ${opt.correct}, '${opt.explain}')"
+                                class="btn-kid text-left p-4 sm:p-5 rounded-3xl border-3 tv-option flex items-center justify-between gap-4 ${
+                                    isDone && opt.correct
+                                        ? 'bg-emerald-600 text-white border-emerald-700'
+                                        : 'bg-white hover:bg-sky-50 text-slate-900 border-slate-300'
+                                }">
+                                <span>${opt.text}</span>
+                                <span class="shrink-0 font-black">${isDone && opt.correct ? '✓ ĐÚNG' : ''}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                const rightOpt = options.find(o => o.correct);
+                showFeedback(true, rightOpt.explain);
+            }
+        }
+
+        function selectPrac8Answer(flagName, isCorrect, explain) {
+            if (isCorrect) {
+                state[flagName] = true;
+                playSound('correct');
+                rewardStar('prac8_' + flagName, 1);
+                renderApp();
+            } else {
+                playSound('wrong');
+                showFeedback(false, explain);
+            }
+        }
+
+        // Câu 1/6
+        function renderStep3_1(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac1Done',
+                'Câu hỏi luyện tập 1 / 6 • Nguyên lí hoạt động của mô hình',
+                'Trong mô hình máy phát điện gió (Hình 3 – trang 39), quá trình tạo ra điện và làm sáng bóng đèn diễn ra theo trình tự nào dưới đây khi có gió thổi?',
+                [
+                    {
+                        text: 'A. Gió làm quay cánh quạt ➔ Máy phát điện biến đổi năng lượng gió thành năng lượng điện ➔ Dòng điện truyền qua dây dẫn điện đến làm đèn LED phát sáng.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Gió làm cánh quạt chuyển động quay, máy phát điện tạo ra điện và truyền qua dây dẫn tới thiết bị tiêu thụ điện là đèn LED.'
+                    },
+                    {
+                        text: 'B. Đèn LED tự phát ra dòng điện ➔ Truyền qua dây dẫn điện lên máy phát điện ➔ Làm cánh quạt quay để tạo ra gió thổi mát.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đèn LED là thiết bị tiêu thụ năng lượng điện chứ không phải nguồn phát điện, và mô hình này biến đổi năng lượng gió thành điện.'
+                    },
+                    {
+                        text: 'C. Gió thổi trực tiếp vào bóng đèn LED làm đèn nóng lên và phát sáng, còn cánh quạt chỉ dùng để trang trí trên khung giá đỡ.',
+                        correct: false,
+                        explain: 'Chưa đúng! Nếu cánh quạt của máy phát điện không quay thì không thể tạo ra dòng điện làm sáng đèn LED.'
+                    },
+                    {
+                        text: 'D. Khung giá đỡ bằng nhựa và kim loại tự sinh ra điện năng rồi truyền qua băng dính 2 mặt để thắp sáng đèn LED.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khung giá đỡ chỉ có vai trò nâng đỡ máy phát điện và đèn LED.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 2/6
+        function renderStep3_2(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac2Done',
+                'Câu hỏi luyện tập 2 / 6 • Bảng chi tiết, vật liệu và dụng cụ',
+                'Theo Bảng chi tiết, vật liệu và dụng cụ (trang 40 SGK), để lắp ráp hoàn chỉnh phần Khung giá đỡ ở Bước 1, ngoài 1 Tấm lớn thì em cần lấy số lượng các thanh và ốc vít như thế nào?',
+                [
+                    {
+                        text: 'A. 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ cùng 12 vít ngắn và 12 đai ốc.',
+                        correct: true,
+                        explain: 'Chính xác 100%! Theo bảng trang 40 SGK: cần 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ, 12 đai ốc và 12 vít ngắn.'
+                    },
+                    {
+                        text: 'B. 2 thanh chữ U dài, 4 thanh thẳng 3 lỗ, 1 tấm 2 lỗ cùng 8 vít ngắn, 2 vít dài và 10 đai ốc.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đây là số lượng chi tiết của mô hình xe điện chạy bằng pin ở Bài 7, không phải của mô hình máy phát điện gió.'
+                    },
+                    {
+                        text: 'C. 4 thanh chữ U dài, 1 thanh chữ U ngắn, 1 thanh chữ L dài cùng 10 vít ngắn và 10 vòng hãm.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mô hình máy phát điện gió không sử dụng vòng hãm, và mỗi loại thanh (U dài, U ngắn, L dài, thẳng 3 lỗ) đều dùng 2 chiếc.'
+                    },
+                    {
+                        text: 'D. 1 thanh chữ U dài, 1 thanh chữ U ngắn, 4 thanh chữ L dài cùng 6 vít ngắn và 6 đai ốc.',
+                        correct: false,
+                        explain: 'Chưa đúng! Trụ đỡ máy phát điện cần ghép song song 2 thanh chữ U dài và dùng tới 12 bộ vít ngắn – đai ốc.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 3/6
+        function renderStep3_3(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac3Done',
+                'Câu hỏi luyện tập 3 / 6 • Quy tắc lắp đèn LED với dây dẫn điện',
+                'Ở Bước 2 (Lắp đèn LED với dây dẫn điện – trang 42 SGK), thao tác nào dưới đây là ĐÚNG quy tắc kĩ thuật?',
+                [
+                    {
+                        text: 'A. Dây dẫn điện màu đỏ nối với chân ngắn của đèn LED, dây dẫn điện màu đen nối với chân dài của đèn LED.',
+                        correct: false,
+                        explain: 'Bị ngược cực rồi! Đèn LED chỉ cho dòng điện đi qua theo một chiều nhất định: dây đỏ phải nối với chân dài, dây đen nối với chân ngắn.'
+                    },
+                    {
+                        text: 'B. Dây dẫn điện màu đỏ nối với chân dài của đèn LED, dây dẫn điện màu đen nối với chân ngắn của đèn LED và dùng băng dính điện cố định.',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Đây chính là lưu ý quan trọng ở dưới Hình 5 trang 42 SGK giúp đèn LED phát sáng khi máy phát điện hoạt động.'
+                    },
+                    {
+                        text: 'C. Dùng kéo cắt bỏ cả hai chân kim loại của đèn LED cho bằng nhau rồi dán trực tiếp bóng đèn lên cánh quạt.',
+                        correct: false,
+                        explain: 'Chưa đúng! Không được cắt bỏ hai chân kim loại của đèn LED vì đó là hai cực dẫn điện vào bóng đèn.'
+                    },
+                    {
+                        text: 'D. Xoắn chập cả hai chân dài và chân ngắn của đèn LED lại với nhau rồi nối chung vào dây dẫn điện màu đỏ.',
+                        correct: false,
+                        explain: 'Chưa đúng! Xoắn chập hai chân đèn LED vào cùng 1 dây sẽ làm mạch điện không khép kín và gây đoản mạch.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 4/6
+        function renderStep3_4(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac4Done',
+                'Câu hỏi luyện tập 4 / 6 • Phân biệt công dụng vật liệu',
+                'Trong quá trình lắp ráp mô hình máy phát điện gió (trang 42 SGK), Băng dính điện (STT 13) và Băng dính 2 mặt (STT 12) được sử dụng cho hai công việc khác nhau như thế nào?',
+                [
+                    {
+                        text: 'A. Băng dính điện dùng để quấn cố định và cách điện chỗ nối đèn LED với đầu dây dẫn điện (Bước 2); còn băng dính 2 mặt dùng để dán gắn đèn LED lên khung giá đỡ (Bước 3).',
+                        correct: true,
+                        explain: 'Rất rõ ràng và chính xác! Băng dính điện dẻo và cách điện tốt dùng quấn quanh mối nối chân đèn LED ở Bước 2; còn băng dính 2 mặt có keo cả 2 mặt dùng dán giữ cụm đèn LED lên thanh chữ U ngắn ở Bước 3.'
+                    },
+                    {
+                        text: 'B. Băng dính 2 mặt dùng để dán các thanh chữ U vào tấm lớn thay cho ốc vít; còn băng dính điện dùng để dán cánh quạt vào trục.',
+                        correct: false,
+                        explain: 'Chưa đúng! Các thanh kim loại của khung giá đỡ được ghép bằng vít ngắn và đai ốc chứ không dán bằng băng dính 2 mặt.'
+                    },
+                    {
+                        text: 'C. Băng dính điện dùng để dán tấm lớn xuống mặt bàn; còn băng dính 2 mặt dùng để quấn nối hai sợi dây điện màu đỏ và màu đen.',
+                        correct: false,
+                        explain: 'Chưa đúng! Em đã đổi ngược công dụng của hai loại băng dính trong Bước 2 và Bước 3 rồi.'
+                    },
+                    {
+                        text: 'D. Hai loại băng dính này chỉ dùng để trang trí màu sắc cho cánh quạt chứ không có tác dụng cố định chi tiết.',
+                        correct: false,
+                        explain: 'Chưa đúng! Cả hai loại băng dính đều đóng vai trò cố định đèn LED với dây dẫn và với khung giá đỡ.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 5/6
+        function renderStep3_5(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac5Done',
+                'Câu hỏi luyện tập 5 / 6 • Kiểm tra với các tốc độ gió khác nhau',
+                'Khi thực hiện Bước 4 (Kiểm tra hoạt động của mô hình – trang 43 SGK) với 3 điều kiện tốc độ gió khác nhau, kết quả quan sát nào dưới đây là ĐÚNG?',
+                [
+                    {
+                        text: 'A. Khi không có gió đèn LED tắt; khi ít gió cánh quạt quay chậm nên đèn LED sáng yếu; khi gió mạnh cánh quạt quay nhanh nên đèn LED sáng rõ (sáng mạnh).',
+                        correct: true,
+                        explain: 'Hoàn toàn chính xác! Tốc độ gió càng lớn thì cánh quạt quay càng nhanh, năng lượng điện tạo ra càng nhiều làm đèn LED càng sáng rõ.'
+                    },
+                    {
+                        text: 'B. Ở cả ba điều kiện (Không có gió, Ít gió, Gió mạnh), đèn LED luôn phát sáng với độ sáng mạnh như nhau.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khi không có gió thì cánh quạt không quay nên không tạo ra điện, và độ sáng đèn LED luôn thay đổi theo tốc độ gió.'
+                    },
+                    {
+                        text: 'C. Khi ít gió thì đèn LED sáng mạnh nhất, còn khi gió mạnh làm cánh quạt quay nhanh thì đèn LED lại tắt hẳn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Khi ít gió năng lượng điện tạo ra ít nên đèn chỉ sáng yếu, còn khi gió mạnh đèn sẽ sáng rõ hơn.'
+                    },
+                    {
+                        text: 'D. Khi không có gió thì đèn LED sáng mạnh nhất vì không bị gió thổi tắt giống như ngọn nến.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đèn LED sáng nhờ dòng điện từ máy phát điện gió chứ không phải ngọn lửa nến.'
+                    }
+                ]
+            );
+        }
+
+        // Câu 6/6
+        function renderStep3_6(container) {
+            renderPracticeMCQ8(
+                container,
+                'prac6Done',
+                'Câu hỏi luyện tập 6 / 6 • Chẩn đoán & điều chỉnh mô hình',
+                'Sau khi lắp xong mô hình máy phát điện gió, bạn Lan dùng quạt giấy quạt gió thật mạnh làm cánh quạt quay tít nhưng đèn LED vẫn không sáng. Nguyên nhân hợp lí nhất mà bạn Lan cần kiểm tra và điều chỉnh là gì?',
+                [
+                    {
+                        text: 'A. Do bạn Lan nối ngược dây dẫn điện với chân của đèn LED (dây đỏ nối nhầm vào chân ngắn, dây đen vào chân dài) hoặc chân đèn LED bị tuột khỏi đầu dây dẫn điện.',
+                        correct: true,
+                        explain: 'Rất xuất sắc! Đèn LED là linh kiện phân cực (chỉ sáng khi nối đúng dây đỏ vào chân dài, dây đen vào chân ngắn) và cần tiếp xúc chặt với đầu dây dẫn điện.'
+                    },
+                    {
+                        text: 'B. Do bạn Lan quên chưa lắp 2 viên pin tiểu 1,5 V vào dưới tấm lớn của khung giá đỡ.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mô hình máy phát điện gió tự tạo ra điện từ sức gió, hoàn toàn không sử dụng pin tiểu.'
+                    },
+                    {
+                        text: 'C. Do bạn Lan dùng tua-vít và cờ-lê vặn 12 bộ vít ngắn và đai ốc trên khung giá đỡ quá chắc chắn.',
+                        correct: false,
+                        explain: 'Chưa đúng! Mối ghép khung giá đỡ chắc chắn là một trong những yêu cầu bắt buộc để mô hình đứng vững trước gió.'
+                    },
+                    {
+                        text: 'D. Do cánh quạt của mô hình có màu xanh dương nên không thể hứng được gió từ quạt giấy.',
+                        correct: false,
+                        explain: 'Chưa đúng! Đề bài đã nêu rõ "cánh quạt quay tít", màu sắc của cánh quạt không ảnh hưởng đến việc tạo ra điện.'
+                    }
+                ]
+            );
+        }
+
+        /**************************************************************
+         * 9. CHẶNG 4: VẬN DỤNG (3 BƯỚC - ĐÁNH GIÁ & CẢI TIẾN SÁNG TẠO)
+         **************************************************************/
+        // Bước 1/3: Phiếu đánh giá sản phẩm (6 tiêu chí - Trang 43 SGK)
+        const EVAL8_ROWS = [
+            { id: 'c1', label: '1. Đúng và đủ các bộ phận' },
+            { id: 'c2', label: '2. Đúng hình dạng' },
+            { id: 'c3', label: '3. Mối ghép chắc chắn' },
+            { id: 'c4', label: '4. Dây dẫn điện gọn gàng' },
+            { id: 'c5', label: '5. Đèn LED phát sáng khi cánh quạt quay' },
+            { id: 'c6', label: '6. Độ sáng đèn LED thay đổi khi tốc độ gió thay đổi' }
+        ];
+
+        function renderStep4_1(container) {
+            const allRated = Object.values(state.evalCriteria).every(v => v !== null);
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <!-- Cột trái: Hình sản phẩm trưng bày -->
+                    <div class="lg:col-span-4 bg-amber-50/70 border-4 border-amber-300 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-amber-600 text-white px-4 py-1 rounded-full mb-1">Trưng bày & Đánh giá (Trang 43)</span>
+                        ${getWindModelSVG(allRated ? 2 : 1)}
+                        <button onclick="rateAllQuick8()" class="btn-kid bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-base mt-2">
+                            😊 Đánh giá tốt tất cả
+                        </button>
+                    </div>
+
+                    <!-- Cột phải: Bảng Phiếu đánh giá sản phẩm 6 tiêu chí (Trang 43) -->
+                    <div class="lg:col-span-8 bg-white border-4 border-sky-400 rounded-3xl overflow-hidden shadow">
+                        <div class="bg-sky-500 text-white text-center py-2.5 px-4 tv-card-title uppercase tracking-wide">
+                            PHIẾU ĐÁNH GIÁ SẢN PHẨM (TRANG 43)
+                        </div>
+                        <div class="p-3 sm:p-4">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-sky-100 text-slate-900 border-b-3 border-sky-300">
+                                        <th class="p-2.5 text-left tv-body">Tiêu chí</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😊</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😐</th>
+                                        <th class="p-2.5 text-center text-2xl sm:text-3xl">😣</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${EVAL8_ROWS.map(row => {
+                                        const val = state.evalCriteria[row.id];
+                                        return `
+                                            <tr class="border-b-2 border-slate-200">
+                                                <td class="p-2.5 tv-body text-slate-900">${row.label}</td>
+                                                ${['good', 'ok', 'try'].map((level, idx) => {
+                                                    const emojis = ['😊', '😐', '😣'];
+                                                    const selected = val === level;
+                                                    return `
+                                                        <td class="p-1.5 text-center">
+                                                            <button onclick="rateCriteria8('${row.id}', '${level}')"
+                                                                class="btn-kid px-3 py-1.5 rounded-xl border-2 font-black text-base ${
+                                                                    selected
+                                                                        ? 'bg-emerald-600 text-white border-emerald-800 scale-105'
+                                                                        : 'bg-slate-50 hover:bg-sky-50 text-slate-700 border-slate-300'
+                                                                }">
+                                                                ${selected ? '✓ ' : ''}${emojis[idx]}
+                                                            </button>
+                                                        </td>
+                                                    `;
+                                                }).join('')}
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allRated) {
+                showFeedback(true, 'Tuyệt vời! Em đã hoàn thành Phiếu đánh giá sản phẩm với đầy đủ 6 tiêu chí ở trang 43 SGK!');
+            }
+        }
+
+        function rateCriteria8(id, level) {
+            state.evalCriteria[id] = level;
+            playSound('pop');
+            if (Object.values(state.evalCriteria).every(v => v !== null)) {
+                playSound('correct');
+                rewardStar('eval_sheet_8', 1);
+            }
+            renderApp();
+        }
+
+        function rateAllQuick8() {
+            state.evalCriteria = { c1: 'good', c2: 'good', c3: 'good', c4: 'good', c5: 'good', c6: 'good' };
+            playSound('correct');
+            rewardStar('eval_sheet_8', 1);
+            renderApp();
+        }
+
+        // Bước 2/3: Xưởng sáng tạo – Cải tiến mô hình máy phát điện gió (Hình 7 – Trang 43)
+        const UPGRADE_IDEAS = {
+            two_leds: {
+                name: 'Ý tưởng 1: Lắp trụ đèn đôi thắp sáng đường phố',
+                desc: 'Dùng thêm thanh chữ U ngắn lắp 2 trụ đèn hai bên để mô phỏng hệ thống đèn đường dùng năng lượng điện gió!',
+                badge: 'Giống mô hình trưng bày ở Hình 7'
+            },
+            tall_tower: {
+                name: 'Ý tưởng 2: Nâng cao tháp trụ đón gió tầng cao',
+                desc: 'Ghép nối thêm thanh thẳng và thanh chữ U để nâng độ cao của tháp trụ, giúp cánh quạt đón được luồng gió mạnh hơn!',
+                badge: 'Tăng hiệu suất đón gió'
+            },
+            house_light: {
+                name: 'Ý tưởng 3: Trạm điện gió chiếu sáng ngôi nhà xanh',
+                desc: 'Lắp thêm khung mái nhà nhỏ bên cạnh trụ đèn LED để mô phỏng điện gió cung cấp điện sinh hoạt cho hộ gia đình!',
+                badge: 'Ứng dụng đời sống'
+            }
+        };
+
+        function renderStep4_2(container) {
+            const curIdea = UPGRADE_IDEAS[state.upgradeOption];
+            const tested = state.upgradeTested;
+
+            const customUpgradeSvg = `
+                <svg viewBox="0 0 420 250" class="w-full max-w-[400px] h-auto mx-auto">
+                    <ellipse cx="210" cy="222" rx="165" ry="22" fill="#fef08a" opacity="0.8"/>
+                    <!-- Tấm lớn xanh lá -->
+                    <polygon points="55,188 305,188 335,226 85,226" fill="#10b981" stroke="#047857" stroke-width="2.5"/>
+                    <polygon points="85,226 335,226 335,240 85,240" fill="#047857"/>
+
+                    <!-- Trụ chính đỡ máy phát điện -->
+                    <rect x="142" y="${state.upgradeOption === 'tall_tower' ? '62' : '82'}" width="15" height="${state.upgradeOption === 'tall_tower' ? '136' : '116'}" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="172" y="${state.upgradeOption === 'tall_tower' ? '62' : '82'}" width="15" height="${state.upgradeOption === 'tall_tower' ? '136' : '116'}" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                    <rect x="138" y="${state.upgradeOption === 'tall_tower' ? '58' : '78'}" width="54" height="12" rx="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+
+                    <!-- Cánh quạt 4 cánh xanh dương -->
+                    ${drawBluePropeller(140, state.upgradeOption === 'tall_tower' ? 46 : 64, 42)}
+
+                    <!-- Chi tiết cải tiến thêm tùy theo ý tưởng -->
+                    ${state.upgradeOption === 'two_leds' ? `
+                        <!-- 2 Trụ đèn LED hai bên -->
+                        <rect x="82" y="128" width="14" height="72" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        <circle cx="89" cy="124" r="${tested ? '18' : '0'}" fill="#fef08a" opacity="0.8"/>
+                        <circle cx="89" cy="124" r="7" fill="${tested ? '#ff1e1e' : '#991b1b'}"/>
+
+                        <rect x="248" y="128" width="14" height="72" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        <circle cx="255" cy="124" r="${tested ? '18' : '0'}" fill="#fef08a" opacity="0.8"/>
+                        <circle cx="255" cy="124" r="7" fill="${tested ? '#ff1e1e' : '#991b1b'}"/>
+                    ` : state.upgradeOption === 'house_light' ? `
+                        <!-- Khung ngôi nhà nhỏ có đèn LED chiếu sáng -->
+                        <polygon points="228,142 268,112 308,142" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+                        <rect x="236" y="142" width="64" height="58" rx="3" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
+                        <circle cx="268" cy="164" r="${tested ? '22' : '0'}" fill="#fde047" opacity="0.85"/>
+                        <circle cx="268" cy="164" r="8" fill="${tested ? '#ff1e1e' : '#991b1b'}"/>
+                    ` : `
+                        <!-- Trụ đèn LED + Biển báo năng lượng sạch -->
+                        <rect x="248" y="124" width="15" height="76" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+                        <circle cx="255" cy="118" r="${tested ? '24' : '0'}" fill="#fde047" opacity="0.9"/>
+                        <circle cx="255" cy="118" r="8" fill="${tested ? '#ff1e1e' : '#991b1b'}"/>
+                    `}
+                </svg>
+            `;
+
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    <div class="lg:col-span-6 bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-100 border-4 border-purple-400 rounded-3xl p-4 flex flex-col items-center text-center">
+                        <span class="tv-badge bg-purple-700 text-white px-4 py-1 rounded-full mb-1">
+                            Hình 7 (Trang 43) – Cải tiến mô hình máy phát điện gió
+                        </span>
+                        ${renderSgkCropOrSVG(4, { x: 48, y: 78, w: 39, h: 17 }, customUpgradeSvg)}
+                        <div class="tv-card-title text-purple-950 mt-1">${curIdea.name}</div>
+                        <p class="tv-body text-slate-700">${curIdea.desc}</p>
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white border-4 border-slate-200 rounded-3xl p-5 flex flex-col gap-4">
+                        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 tv-body text-amber-950">
+                            💡 <b>Yêu cầu vận dụng (Trang 43):</b> “Em hãy sử dụng các chi tiết trong bộ lắp ghép mô hình kĩ thuật để cải tiến mô hình máy phát điện gió đã lắp theo ý tưởng sáng tạo của em.”
+                        </div>
+
+                        <div class="flex flex-col gap-2.5">
+                            ${Object.keys(UPGRADE_IDEAS).map(key => `
+                                <button onclick="selectUpgradeIdea8('${key}')"
+                                    class="btn-kid p-3.5 rounded-2xl border-3 text-left tv-option ${
+                                        state.upgradeOption === key
+                                            ? 'bg-purple-600 text-white border-purple-800'
+                                            : 'bg-slate-50 hover:bg-purple-50 text-slate-900 border-slate-300'
+                                    }">
+                                    ${state.upgradeOption === key ? '✓ ' : ''}✨ ${UPGRADE_IDEAS[key].name}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <button onclick="toggleUpgradeWind8()"
+                            class="btn-kid py-4 px-6 rounded-2xl font-black text-xl text-white ${
+                                tested ? 'bg-rose-600 hover:bg-rose-700' : 'bg-gradient-to-r from-emerald-600 to-teal-700'
+                            }">
+                            ${tested ? '🛑 Dừng thổi gió' : '💨 Thổi gió chạy thử mô hình cải tiến!'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            if (tested) {
+                showFeedback(true, 'Tuyệt vời! Mô hình máy phát điện gió cải tiến của em đã tạo ra dòng điện thắp sáng rực rỡ!');
+            }
+        }
+
+        function selectUpgradeIdea8(key) {
+            playSound('wrench');
+            state.upgradeOption = key;
+            rewardStar('upgrade_idea_8', 1);
+            renderApp();
+        }
+
+        function toggleUpgradeWind8() {
+            state.upgradeTested = !state.upgradeTested;
+            if (state.upgradeTested) {
+                playSound('wind_high');
+                rewardStar('upgrade_test_8', 1);
+            } else {
+                playSound('click');
+            }
+            renderApp();
+        }
+
+        // Bước 3/3: Tổng kết bài học & Trao Huy hiệu (Trang 43)
+        function renderStep4_3(container) {
+            container.innerHTML = `
+                <div class="step-enter max-w-[1480px] mx-auto w-full flex flex-col gap-4">
+                    <div class="bg-gradient-to-r from-sky-100 via-emerald-50 to-amber-100 border-4 border-sky-400 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl sm:text-6xl">🏆🌬️💡</div>
+                            <div>
+                                <div class="tv-badge uppercase text-sky-900">Hoàn thành xuất sắc Bài 8: Mô hình máy phát điện gió</div>
+                                <h2 class="tv-title text-slate-900">
+                                    Huy Hiệu: Kĩ Sư Nhí Năng Lượng Xanh Tài Ba!
+                                </h2>
+                                <p class="tv-body text-slate-800 mt-1">
+                                    Tổng số Sao lớp mình đạt được: <span class="text-amber-600 font-black text-3xl">${state.stars} ⭐</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="celebrateFinishLesson8()"
+                                class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-5 py-3 rounded-2xl text-lg">
+                                🎉 Bắn pháo hoa
+                            </button>
+                            <button onclick="goToStage(0, 0)"
+                                class="btn-kid bg-white hover:bg-sky-50 text-sky-950 border-3 border-sky-400 font-black px-5 py-3 rounded-2xl text-lg">
+                                🔄 Học lại từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng kết kiến thức cốt lõi Bài 8 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-sky-50 border-4 border-sky-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-sky-950 mb-2">🌬️ 1. Nguyên lí & Cấu tạo mô hình máy phát điện gió:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Nguyên lí:</b> Máy phát điện gió biến đổi <b>năng lượng gió</b> thành <b>năng lượng điện</b> (Gió làm quay cánh quạt $\rightarrow$ tạo ra điện).</li>
+                                <li><b>4 bộ phận chính:</b> Máy phát điện cánh quạt, khung giá đỡ, dây dẫn điện và thiết bị tiêu thụ điện (đèn LED).</li>
+                                <li><b>Chi tiết lắp ghép:</b> 1 tấm lớn, 2 thanh chữ U dài, 2 thanh chữ U ngắn, 2 thanh chữ L dài, 2 thanh thẳng 3 lỗ, 12 đai ốc, 12 vít ngắn.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-50 border-4 border-emerald-300 rounded-3xl p-4 sm:p-5">
+                            <div class="tv-card-title text-emerald-950 mb-2">🛠️ 2. Quy trình 4 bước lắp ráp & Kiểm tra mô hình:</div>
+                            <ul class="tv-body text-slate-800 space-y-1.5 list-disc list-inside">
+                                <li><b>Bước 1:</b> Lắp khung giá đỡ chắc chắn (Hình 4).</li>
+                                <li><b>Bước 2:</b> Lắp đèn LED với dây dẫn điện và cố định bằng <b>băng dính điện</b> (Hình 5). <i>Lưu ý: Dây đỏ nối chân dài, dây đen nối chân ngắn.</i></li>
+                                <li><b>Bước 3:</b> Gắn máy phát điện và dùng <b>băng dính 2 mặt</b> gắn đèn LED vào khung giá đỡ (Hình 6).</li>
+                                <li><b>Bước 4:</b> Kiểm tra với các tốc độ gió: Không có gió (đèn tắt) $\rightarrow$ Ít gió (đèn sáng yếu) $\rightarrow$ Gió mạnh (đèn sáng rõ).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showFeedback(true, 'Chúc mừng các em đã nắm vững toàn bộ kiến thức và quy trình thực hành Bài 8: Mô hình máy phát điện gió!');
+        }
+
+        function celebrateFinishLesson8() {
+            playSound('fanfare');
+            launchConfetti();
+            showFeedback(true, 'Chúc mừng các Kĩ sư nhí đã hoàn thành xuất sắc Bài 8: Mô hình máy phát điện gió!');
+        }
+
+        /**************************************************************
+         * 10. ĐIỀU HƯỚNG CHẶNG & BƯỚC (STAGE & STEP NAVIGATION)
+         **************************************************************/
+        function goToStage(sIdx, stIdx = 0) {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            state.stageIdx = sIdx;
+            state.stepIdx = stIdx;
+            hideFeedback();
+            renderApp();
+        }
+
+        function prevStep() {
+            playSound('click');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            if (state.stepIdx > 0) {
+                state.stepIdx--;
+            } else if (state.stageIdx > 0) {
+                state.stageIdx--;
+                state.stepIdx = STAGES[state.stageIdx].steps.length - 1;
+            }
+            renderApp();
+        }
+
+        function nextStep() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            hideFeedback();
+            const currentStage = STAGES[state.stageIdx];
+            if (state.stepIdx < currentStage.steps.length - 1) {
+                playSound('click');
+                state.stepIdx++;
+                renderApp();
+            } else if (state.stageIdx < STAGES.length - 1) {
+                playSound('fanfare');
+                launchConfetti();
+                state.stageIdx++;
+                state.stepIdx = 0;
+                renderApp();
+            } else {
+                celebrateFinishLesson8();
+            }
+        }
+
+        function renderApp() {
+            const currentStage = STAGES[state.stageIdx];
+            const currentStep = currentStage.steps[state.stepIdx];
+
+            // 1. Render 4 nút chuyển chặng trên Header & Mobile
+            const tabsHtml = STAGES.map((st, idx) => {
+                const isActive = idx === state.stageIdx;
+                return `
+                    <button onclick="goToStage(${idx}, 0)"
+                        class="px-4 py-1.5 rounded-xl font-black text-base sm:text-lg transition-all flex items-center gap-1.5 ${
+                            isActive
+                                ? `bg-gradient-to-r ${st.color} text-white shadow`
+                                : 'text-slate-700 hover:bg-white'
+                        }">
+                        <span>${st.title}</span>
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('stage-tabs').innerHTML = tabsHtml;
+            document.getElementById('stage-tabs-mobile').innerHTML = tabsHtml;
+
+            // 2. Render Tiêu đề bước hiện tại (Chữ cực to rõ cho Tivi)
+            document.getElementById('step-header').innerHTML = `
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-0.5 rounded-xl tv-badge uppercase border-2 ${currentStage.badgeBg}">
+                            ${currentStage.title} • Bước ${state.stepIdx + 1}/${currentStage.steps.length}
+                        </span>
+                    </div>
+                    <h2 class="tv-title text-slate-900 mt-1">
+                        ${currentStep.title}
+                    </h2>
+                    <p class="tv-subtitle text-slate-700 mt-0.5">
+                        ${currentStep.subtitle}
+                    </p>
+                </div>
+            `;
+
+            // 3. Render Nội dung bước hiện tại
+            const bodyEl = document.getElementById('step-body');
+            currentStep.render(bodyEl);
+
+            // 4. Render Thanh chấm tiến trình dưới cùng
+            const dotsHtml = currentStage.steps.map((_, idx) => {
+                const active = idx === state.stepIdx;
+                return `
+                    <button onclick="goToStage(${state.stageIdx}, ${idx})"
+                        title="Bước ${idx + 1}"
+                        class="h-4 rounded-full transition-all ${
+                            active ? 'w-10 bg-sky-600' : 'w-4 bg-slate-300 hover:bg-slate-400'
+                        }"></button>
+                `;
+            }).join('');
+            document.getElementById('step-dots').innerHTML = dotsHtml;
+            document.getElementById('step-counter-text').textContent =
+                `${currentStage.title} — Bước ${state.stepIdx + 1} / ${currentStage.steps.length}`;
+
+            // 5. Cập nhật trạng thái nút Quay lại & Tiếp theo
+            const btnPrev = document.getElementById('btn-prev');
+            btnPrev.disabled = (state.stageIdx === 0 && state.stepIdx === 0);
+
+            const btnNextText = document.getElementById('btn-next-text');
+            const isLastStepOfStage = state.stepIdx === currentStage.steps.length - 1;
+            const isLastStage = state.stageIdx === STAGES.length - 1;
+
+            if (isLastStepOfStage && !isLastStage) {
+                btnNextText.textContent = `Sang ${STAGES[state.stageIdx + 1].title} 🎉`;
+            } else if (isLastStepOfStage && isLastStage) {
+                btnNextText.textContent = 'Hoàn thành bài học 🏆';
+            } else {
+                btnNextText.textContent = 'Tiếp theo';
+            }
+        }
+
+        window.onload = function () {
+            renderApp();
+        };
+    </script>
+</body>
+</html>
