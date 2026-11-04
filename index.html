@@ -1,22 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Bài Giảng E-Learning Công Nghệ Lớp 5</title>
+    <!-- TAILWIND CSS & FONTS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Nunito', sans-serif; background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%); min-height: 100vh; }
+        .card-kid { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .card-kid:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .btn-kid { transition: all 0.2s ease; }
+        .btn-kid:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800">
+
 <!-- CANVAS PHÁO HOA CHÚC MỪNG -->
 <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
 
 <!-- HEADER TRANG CHỦ KHO BÀI GIẢNG -->
 <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-sky-300 px-6 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-sm">
     <div class="flex items-center gap-3.5">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-600 flex items-center justify-center text-white shadow-md border-2 border-white float-icon">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-600 flex items-center justify-center text-white shadow-md border-2 border-white">
             <span class="text-3xl">🎒</span>
         </div>
         <div>
-            <div class="text-xs font-black text-sky-700 uppercase tracking-wider">Hệ thống E-Learning Tiểu học • GitHub Repository</div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kho Bài Giảng Công Nghệ Lớp 5 (Kết Nối Tri Thức)</h1>
+            <div class="text-xs font-black text-sky-700 uppercase tracking-wider">Hệ thống E-Learning • GitHub Repository</div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Kho Bài Giảng Công Nghệ & Kĩ Năng Sống 5</h1>
         </div>
     </div>
 
     <div class="flex items-center gap-3">
         <div class="hidden sm:flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 px-3.5 py-1.5 rounded-2xl">
             <span class="text-2xl">📚</span>
-            <span class="text-base font-black text-amber-950">Tổng số: 16 Bài giảng</span>
+            <span class="text-base font-black text-amber-950">Đã cập nhật tên file chuẩn</span>
         </div>
         <button onclick="triggerConfetti()" class="btn-kid bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black px-4 py-2 rounded-2xl text-base flex items-center gap-1.5">
             <span>🎉 Chúc Mừng</span>
@@ -27,149 +46,128 @@
 <!-- THANH TÌM KIẾM & BỘ LỌC CHỦ ĐỀ -->
 <section class="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2 flex flex-col md:flex-row items-center justify-between gap-4">
     <div class="relative w-full md:w-96">
-        <input type="text" id="search-input" onkeyup="filterLessons()" placeholder="🔍 Tìm kiếm bài học (VD: xe điện, điện mặt trời...)"
+        <input type="text" id="search-input" onkeyup="filterLessons()" placeholder="🔍 Tìm kiếm bài học (VD: xe điện, mặt trời, bảo vệ...)"
             class="w-full bg-white border-3 border-sky-300 focus:border-sky-500 rounded-2xl px-4 py-3 pl-11 text-base font-bold text-slate-800 shadow-inner outline-none transition-all"/>
         <span class="absolute left-3.5 top-3.5 text-xl">🔎</span>
     </div>
 
     <div class="flex items-center gap-2 flex-wrap justify-center" id="filter-btns">
         <button onclick="filterCategory('all', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-sky-600 text-white border-2 border-sky-700">
-            🌟 Tất cả (16 bài)
+            🌟 Tất cả bài học
         </button>
-        <button onclick="filterCategory('life', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-white hover:bg-sky-50 text-slate-800 border-2 border-slate-300">
-            ⚡ Chủ đề 1: Công nghệ & Đời sống (Bài 1-5)
+        <button onclick="filterCategory('congnghe', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-white hover:bg-sky-50 text-slate-800 border-2 border-slate-300">
+            ⚡ Công nghệ 5
         </button>
-        <button onclick="filterCategory('model', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-white hover:bg-sky-50 text-slate-800 border-2 border-slate-300">
-            🛠️ Chủ đề 2: Lắp ráp mô hình (Bài 6-10)
-        </button>
-        <button onclick="filterCategory('digital', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-white hover:bg-sky-50 text-slate-800 border-2 border-slate-300">
-            💻 Chủ đề 3: Công nghệ số (Bài 11-16)
+        <button onclick="filterCategory('kinang', this)" class="filter-btn btn-kid px-4 py-2 rounded-xl font-black text-sm bg-white hover:bg-sky-50 text-slate-800 border-2 border-slate-300">
+            🛡️ Kĩ năng sống & Đạo đức
         </button>
     </div>
 </section>
 
-<!-- DANH SÁCH 16 BÀI GIẢNG (GRID CARDS) -->
+<!-- DANH SÁCH BÀI GIẢNG ĐÃ KHỚP TÊN FILE THỰC TẾ -->
 <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="lessons-grid">
         
-        <!-- BÀI 1 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="life" data-name="bài 1 công nghệ trong đời sống">
+        <!-- BÀI 2 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="congnghe" data-name="bài 2 nhà sáng chế">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 1 • CĐ 1</span>
-                    <span class="text-2xl">💡</span>
-                </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Công nghệ trong đời sống</h3>
-                <p class="text-sm font-bold text-slate-600">Khám phá vai trò của công nghệ và các sản phẩm công nghệ quen thuộc.</p>
-            </div>
-            <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 1_Công nghệ trong đời sống.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
-                    Vào học ➔
-                </a>
-            </div>
-        </div>
-
-        <!-- BÀI 2 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="life" data-name="bài 2 sáng chế công nghệ">
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 2 • CĐ 1</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 2 • Công Nghệ</span>
                     <span class="text-2xl">⚙️</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sáng chế công nghệ</h3>
-                <p class="text-sm font-bold text-slate-600">Tìm hiểu lịch sử và ý nghĩa của các phát minh, sáng chế công nghệ.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Nhà sáng chế</h3>
+                <p class="text-sm font-bold text-slate-600">Tìm hiểu lịch sử và ý nghĩa của các phát minh, sáng chế.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 2_Sáng chế công nghệ.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Đã sẵn sàng</span>
+                <a href="CN5_Bài 2_Nhà sáng chế_.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 3 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="life" data-name="bài 3 đồ dùng điện trong gia đình">
+        <!-- BÀI 3 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="congnghe" data-name="bài 3 tìm hiểu thiết kế">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 3 • CĐ 1</span>
-                    <span class="text-2xl">🔌</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 3 • Công Nghệ</span>
+                    <span class="text-2xl">📐</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Đồ dùng điện trong gia đình</h3>
-                <p class="text-sm font-bold text-slate-600">Nhận biết và phân loại các thiết bị đồ dùng điện phổ biến.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Tìm hiểu thiết kế</h3>
+                <p class="text-sm font-bold text-slate-600">Khám phá các bước cơ bản trong thiết kế sản phẩm.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 3_Đồ dùng điện trong gia đình.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Đã sẵn sàng</span>
+                <a href="CN5_Bài 3_Tìm hiểu thiết kế_HoclieusoTuMo0868838870.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 4 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="life" data-name="bài 4 sử dụng an toàn và tiết kiệm điện năng">
+        <!-- BÀI 4 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="congnghe" data-name="bài 4 thiết kế sản phẩm">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 4 • CĐ 1</span>
-                    <span class="text-2xl">⚡</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 4 • Công Nghệ</span>
+                    <span class="text-2xl">✏️</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sử dụng an toàn và tiết kiệm điện</h3>
-                <p class="text-sm font-bold text-slate-600">Quy tắc an toàn điện và các biện pháp tiết kiệm điện năng.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Thiết kế sản phẩm</h3>
+                <p class="text-sm font-bold text-slate-600">Thực hành lên ý tưởng và phác thảo thiết kế sản phẩm.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 4_Sử dụng an toàn và tiết kiệm điện năng.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Đã sẵn sàng</span>
+                <a href="CN5_Bài 4_Thiết kế sản phẩm_HoclieusoTuMo0868838870.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 5 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="life" data-name="bài 5 dự án tìm hiểu về đồ dùng điện">
+        <!-- BÀI 5 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="congnghe" data-name="bài 5 sử dụng điện thoại">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 5 • CĐ 1</span>
-                    <span class="text-2xl">📋</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 5 • Công Nghệ</span>
+                    <span class="text-2xl">📱</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Dự án: Đồ dùng điện gia đình</h3>
-                <p class="text-sm font-bold text-slate-600">Thực hiện dự án tìm hiểu và khảo sát đồ dùng điện thực tế.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sử dụng điện thoại</h3>
+                <p class="text-sm font-bold text-slate-600">Sử dụng điện thoại đúng cách, an toàn và hiệu quả.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 5_Dự án Tìm hiểu về đồ dùng điện.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Đã sẵn sàng</span>
+                <a href="CN5_Bài 5_Sử dụng điện thoại_HoclieusoTuMo0868838870.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 6 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="model" data-name="bài 6 giới thiệu bộ lắp ghép mô hình kĩ thuật">
+        <!-- BÀI 6 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="congnghe" data-name="bài 6 sử dụng tủ lạnh">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-amber-100 text-amber-900 font-black text-xs uppercase border border-amber-300">Bài 6 • CĐ 2</span>
-                    <span class="text-2xl">🧰</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-100 text-sky-900 font-black text-xs uppercase border border-sky-300">Bài 6 • Công Nghệ</span>
+                    <span class="text-2xl">🧊</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Giới thiệu bộ lắp ghép mô hình kĩ thuật</h3>
-                <p class="text-sm font-bold text-slate-600">Làm quen với các chi tiết, dụng cụ trong bộ lắp ghép lớp 5.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sử dụng tủ lạnh</h3>
+                <p class="text-sm font-bold text-slate-600">Nguyên lý bảo quản thực phẩm và tiết kiệm điện khi dùng tủ lạnh.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 6_Giới thiệu bộ lắp ghép mô hình kĩ thuật.html" class="btn-kid bg-amber-600 hover:bg-amber-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Đã sẵn sàng</span>
+                <a href="CN5_Bài 6_Sử dụng tủ lạnh_HoclieusoTuMo0868838870.html" class="btn-kid bg-sky-600 hover:bg-sky-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 7 (ĐẶC BIỆT NỔI BẬT) -->
-        <div class="lesson-card card-kid bg-gradient-to-br from-sky-50 to-emerald-50 rounded-3xl border-4 border-sky-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="model" data-name="bài 7 lắp ráp mô hình xe điện chạy bằng pin">
+        <!-- BÀI 7 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-gradient-to-br from-sky-50 to-emerald-50 rounded-3xl border-4 border-sky-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="congnghe" data-name="bài 7 lắp ráp mô hình xe điện chạy bằng pin">
             <div class="absolute top-3 right-3 bg-amber-400 text-amber-950 px-2.5 py-0.5 rounded-full font-black text-xs border border-amber-600">⭐ Hot</div>
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between pr-10">
-                    <span class="px-3 py-1 rounded-xl bg-sky-200 text-sky-950 font-black text-xs uppercase border border-sky-400">Bài 7 • CĐ 2</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-200 text-sky-950 font-black text-xs uppercase border border-sky-400">Bài 7 • Công Nghệ</span>
                     <span class="text-2xl">🚗</span>
                 </div>
                 <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Lắp ráp mô hình xe điện chạy bằng pin</h3>
-                <p class="text-sm font-bold text-slate-700">Khám phá cấu tạo và lắp ráp xe điện chạy pin hoàn chỉnh.</p>
+                <p class="text-sm font-bold text-slate-700">Thực hành lắp ráp xe điện có động cơ chạy bằng nguồn pin.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-sky-200 flex items-center justify-between">
                 <span class="text-xs font-black text-sky-800 bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-300">✓ E-Learning TV</span>
@@ -179,16 +177,16 @@
             </div>
         </div>
 
-        <!-- BÀI 8 (ĐẶC BIỆT NỔI BẬT) -->
-        <div class="lesson-card card-kid bg-gradient-to-br from-sky-50 to-emerald-50 rounded-3xl border-4 border-sky-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="model" data-name="bài 8 mô hình máy phát điện gió">
+        <!-- BÀI 8 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-gradient-to-br from-sky-50 to-emerald-50 rounded-3xl border-4 border-sky-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="congnghe" data-name="bài 8 mô hình máy phát điện gió">
             <div class="absolute top-3 right-3 bg-amber-400 text-amber-950 px-2.5 py-0.5 rounded-full font-black text-xs border border-amber-600">⭐ Hot</div>
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between pr-10">
-                    <span class="px-3 py-1 rounded-xl bg-sky-200 text-sky-950 font-black text-xs uppercase border border-sky-400">Bài 8 • CĐ 2</span>
+                    <span class="px-3 py-1 rounded-xl bg-sky-200 text-sky-950 font-black text-xs uppercase border border-sky-400">Bài 8 • Công Nghệ</span>
                     <span class="text-2xl">🌬️</span>
                 </div>
                 <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Mô hình máy phát điện gió</h3>
-                <p class="text-sm font-bold text-slate-700">Lắp ráp và kiểm tra mô hình máy phát điện gió thắp sáng đèn LED.</p>
+                <p class="text-sm font-bold text-slate-700">Lắp ráp mô hình năng lượng gió phát điện thắp sáng đèn LED.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-sky-200 flex items-center justify-between">
                 <span class="text-xs font-black text-sky-800 bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-300">✓ E-Learning TV</span>
@@ -198,16 +196,16 @@
             </div>
         </div>
 
-        <!-- BÀI 9 (ĐẶC BIỆT NỔI BẬT) -->
-        <div class="lesson-card card-kid bg-gradient-to-br from-amber-50 to-sky-50 rounded-3xl border-4 border-amber-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="model" data-name="bài 9 mô hình điện mặt trời">
+        <!-- BÀI 9 CÔNG NGHỆ -->
+        <div class="lesson-card card-kid bg-gradient-to-br from-amber-50 to-sky-50 rounded-3xl border-4 border-amber-400 overflow-hidden flex flex-col justify-between p-5 shadow-md relative" data-category="congnghe" data-name="bài 9 mô hình điện mặt trời">
             <div class="absolute top-3 right-3 bg-amber-400 text-amber-950 px-2.5 py-0.5 rounded-full font-black text-xs border border-amber-600">⭐ Hot</div>
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between pr-10">
-                    <span class="px-3 py-1 rounded-xl bg-amber-200 text-amber-950 font-black text-xs uppercase border border-amber-400">Bài 9 • CĐ 2</span>
+                    <span class="px-3 py-1 rounded-xl bg-amber-200 text-amber-950 font-black text-xs uppercase border border-amber-400">Bài 9 • Công Nghệ</span>
                     <span class="text-2xl">☀️</span>
                 </div>
                 <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Mô hình điện mặt trời</h3>
-                <p class="text-sm font-bold text-slate-700">Khám phá năng lượng sạch và lắp ráp mô hình điện mặt trời.</p>
+                <p class="text-sm font-bold text-slate-700">Khám phá pin mặt trời và mô hình năng lượng sạch.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-amber-200 flex items-center justify-between">
                 <span class="text-xs font-black text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">✓ E-Learning TV</span>
@@ -217,127 +215,127 @@
             </div>
         </div>
 
-        <!-- BÀI 10 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="model" data-name="bài 10 ôn tập lắp ráp mô hình kĩ thuật">
+        <!-- BÀI KĨ NĂNG SỐNG 2 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 2 tôn trọng sự khác biệt">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-amber-100 text-amber-900 font-black text-xs uppercase border border-amber-300">Bài 10 • CĐ 2</span>
-                    <span class="text-2xl">🏆</span>
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 2 • Kĩ Năng</span>
+                    <span class="text-2xl">🤝</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Ôn tập lắp ráp mô hình kĩ thuật</h3>
-                <p class="text-sm font-bold text-slate-600">Tổng kết và thực hành các mô hình lắp ghép đã học.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Tôn trọng sự khác biệt</h3>
+                <p class="text-sm font-bold text-slate-600">Học cách chấp nhận và tôn trọng điểm khác biệt của bạn bè.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 10_Ôn tập lắp ráp mô hình kĩ thuật.html" class="btn-kid bg-amber-600 hover:bg-amber-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 2_Tôn trọng sự khác biệt_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 11 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 11 thiết bị công nghệ số">
+        <!-- BÀI KĨ NĂNG SỐNG 3 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 3 vượt qua khó khăn">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 11 • CĐ 3</span>
-                    <span class="text-2xl">💻</span>
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 3 • Kĩ Năng</span>
+                    <span class="text-2xl">💪</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Thiết bị công nghệ số</h3>
-                <p class="text-sm font-bold text-slate-600">Làm quen với các thiết bị công nghệ số thông minh.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Vượt qua khó khăn</h3>
+                <p class="text-sm font-bold text-slate-600">Rèn luyện bản lĩnh và kĩ năng giải quyết vấn đề.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 11_Thiết bị công nghệ số.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 3_Vượt qua khó khăn_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 12 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 12 sử dụng máy tính và internet an toàn">
+        <!-- BÀI KĨ NĂNG SỐNG 4 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 4 bảo vệ cái đúng cái tốt">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 12 • CĐ 3</span>
-                    <span class="text-2xl">🔒</span>
-                </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sử dụng máy tính & internet an toàn</h3>
-                <p class="text-sm font-bold text-slate-600">Quy tắc bảo vệ bản thân khi sử dụng máy tính và internet.</p>
-            </div>
-            <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 12_Sử dụng máy tính và internet an toàn.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
-                    Vào học ➔
-                </a>
-            </div>
-        </div>
-
-        <!-- BÀI 13 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 13 tìm kiếm thông tin học tập trên internet">
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 13 • CĐ 3</span>
-                    <span class="text-2xl">🌐</span>
-                </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Tìm kiếm thông tin học tập trên internet</h3>
-                <p class="text-sm font-bold text-slate-600">Kĩ năng tìm kiếm tài liệu và kiến thức phục vụ học tập.</p>
-            </div>
-            <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 13_Tìm kiếm thông tin học tập trên internet.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
-                    Vào học ➔
-                </a>
-            </div>
-        </div>
-
-        <!-- BÀI 14 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 14 an toàn khi tham gia môi trường số">
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 14 • CĐ 3</span>
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 4 • Đạo Đức</span>
                     <span class="text-2xl">🛡️</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">An toàn khi tham gia môi trường số</h3>
-                <p class="text-sm font-bold text-slate-600">Nhận diện và phòng tránh các nguy cơ trên không gian mạng.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Bảo vệ cái đúng, cái tốt</h3>
+                <p class="text-sm font-bold text-slate-600">Dũng cảm ủng hộ lẽ phải và những điều tốt đẹp.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 14_An toàn khi tham gia môi trường số.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 4_Bảo vệ cái đúng cái tốt_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 15 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 15 dự án sáng tạo sản phẩm công nghệ số">
+        <!-- BÀI KĨ NĂNG SỐNG 5 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 5 bảo vệ môi trường sống">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 15 • CĐ 3</span>
-                    <span class="text-2xl">✨</span>
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 5 • Kĩ Năng</span>
+                    <span class="text-2xl">🌱</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Dự án: Sáng tạo sản phẩm công nghệ số</h3>
-                <p class="text-sm font-bold text-slate-600">Thực hành sáng tạo sản phẩm công nghệ số thiết thực.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Bảo vệ môi trường sống</h3>
+                <p class="text-sm font-bold text-slate-600">Ý thức và hành động giữ gìn không gian sống xanh - sạch.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 15_Dự án Sáng tạo sản phẩm công nghệ số.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 5_Bảo vệ môi trường sống_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
         </div>
 
-        <!-- BÀI 16 -->
-        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-slate-200 overflow-hidden flex flex-col justify-between p-5" data-category="digital" data-name="bài 16 ôn tập cuối năm môn công nghệ 5">
+        <!-- BÀI KĨ NĂNG SỐNG 6 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 6 lập kế hoạch cá nhân">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 16 • CĐ 3</span>
-                    <span class="text-2xl">🎓</span>
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 6 • Kĩ Năng</span>
+                    <span class="text-2xl">📅</span>
                 </div>
-                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Ôn tập cuối năm môn Công nghệ 5</h3>
-                <p class="text-sm font-bold text-slate-600">Tổng kết toàn bộ kiến thức môn Công nghệ lớp 5.</p>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Lập kế hoạch cá nhân</h3>
+                <p class="text-sm font-bold text-slate-600">Quản lý thời gian và sắp xếp công việc hiệu quả.</p>
             </div>
             <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">✓ Sẵn sàng</span>
-                <a href="CN5_Bài 16_Ôn tập cuối năm.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 6_Lập kế hoạch cá nhân_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                    Vào học ➔
+                </a>
+            </div>
+        </div>
+
+        <!-- BÀI KĨ NĂNG SỐNG 7 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 7 phòng tránh xâm hại">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 7 • Kĩ Năng</span>
+                    <span class="text-2xl">🚨</span>
+                </div>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Phòng tránh xâm hại</h3>
+                <p class="text-sm font-bold text-slate-600">Kĩ năng tự bảo vệ bản thân an toàn trước nguy cơ xâm hại.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 7_Phòng tránh xâm hại_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
+                    Vào học ➔
+                </a>
+            </div>
+        </div>
+
+        <!-- BÀI KĨ NĂNG SỐNG 8 -->
+        <div class="lesson-card card-kid bg-white rounded-3xl border-4 border-purple-200 overflow-hidden flex flex-col justify-between p-5" data-category="kinang" data-name="bài 8 sử dụng tiền hợp lí">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <span class="px-3 py-1 rounded-xl bg-purple-100 text-purple-900 font-black text-xs uppercase border border-purple-300">Bài 8 • Kĩ Năng</span>
+                    <span class="text-2xl">💰</span>
+                </div>
+                <h3 class="text-lg font-black text-slate-900 leading-snug mt-1">Sử dụng tiền hợp lí</h3>
+                <p class="text-sm font-bold text-slate-600">Quản lý tài chính cá nhân và thói quen tiết kiệm.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">✓ Đã sẵn sàng</span>
+                <a href="Bài 8_Sử dụng tiền hợp lí_HoclieusoTuMo0868838870.html" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white font-black px-4 py-2 rounded-xl text-sm">
                     Vào học ➔
                 </a>
             </div>
@@ -348,13 +346,12 @@
 
 <!-- FOOTER -->
 <footer class="w-full bg-white/95 backdrop-blur-md border-t-4 border-sky-300 px-6 py-3 text-center text-slate-700 font-bold text-sm mt-6">
-    🌟 Kho Lưu Trữ Bài Giảng E-Learning Công Nghệ 5 • Thiết kế chuyên biệt cho học sinh Tiểu học & Trình chiếu Tivi lớp học 🌟
+    🌟 Kho Bài Giảng E-Learning • Đồng bộ chuẩn 100% với file trên GitHub 🌟
 </footer>
 
 <!-- JAVASCRIPT XỬ LÝ TÌM KIẾM & BỘ LỌC -->
 <script>
     function filterCategory(category, btnEl) {
-        // Đổi active button
         document.querySelectorAll('.filter-btn').forEach(b => {
             b.classList.remove('bg-sky-600', 'text-white', 'border-sky-700');
             b.classList.add('bg-white', 'text-slate-800', 'border-slate-300');
@@ -432,3 +429,5 @@
         render();
     }
 </script>
+</body>
+</html>
